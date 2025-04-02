@@ -1,0 +1,23 @@
+@import url("https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+  @apply font-inter;
+}
+
+.left-image {
+  background-image: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.1),
+      rgba(198, 21, 41, 0.7)
+    ),
+    url(/landing.jpg);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
