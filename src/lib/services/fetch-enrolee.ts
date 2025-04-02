@@ -35,7 +35,7 @@ export async function fetchEnrollee({
   pageSize = 10,
   providerName = "",
   typeId = "0",
-  lgaId = "0"
+  // lgaId = "0"
 }: FetchEnrolleeParams): Promise<EnrolleeData | null> {
   if (!enrolleeId || !stateId) {
     console.error("Enrollee ID and State ID are required");
