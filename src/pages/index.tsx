@@ -12,13 +12,12 @@ import {
   TableCell,
   getKeyValue,
 } from "@heroui/table";
-
+import { SharedSelection } from "@heroui/system";
 import { Pagination } from "@heroui/pagination";
 import { Spinner } from "@heroui/spinner";
 
 import { fetchStates, StateOption } from "@/lib/services/fetch-state";
 import { EnrolleeData, fetchEnrollee } from "@/lib/services/fetch-enrolee";
-import { SharedSelection } from "@heroui/system";
 
 export default function EnrolleeSearch() {
   const [states, setStates] = useState<StateOption[]>([]);
