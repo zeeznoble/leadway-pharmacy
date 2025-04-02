@@ -27,7 +27,7 @@ export default function EnrolleeSearch() {
   const [enrolleeData, setEnrolleeData] = useState<EnrolleeData | null>(null);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(20); // Match NoOfRecords from working URL
+  const [pageSize] = useState(20);
   const [error, setError] = useState("");
 
   useEffect(() => {
