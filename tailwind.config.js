@@ -12,7 +12,6 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        figtree: ["Figtree", "serif"],
         inter: ["Inter", "sans-serif"],
       },
       colors: {
