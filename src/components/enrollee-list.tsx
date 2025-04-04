@@ -26,7 +26,7 @@ import { DownloadIcon } from "./icons";
 import { EnrolleeData, fetchEnrollee } from "@/lib/services/fetch-enrolee";
 import { IdsChunk } from "@/lib/store/enrollee-store";
 import { columns, exportToExcel, exportToPDF } from "@/lib/helpers";
-import AllEnrollee from "./all-enrollee";
+// import AllEnrollee from "./all-enrollee";
 
 export default function EnrolleeDataTable() {
   const Ids = useChunkValue(IdsChunk);
