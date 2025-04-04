@@ -46,8 +46,7 @@ export async function fetchEnrollee({
     const minimumID = (page - 1) * pageSize;
     const baseUrl = `${import.meta.env.VITE_PROGNOSIS_API_URL}/EnrolleeProfile/GetEnrolleeProvidersListsAll`;
 
-    // Match the working URL parameters
-    const url = `${baseUrl}?schemeid=0&MinimumID=${minimumID}&NoOfRecords=20&pageSize=${pageSize}&ProviderName=${providerName}&TypeID=${typeId || "0"}&StateID=${stateId}&LGAID=0&enrolleeid=${enrolleeId}&provider_id=0`;
+    const url = `${baseUrl}?schemeid=0&MinimumID=${minimumID}&NoOfRecords=20&pageSize=${pageSize}&ProviderName=${providerName}&TypeID=${typeId}&StateID=${stateId}&LGAID=0&enrolleeid=${enrolleeId}&provider_id=0`;
 
     console.log("Final API URL:", url);
 
