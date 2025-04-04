@@ -1,7 +1,5 @@
-import { useState } from "react";
-
+import { useMemo, useState } from "react";
 import { useChunkValue } from "stunk/react";
-
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
@@ -32,19 +30,20 @@ import { DownloadIcon } from "./icons";
 export default function EnrolleeDataTable() {
   const Ids = useChunkValue(IdsChunk);
 
-  const [enrolleeData, setEnrolleeData] = useState<EnrolleeData | null>(null);
+  const [allData, setAllData] = useState<EnrolleeData | null>(null);
+  const [displayData, setDisplayData] = useState<EnrolleeData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(20);
   const [error, setError] = useState("");
 
   const getSelectedStateId = () => Ids.stateId;
-  // const getSelectedDisciplineId = () => Ids.disciplineId;
 
-  const fetchEnrolleeData = async (page: number) => {
+  const fetchAllData = async () => {
     const stateId = getSelectedStateId();
-    // const typeId = getSelectedDisciplineId();
     const enrolleeId = Ids.enrolleeId;
+
     if (!enrolleeId) {
       setError("Please enter an Enrollee ID");
       return;
@@ -60,13 +59,17 @@ export default function EnrolleeDataTable() {
       const data = await fetchEnrollee({
         enrolleeId,
         stateId,
-        page,
-        pageSize,
+        page: 1,
+        pageSize: 5000,
       });
-      setEnrolleeData(data);
+
       if (!data || !data.result) {
-        setError("Cannot find Enrolee");
+        setError("Cannot find Enrollee");
+        return;
       }
+
+      setAllData(data);
+      updateDisplayData(data, 1);
     } catch (error) {
       console.error("Error fetching enrollee data", error);
       setError("Failed to fetch enrollee data. Please try again.");
@@ -75,37 +78,73 @@ export default function EnrolleeDataTable() {
     }
   };
 
-  const handleSearch = () => fetchEnrolleeData(1);
+  const updateDisplayData = (data: EnrolleeData, page: number) => {
+    setPageLoading(true);
 
-  const pages = enrolleeData?.totalPages || 0;
+    setTimeout(() => {
+      const startIndex = (page - 1) * pageSize;
+      const endIndex = Math.min(startIndex + pageSize, data.result.length);
+
+      const currentPageData = {
+        ...data,
+        result: data.result.slice(startIndex, endIndex),
+        currentPage: page,
+      };
+
+      setDisplayData(currentPageData);
+      setPageLoading(false);
+    }, 300);
+  };
+
+  const handleSearch = () => {
+    setCurrentPage(1);
+    fetchAllData();
+  };
 
   const handlePageChange = (page: number) => {
+    if (!allData) return;
+
     setCurrentPage(page);
-    fetchEnrolleeData(page);
+    updateDisplayData(allData, page);
   };
 
   const columns = [
+    { key: "serial", label: "S/N" },
     { key: "provider", label: "PROVIDER" },
     { key: "email", label: "EMAIL" },
-    { key: "phone1", label: "PHONE" },
-    { key: "region", label: "REGION" },
-    { key: "medicaldirector", label: "MEDICAL DIRECTOR" },
-    { key: "ProviderAddress", label: "ADDRESS" },
   ];
 
+  const isStillLoading = loading || pageLoading;
+
+  const serialOffset = (currentPage - 1) * pageSize;
+
+  const tableItems = useMemo(() => {
+    if (isStillLoading) return [];
+
+    return (displayData?.result || []).map((item, index) => ({
+      ...item,
+      serial: serialOffset + index + 1,
+    }));
+  }, [displayData?.result, isStillLoading, currentPage, pageSize]);
+
+  // const columns = [
+  //   { key: "provider", label: "PROVIDER" },
+  //   { key: "email", label: "EMAIL" },
+  //   { key: "phone1", label: "PHONE" },
+  //   { key: "region", label: "REGION" },
+  //   { key: "medicaldirector", label: "MEDICAL DIRECTOR" },
+  //   { key: "ProviderAddress", label: "ADDRESS" },
+  // ];
+
+  // Export functions remain the same
   const exportToExcel = () => {
-    if (
-      !enrolleeData ||
-      !enrolleeData.result ||
-      enrolleeData.result.length === 0
-    ) {
+    if (!allData?.result?.length) {
       setError("No data to export");
       return;
     }
 
     const wb = XLSX.utils.book_new();
-
-    const excelData = enrolleeData.result.map((item) => ({
+    const excelData = allData.result.map((item) => ({
       Provider: item.provider,
       Email: item.email,
       Phone: item.phone1,
@@ -115,35 +154,29 @@ export default function EnrolleeDataTable() {
     }));
 
     const ws = XLSX.utils.json_to_sheet(excelData);
-
     XLSX.utils.book_append_sheet(wb, ws, "Enrollee Providers");
-
     XLSX.writeFile(wb, "Enrollee_Providers.xlsx");
   };
 
   const exportToPDF = () => {
-    if (
-      !enrolleeData ||
-      !enrolleeData.result ||
-      enrolleeData.result.length === 0
-    ) {
+    if (!allData?.result?.length) {
       setError("No data to export");
       return;
     }
 
     try {
       const doc = new jsPDF();
-
       doc.setFontSize(16);
       doc.text("Enrollee Providers", 14, 15);
 
-      const pdfData = enrolleeData.result.map((item) => [
+      const pdfData = allData.result.map((item, index) => [
+        index + 1,
         item.provider,
         item.email,
-        item.phone1,
-        item.region,
-        item.medicaldirector,
-        item.ProviderAddress,
+        // item.phone1,
+        // item.region,
+        // item.medicaldirector,
+        // item.ProviderAddress,
       ]);
 
       const tableColumns = columns.map((col) => col.label);
@@ -186,7 +219,7 @@ export default function EnrolleeDataTable() {
         </Button>
       </div>
       {error && <p className="text-red-500 mt-2 text-center">{error}</p>}
-      {enrolleeData && enrolleeData.status === 200 && (
+      {displayData && displayData.status === 200 && (
         <div className="mt-2 bg-white p-6 rounded-lg max-w-[90rem] mx-auto">
           <div className="overflow-x-auto">
             <Table
@@ -202,7 +235,7 @@ export default function EnrolleeDataTable() {
                         <Button
                           color="success"
                           radius="sm"
-                          isDisabled={!enrolleeData?.result?.length}
+                          isDisabled={!allData?.result?.length}
                           startContent={<DownloadIcon />}
                         >
                           Export
@@ -219,7 +252,7 @@ export default function EnrolleeDataTable() {
                     </Dropdown>
                     <Button
                       color="default"
-                      onPress={() => handlePageChange(currentPage)}
+                      onPress={handleSearch}
                       isDisabled={loading}
                       radius="sm"
                     >
@@ -229,12 +262,15 @@ export default function EnrolleeDataTable() {
                 </div>
               }
               bottomContent={
-                pages > 0 && (
-                  <div className="flex w-full justify-center">
+                allData &&
+                allData.result &&
+                allData.result.length > pageSize && (
+                  <div className="flex w-full justify-center mt-4">
                     <Pagination
-                      className="text-white"
+                      showControls
+                      color="secondary"
                       page={currentPage}
-                      total={pages}
+                      total={Math.ceil(allData.result.length / pageSize)}
                       onChange={handlePageChange}
                     />
                   </div>
@@ -247,9 +283,9 @@ export default function EnrolleeDataTable() {
                 ))}
               </TableHeader>
               <TableBody
-                items={enrolleeData?.result || []}
+                items={tableItems}
                 loadingContent={<Spinner color="warning" />}
-                loadingState={loading ? "loading" : "idle"}
+                loadingState={isStillLoading ? "loading" : "idle"}
                 emptyContent={"No Provider Results Found"}
               >
                 {(item) => (
@@ -263,13 +299,16 @@ export default function EnrolleeDataTable() {
             </Table>
           </div>
 
-          {enrolleeData.result && enrolleeData.result.length > 0 && (
-            <div className="mt-4 text-sm text-gray-500 text-center">
-              Showing {(currentPage - 1) * pageSize + 1} to{" "}
-              {Math.min(currentPage * pageSize, enrolleeData.totalRecord)} of{" "}
-              {enrolleeData.totalRecord} providers
-            </div>
-          )}
+          {!pageLoading &&
+            displayData.result &&
+            displayData.result.length > 0 &&
+            allData && (
+              <div className="mt-4 text-sm text-gray-500 text-center">
+                Showing {(currentPage - 1) * pageSize + 1} to{" "}
+                {Math.min(currentPage * pageSize, allData.totalRecord)} of{" "}
+                {allData.totalRecord} providers
+              </div>
+            )}
         </div>
       )}
     </>
