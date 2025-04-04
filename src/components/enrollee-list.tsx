@@ -1,8 +1,6 @@
 import { useMemo, useState } from "react";
+
 import { useChunkValue } from "stunk/react";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-import * as XLSX from "xlsx";
 
 import { Button } from "@heroui/button";
 import { Pagination } from "@heroui/pagination";
@@ -23,9 +21,12 @@ import {
   DropdownItem,
 } from "@heroui/dropdown";
 
+import { DownloadIcon } from "./icons";
+
 import { EnrolleeData, fetchEnrollee } from "@/lib/services/fetch-enrolee";
 import { IdsChunk } from "@/lib/store/enrollee-store";
-import { DownloadIcon } from "./icons";
+import { columns, exportToExcel, exportToPDF } from "@/lib/helpers";
+import AllEnrollee from "./all-enrollee";
 
 export default function EnrolleeDataTable() {
   const Ids = useChunkValue(IdsChunk);
@@ -108,12 +109,6 @@ export default function EnrolleeDataTable() {
     updateDisplayData(allData, page);
   };
 
-  const columns = [
-    { key: "serial", label: "S/N" },
-    { key: "provider", label: "PROVIDER" },
-    { key: "email", label: "EMAIL" },
-  ];
-
   const isStillLoading = loading || pageLoading;
 
   const serialOffset = (currentPage - 1) * pageSize;
@@ -127,87 +122,9 @@ export default function EnrolleeDataTable() {
     }));
   }, [displayData?.result, isStillLoading, currentPage, pageSize]);
 
-  // const columns = [
-  //   { key: "provider", label: "PROVIDER" },
-  //   { key: "email", label: "EMAIL" },
-  //   { key: "phone1", label: "PHONE" },
-  //   { key: "region", label: "REGION" },
-  //   { key: "medicaldirector", label: "MEDICAL DIRECTOR" },
-  //   { key: "ProviderAddress", label: "ADDRESS" },
-  // ];
-
-  // Export functions remain the same
-  const exportToExcel = () => {
-    if (!allData?.result?.length) {
-      setError("No data to export");
-      return;
-    }
-
-    const wb = XLSX.utils.book_new();
-    const excelData = allData.result.map((item) => ({
-      Provider: item.provider,
-      Email: item.email,
-      Phone: item.phone1,
-      Region: item.region,
-      "Medical Director": item.medicaldirector,
-      Address: item.ProviderAddress,
-    }));
-
-    const ws = XLSX.utils.json_to_sheet(excelData);
-    XLSX.utils.book_append_sheet(wb, ws, "Enrollee Providers");
-    XLSX.writeFile(wb, "Enrollee_Providers.xlsx");
-  };
-
-  const exportToPDF = () => {
-    if (!allData?.result?.length) {
-      setError("No data to export");
-      return;
-    }
-
-    try {
-      const doc = new jsPDF();
-      doc.setFontSize(16);
-      doc.text("Enrollee Providers", 14, 15);
-
-      const pdfData = allData.result.map((item, index) => [
-        index + 1,
-        item.provider,
-        item.email,
-        // item.phone1,
-        // item.region,
-        // item.medicaldirector,
-        // item.ProviderAddress,
-      ]);
-
-      const tableColumns = columns.map((col) => col.label);
-
-      autoTable(doc, {
-        head: [tableColumns],
-        theme: "striped",
-        body: pdfData,
-        startY: 25,
-        styles: { fontSize: 5, cellPadding: 2, font: "times" },
-        headStyles: {
-          fillColor: "#C61531",
-          textColor: [255, 255, 255],
-          fontSize: 4,
-          font: "times",
-        },
-        columnStyles: {
-          5: { cellWidth: "auto" },
-        },
-        margin: { top: 25 },
-      });
-      doc.save("Enrollee_Providers.pdf");
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      setError("Failed to generate PDF. Please try again.");
-    }
-  };
-
   return (
     <>
-      <div className="max-w-[85rem] mx-auto">
+      <div className="max-w-[85rem] mx-auto flex justify-between items-center">
         <Button
           radius="sm"
           onPress={handleSearch}
@@ -217,6 +134,7 @@ export default function EnrolleeDataTable() {
         >
           {loading ? "Searching..." : "View my Provider List"}
         </Button>
+        {/* <AllEnrollee /> */}
       </div>
       {error && <p className="text-red-500 mt-2 text-center">{error}</p>}
       {displayData && displayData.status === 200 && (
@@ -242,22 +160,20 @@ export default function EnrolleeDataTable() {
                         </Button>
                       </DropdownTrigger>
                       <DropdownMenu aria-label="Export Options">
-                        <DropdownItem key="excel" onPress={exportToExcel}>
+                        <DropdownItem
+                          key="excel"
+                          onPress={() => exportToExcel(allData, setError)}
+                        >
                           Export to Excel
                         </DropdownItem>
-                        <DropdownItem key="pdf" onPress={exportToPDF}>
+                        <DropdownItem
+                          key="pdf"
+                          onPress={() => exportToPDF(allData, setError)}
+                        >
                           Export to PDF
                         </DropdownItem>
                       </DropdownMenu>
                     </Dropdown>
-                    <Button
-                      color="default"
-                      onPress={handleSearch}
-                      isDisabled={loading}
-                      radius="sm"
-                    >
-                      Refresh
-                    </Button>
                   </div>
                 </div>
               }
