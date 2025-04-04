@@ -28,12 +28,12 @@ export default function SelectDiscipline() {
 
   useEffect(() => {
     if (discipline.length > 0 && !dataLoaded.current) {
-      const initialBatch = discipline.slice(0, LIMIT);
+      const initialBatch = discipline.slice(1, LIMIT);
       setDisplayedDisc(initialBatch);
       setHasMore(discipline.length > LIMIT);
       currentOffset.current = LIMIT;
       if (selectedDisc.size === 0) {
-        setSelectedDisc(new Set([String(discipline[0].Department_id)]));
+        setSelectedDisc(new Set([String(discipline[1].Department_id)]));
       }
       dataLoaded.current = true;
     }
