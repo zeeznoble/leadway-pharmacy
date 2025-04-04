@@ -19,7 +19,9 @@ export default function SelectStates() {
   const [hasMore, setHasMore] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
 
-  const states = Array.isArray(data) ? data : [];
+  const states = Array.isArray(data)
+    ? data.filter((state) => state.Value !== "71")
+    : [];
 
   const dataLoaded = useRef(false);
   const LIMIT = 10;
