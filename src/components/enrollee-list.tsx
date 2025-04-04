@@ -180,7 +180,6 @@ export default function EnrolleeDataTable() {
           onPress={handleSearch}
           isDisabled={loading}
           color="warning"
-          size="lg"
           className="text-white font-semibold"
         >
           {loading ? "Searching..." : "View my Provider List"}
