@@ -41,7 +41,7 @@ export default function BenefitDataTable() {
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(20);
+  const [pageSize] = useState(10);
   const [error, setError] = useState("");
 
   const fetchBenefitsData = async () => {
@@ -54,7 +54,12 @@ export default function BenefitDataTable() {
     setLoading(true);
 
     try {
-      const data = await fetchBenefitsById(state.enrolleeId);
+      const data = await fetchBenefitsById(
+        String(state.enrolleeData?.Member_MemberUniqueID)
+      );
+
+      console.log("Enrollee ID: ", state.enrolleeData?.Member_MemberUniqueID);
+      console.log("Benefits Data: ", data);
 
       if (!data || !data.result) {
         setError("No benefits data available");
@@ -118,43 +123,40 @@ export default function BenefitDataTable() {
       )}
 
       {displayData && displayData.status === 200 && (
-        <div className="mt-2 bg-white p-6 rounded-lg max-w-[90rem] mx-auto">
+        <div className="bg-white rounded-lg max-w-[90rem] mx-auto">
           <div className="overflow-x-auto">
             <Table
               aria-label="Enrollee Benefits Table"
               isStriped
               shadow="none"
               topContent={
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold">Benefits</h3>
-                  <div className="flex gap-2 items-center">
-                    <Dropdown>
-                      <DropdownTrigger>
-                        <Button
-                          color="success"
-                          radius="sm"
-                          isDisabled={!allData?.result?.length}
-                          startContent={<DownloadIcon />}
-                        >
-                          Export
-                        </Button>
-                      </DropdownTrigger>
-                      <DropdownMenu aria-label="Export Options">
-                        <DropdownItem
-                          key="excel"
-                          onPress={() => exportToExcelBen(allData, setError)}
-                        >
-                          Export to Excel
-                        </DropdownItem>
-                        <DropdownItem
-                          key="pdf"
-                          onPress={() => exportToPDFBen(allData, setError)}
-                        >
-                          Export to PDF
-                        </DropdownItem>
-                      </DropdownMenu>
-                    </Dropdown>
-                  </div>
+                <div className="flex gap-2 items-center justify-end">
+                  <Dropdown>
+                    <DropdownTrigger>
+                      <Button
+                        color="success"
+                        radius="sm"
+                        isDisabled={!allData?.result?.length}
+                        startContent={<DownloadIcon />}
+                      >
+                        Export
+                      </Button>
+                    </DropdownTrigger>
+                    <DropdownMenu aria-label="Export Options">
+                      <DropdownItem
+                        key="excel"
+                        onPress={() => exportToExcelBen(allData, setError)}
+                      >
+                        Export to Excel
+                      </DropdownItem>
+                      <DropdownItem
+                        key="pdf"
+                        onPress={() => exportToPDFBen(allData, setError)}
+                      >
+                        Export to PDF
+                      </DropdownItem>
+                    </DropdownMenu>
+                  </Dropdown>
                 </div>
               }
               bottomContent={
