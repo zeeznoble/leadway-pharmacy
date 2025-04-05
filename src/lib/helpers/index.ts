@@ -16,7 +16,8 @@ import { BenefitsResponse } from "../services/fetch-benefit";
 export const ProvidersColumns = [
   { key: "serial", label: "S/N" },
   { key: "provider", label: "PROVIDER" },
-  { key: "email", label: "EMAIL" },
+  // { key: "email", label: "EMAIL" },
+  { key: "ProviderAddress", label: "ADDRESS" },
 ];
 
 
@@ -57,6 +58,8 @@ export const exportToPDF = (allData: ProviderData | null, setError?: Dispatch<Se
       index + 1,
       item.provider,
       item.email,
+      item.ProviderAddress,
+
       // item.phone1,
       // item.region,
       // item.medicaldirector,
@@ -135,11 +138,7 @@ export const BenefitsColumns = [
   { key: "Benefit", label: "BENEFIT" },
   { key: "Limit", label: "LIMIT" },
   { key: "Used", label: "USED" },
-  { key: "AmtClaimed", label: "AMOUNT CLAIMED" },
   { key: "Balance", label: "BALANCE" },
-  { key: "VisitsLimit", label: "VISITS LIMIT" },
-  { key: "VisitsUsed", label: "VISITS USED" },
-  { key: "VisitsBalance", label: "VISITS BALANCE" },
 ];
 
 export const exportToExcelBen = (allData: BenefitsResponse | null, setError?: Dispatch<SetStateAction<string>>) => {
@@ -153,11 +152,8 @@ export const exportToExcelBen = (allData: BenefitsResponse | null, setError?: Di
     Benefit: item.Benefit,
     Limit: item.Limit,
     Used: item.Used,
-    AmtClaimed: item.AmtClaimed,
     Balance: item.Balance,
-    VisitsLimit: item.VisitsLimit,
-    VisitsUsed: item.VisitsUsed,
-    VisitsBalance: item.VisitsBalance,
+
   }));
 
   const ws = XLSX.utils.json_to_sheet(excelData);
@@ -181,11 +177,7 @@ export const exportToPDFBen = (allData: BenefitsResponse | null, setError?: Disp
       item.Benefit,
       item.Limit,
       item.Used,
-      item.AmtClaimed,
       item.Balance,
-      item.VisitsLimit,
-      item.VisitsUsed,
-      item.VisitsBalance,
     ]);
 
     const tableColumns = BenefitsColumns.map((col) => col.label);
