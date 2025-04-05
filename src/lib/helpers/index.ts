@@ -1,18 +1,27 @@
+import { Dispatch, SetStateAction } from "react";
+import { To } from "react-router-dom";
+
+
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-import { EnrolleeData } from "../services/fetch-enrolee";
-import { Dispatch, SetStateAction } from "react";
+import { ProviderData } from "../services/fetch-providers";
+import { fetchEnrolleeById } from "../services/fetch-enrolee";
+
+import { appChunk } from "../store/app-store";
+import { BenefitsResponse } from "../services/fetch-benefit";
 
 
-export const columns = [
+export const ProvidersColumns = [
   { key: "serial", label: "S/N" },
   { key: "provider", label: "PROVIDER" },
   { key: "email", label: "EMAIL" },
 ];
 
-export const exportToExcel = (allData: EnrolleeData | null, setError?: Dispatch<SetStateAction<string>>) => {
+
+
+export const exportToExcel = (allData: ProviderData | null, setError?: Dispatch<SetStateAction<string>>) => {
   if (!allData?.result?.length) {
     if (setError) setError("No data to export");
     return;
@@ -33,7 +42,7 @@ export const exportToExcel = (allData: EnrolleeData | null, setError?: Dispatch<
   XLSX.writeFile(wb, "Enrollee_Providers.xlsx");
 };
 
-export const exportToPDF = (allData: EnrolleeData | null, setError?: Dispatch<SetStateAction<string>>) => {
+export const exportToPDF = (allData: ProviderData | null, setError?: Dispatch<SetStateAction<string>>) => {
   if (!allData?.result?.length) {
     if (setError) setError("No data to export");
     return;
@@ -54,7 +63,7 @@ export const exportToPDF = (allData: EnrolleeData | null, setError?: Dispatch<Se
       // item.ProviderAddress,
     ]);
 
-    const tableColumns = columns.map((col) => col.label);
+    const tableColumns = ProvidersColumns.map((col) => col.label);
 
     autoTable(doc, {
       head: [tableColumns],
@@ -74,6 +83,131 @@ export const exportToPDF = (allData: EnrolleeData | null, setError?: Dispatch<Se
       margin: { top: 25 },
     });
     doc.save("Enrollee_Providers.pdf");
+  } catch (error) {
+    console.error("Error generating PDF:", error);
+    if (setError) setError("Failed to generate PDF. Please try again.");
+  }
+};
+
+type FetchInfoParam = {
+  enrolleeId: string,
+  path: string,
+  setFetchError: Dispatch<SetStateAction<string>>,
+  setLoading: Dispatch<SetStateAction<boolean>>,
+  navigate: (to: To) => void
+}
+
+export const fetchInfoAndRoute = async ({ enrolleeId, path, navigate, setFetchError, setLoading }: FetchInfoParam) => {
+  try {
+    const enrolleeData = await fetchEnrolleeById(enrolleeId.trim());
+
+
+    if (!enrolleeData || enrolleeData.result.length === 0) {
+      setFetchError(
+        "No enrollee found with this ID. Please check and try again."
+      );
+      setLoading(false);
+      return;
+    }
+
+    const [enrollee] = enrolleeData.result;
+
+    appChunk.set((prev) => ({
+      ...prev,
+      enrolleeId: enrolleeId.trim(),
+      enrolleeData: enrollee,
+      profilePic: enrolleeData.profilepic,
+    }));
+
+    console.log(enrolleeData);
+
+    navigate(path);
+  } catch (error) {
+    console.error("Error in fetch and navigate:", error);
+    setFetchError("An error occurred while fetching data. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+}
+
+
+export const BenefitsColumns = [
+  { key: "Benefit", label: "BENEFIT" },
+  { key: "Limit", label: "LIMIT" },
+  { key: "Used", label: "USED" },
+  { key: "AmtClaimed", label: "AMOUNT CLAIMED" },
+  { key: "Balance", label: "BALANCE" },
+  { key: "VisitsLimit", label: "VISITS LIMIT" },
+  { key: "VisitsUsed", label: "VISITS USED" },
+  { key: "VisitsBalance", label: "VISITS BALANCE" },
+];
+
+export const exportToExcelBen = (allData: BenefitsResponse | null, setError?: Dispatch<SetStateAction<string>>) => {
+  if (!allData?.result?.length) {
+    if (setError) setError("No data to export");
+    return;
+  }
+
+  const wb = XLSX.utils.book_new();
+  const excelData = allData.result.map((item) => ({
+    Benefit: item.Benefit,
+    Limit: item.Limit,
+    Used: item.Used,
+    AmtClaimed: item.AmtClaimed,
+    Balance: item.Balance,
+    VisitsLimit: item.VisitsLimit,
+    VisitsUsed: item.VisitsUsed,
+    VisitsBalance: item.VisitsBalance,
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(excelData);
+  XLSX.utils.book_append_sheet(wb, ws, "Enrollee Providers");
+  XLSX.writeFile(wb, "Benefits.xlsx");
+};
+
+
+export const exportToPDFBen = (allData: BenefitsResponse | null, setError?: Dispatch<SetStateAction<string>>) => {
+  if (!allData?.result?.length) {
+    if (setError) setError("No data to export");
+    return;
+  }
+
+  try {
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text("Enrollee Providers", 14, 15);
+
+    const pdfData = allData.result.map((item) => [
+      item.Benefit,
+      item.Limit,
+      item.Used,
+      item.AmtClaimed,
+      item.Balance,
+      item.VisitsLimit,
+      item.VisitsUsed,
+      item.VisitsBalance,
+    ]);
+
+    const tableColumns = BenefitsColumns.map((col) => col.label);
+
+    autoTable(doc, {
+      head: [tableColumns],
+      theme: "striped",
+      body: pdfData,
+      startY: 25,
+      styles: { fontSize: 5, cellPadding: 2, font: "times" },
+      headStyles: {
+        fillColor: "#C61531",
+        textColor: [255, 255, 255],
+        fontSize: 4,
+        font: "times",
+      },
+      columnStyles: {
+        5: { cellWidth: "auto" },
+      },
+      margin: { top: 25 },
+    });
+    doc.save("Benefits.pdf");
   } catch (error) {
     console.error("Error generating PDF:", error);
     if (setError) setError("Failed to generate PDF. Please try again.");
