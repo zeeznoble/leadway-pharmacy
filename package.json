@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@heroui/button": "^2.2.16",
+    "@heroui/card": "^2.2.15",
+    "@heroui/chip": "^2.2.12",
     "@heroui/dropdown": "^2.3.16",
     "@heroui/input": "^2.4.16",
     "@heroui/pagination": "^2.2.14",
