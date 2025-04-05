@@ -40,9 +40,11 @@ export default function ProviderDataTable() {
   const [error, setError] = useState("");
 
   const getSelectedStateId = () => state.stateId;
+  const getSelectedDisciplineId = () => state.disciplineId;
 
   const fetchAllData = async () => {
     const stateId = getSelectedStateId();
+    const disciplineId = getSelectedDisciplineId();
     const enrolleeId = state.enrolleeId;
 
     if (!enrolleeId) {
@@ -53,6 +55,10 @@ export default function ProviderDataTable() {
       setError("Please select a state");
       return;
     }
+    if (!disciplineId) {
+      setError("Please select a discipline");
+      return;
+    }
 
     setError("");
     setLoading(true);
@@ -60,6 +66,7 @@ export default function ProviderDataTable() {
       const data = await fetchEnrollee({
         enrolleeId,
         stateId,
+        typeId: disciplineId,
         page: 1,
         pageSize: 5000,
       });
