@@ -14,6 +14,7 @@ export type EnrolleeData = {
   Member_Country: string,
   Member_MemberStatus: number,
   Member_MemberStatus_Description: string,
+  Plan_Category: string,
 }
 
 export type EnrolleeResponse = {
