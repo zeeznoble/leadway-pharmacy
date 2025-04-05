@@ -101,7 +101,7 @@ export default function Index() {
             size="lg"
             radius="sm"
             fullWidth
-            isDisabled={!isValidId || isLoadingPro}
+            isDisabled={!isValidId || isLoadingPro || isLoadingBen}
             isLoading={isLoadingPro}
             onPress={() => handleProviderFetch("/providers")}
           >
@@ -113,7 +113,7 @@ export default function Index() {
             size="lg"
             fullWidth
             radius="sm"
-            isDisabled={!isValidId || isLoadingBen}
+            isDisabled={!isValidId || isLoadingBen || isLoadingPro}
             isLoading={isLoadingBen}
             onPress={() => handleBenefitsFetch("/benefits")}
           >
