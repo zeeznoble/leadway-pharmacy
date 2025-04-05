@@ -15,7 +15,7 @@ export default function EnrolleeDetails() {
 
   if (!enrolleeData) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-6">
+      <div className="flex flex-col items-center justify-center p-6">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             No Enrollee Data Found{" "}
@@ -34,7 +34,6 @@ export default function EnrolleeDetails() {
   }
 
   const fullName = [
-    enrolleeData.Member_MemberTitle,
     enrolleeData.Member_FirstName,
     enrolleeData.Member_othernames,
     enrolleeData.Member_Surname,
@@ -53,7 +52,7 @@ export default function EnrolleeDetails() {
         </div>
       </CardHeader>
       <CardBody className="pt-4">
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <h3 className="text-sm text-gray-500 font-medium mb-1">
               Full Name
@@ -69,18 +68,8 @@ export default function EnrolleeDetails() {
           </div>
 
           <div>
-            <h3 className="text-sm text-gray-500 font-medium mb-1">Age</h3>
-            <p className="text-medium">{enrolleeData.Member_Age} years</p>
-          </div>
-
-          <div>
-            <h3 className="text-sm text-gray-500 font-medium mb-1">Gender</h3>
-            <p className="text-medium">{enrolleeData.Member_Gender}</p>
-          </div>
-
-          <div>
             <h3 className="text-sm text-gray-500 font-medium mb-1">Plan</h3>
-            <p className="text-medium">{enrolleeData.Member_Plan}</p>
+            <p className="text-medium">{enrolleeData.Plan_Category}</p>
           </div>
 
           <div>
