@@ -1,21 +1,17 @@
 import { useChunkValue } from "stunk/react";
 
-import { useNavigate } from "react-router-dom";
-
-import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 
 import SelectStates from "@/components/providers/select-states";
 import SelectDiscipline from "@/components/providers/select-discipline";
 import ProvidersDataTable from "@/components/providers/provider-list";
 import EnrolleeDetails from "@/components/enrollee-details";
+import Logout from "@/components/logout";
 
 import { appChunk } from "@/lib/store/app-store";
 
 export default function ProvidersPage() {
   const state = useChunkValue(appChunk);
-
-  const navigate = useNavigate();
 
   return (
     <div className="flex flex-col gap-4 p-6 font-inter">
@@ -48,9 +44,7 @@ export default function ProvidersPage() {
           </div>
         </div>
         <ProvidersDataTable />
-        <div className="flex justify-center mt-4">
-          <Button onPress={() => navigate("/")}>Go back</Button>
-        </div>
+        <Logout />
       </div>
     </div>
   );
