@@ -28,7 +28,7 @@ export default function SelectDiscipline() {
 
   useEffect(() => {
     if (discipline.length > 0 && !dataLoaded.current) {
-      const initialBatch = discipline.slice(1, LIMIT);
+      const initialBatch = discipline.slice(0, LIMIT);
       setDisplayedDisc(initialBatch);
       setHasMore(discipline.length > LIMIT);
       currentOffset.current = LIMIT;
@@ -59,6 +59,8 @@ export default function SelectDiscipline() {
       setHasMore(false);
     } else {
       setDisplayedDisc((prev) => [...prev, ...nextBatch]);
+      console.log("Next Batch: ", nextBatch);
+      console.log("Current Offset: ", currentOffset.current);
       currentOffset.current += LIMIT;
       setHasMore(currentOffset.current < discipline.length);
     }
