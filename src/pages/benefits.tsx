@@ -1,32 +1,44 @@
-import { useNavigate } from "react-router-dom";
-
-import { Button } from "@heroui/button";
+import { Accordion, AccordionItem } from "@heroui/accordion";
 
 import EnrolleeDetails from "@/components/enrollee-details";
 import BenefitDataTable from "@/components/benefits/benefit-list";
+import BenefitDefault from "@/components/benefits/benefit-default";
+import Logout from "@/components/logout";
 
 export default function BenefitsPage() {
-  const navigate = useNavigate();
   return (
     <div className="flex flex-col gap-4 p-6 font-inter">
       <div className="container mx-auto">
         <div className="text-center mb-8">
           <img src="/leadway-logo.png" alt="Leadway" className="w-48 mx-auto" />
-          <h2 className="text-3xl font-semibold mt-10">
-            See Enrollment Benefits
-          </h2>
-          <p className="text-gray-600 text-sm mt-2">
-            Enter your Enrollee ID below and select your state to retrieve your
-            records.
-          </p>
         </div>
 
         <EnrolleeDetails />
 
-        <BenefitDataTable />
-        <div className="flex justify-center mt-4">
-          <Button onPress={() => navigate("/")}>Go back</Button>
+        <div className="bg-white p-4 rounded-lg max-w-[88rem] mx-auto">
+          <Accordion
+            selectionMode="multiple"
+            variant="shadow"
+            defaultExpandedKeys={["1"]}
+          >
+            <AccordionItem
+              key="1"
+              aria-label="Benefit list"
+              title="Benefit list"
+            >
+              <BenefitDefault />
+            </AccordionItem>
+            <AccordionItem
+              key="2"
+              aria-label="Other Benefits"
+              title="Other Benefits"
+            >
+              <BenefitDataTable />
+            </AccordionItem>
+          </Accordion>
         </div>
+
+        <Logout />
       </div>
     </div>
   );
