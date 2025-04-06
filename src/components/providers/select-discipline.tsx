@@ -24,7 +24,7 @@ const mapDisciplines = (data: Discipline[] | null): Discipline[] => {
 
   data?.forEach((d) => {
     switch (d.Department) {
-      case "General":
+      case "General Practitioner":
         disciplineMap["General"] = d;
         break;
       case "Pediatrician":
