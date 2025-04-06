@@ -69,7 +69,7 @@ export default function Index() {
     <div className="grid grid-cols-1 sm:grid-cols-2 h-screen">
       <LandingLeft />
       <div className="flex items-center justify-center min-h-screen">
-        <div className="w-full max-w-md">
+        <div className="px-6 sm:px-0 w-full max-w-md">
           {/* <img
             src="/leadway-logo.png"
             alt="Leadway"
@@ -84,7 +84,7 @@ export default function Index() {
               <span className="text-[#f15A24]">unparalleled service.</span>
             </h1>
             <p className="mt-6 text-md font-medium">
-              Access your insurance details—log in now.
+              Access your healthcare benefits—log in now.
             </p>
           </div>
           <div className="mb-4">
