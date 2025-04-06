@@ -133,13 +133,13 @@ export default function ProviderDataTable() {
 
   return (
     <>
-      <div className="max-w-[85rem] mx-auto flex justify-between items-center">
+      <div className="max-w-[85rem] flex justify-between items-center mx-3 sm:mx-auto">
         <Button
           radius="sm"
           onPress={handleSearch}
           isDisabled={loading}
           color="warning"
-          className="text-white font-semibold"
+          className="text-white font-semibold w-full sm:w-auto"
         >
           {loading ? "Searching..." : "View my Provider List"}
         </Button>
