@@ -95,7 +95,7 @@ export default function BenefitDefault() {
   const state = useChunkValue(appChunk);
 
   const [allData, setAllData] = useState<BenefitsResponse | null>(null);
-  const [tableData, setTableData] = useState(staticBenefits); // Static table data
+  const [tableData, setTableData] = useState(staticBenefits);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -111,8 +111,6 @@ export default function BenefitDefault() {
     try {
       const data = await fetchDefaultBenefitsById(state.enrolleeId);
 
-      console.log("Benefits Data: ", data);
-
       if (!data || !data.result) {
         setError("No benefits data available");
         setTableData(staticBenefits); // Reset to defaults
@@ -125,7 +123,7 @@ export default function BenefitDefault() {
     } catch (error) {
       console.error("Error fetching benefits data", error);
       setError("Failed to fetch benefits data. Please try again.");
-      setTableData(staticBenefits); // Reset to defaults on error
+      setTableData(staticBenefits);
     } finally {
       setLoading(false);
     }
