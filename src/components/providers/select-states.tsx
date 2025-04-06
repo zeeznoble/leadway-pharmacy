@@ -20,7 +20,9 @@ export default function SelectStates() {
   const [isOpen, setIsOpen] = useState(false);
 
   const states = Array.isArray(data)
-    ? data.filter((state) => state.Value !== "71")
+    ? data
+        .filter((state) => state.Value !== "71" && state.Value !== "25")
+        .sort((a, b) => a.Text.localeCompare(b.Text))
     : [];
 
   const dataLoaded = useRef(false);
