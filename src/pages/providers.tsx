@@ -29,7 +29,7 @@ export default function ProvidersPage() {
 
         <EnrolleeDetails />
 
-        <div className="bg-white p-6 rounded-lg max-w-[88rem] mx-auto">
+        <div className="bg-white px-3 py-6 sm:p-6 rounded-lg max-w-[88rem] mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Input
               label="Enrollee ID"
