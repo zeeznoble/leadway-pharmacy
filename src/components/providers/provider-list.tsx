@@ -63,9 +63,11 @@ export default function ProviderDataTable() {
     setError("");
     setLoading(true);
     try {
+      const switchStateId =
+        stateId === "72" ? "73" : stateId === "73" ? "72" : stateId;
       const data = await fetchEnrollee({
         enrolleeId,
-        stateId,
+        stateId: switchStateId,
         typeId: disciplineId,
         page: 1,
         pageSize: 5000,
