@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
+
 import { useAsyncChunk, useChunk } from "stunk/react";
+
 import { Select, SelectItem } from "@heroui/select";
 import { SharedSelection } from "@heroui/system";
 import { appChunk } from "@/lib/store/app-store";
+
 import { Discipline, disciplineChunk } from "@/lib/store/discipline-store";
 
-// Define the 10 desired disciplines
 const desiredDisciplines = [
   "General",
   "Paedatric",
