@@ -7,7 +7,7 @@ export default function Logout() {
 
   return (
     <div className="flex justify-center mt-4">
-      <Button color="danger" onPress={() => navigate("/")}>
+      <Button radius="sm" color="danger" onPress={() => navigate("/")}>
         Logout
       </Button>
     </div>
