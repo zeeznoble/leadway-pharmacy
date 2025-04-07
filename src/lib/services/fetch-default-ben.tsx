@@ -26,7 +26,7 @@ export const fetchDefaultBenefitsById = async (
 ): Promise<BenefitsResponse | null> => {
   try {
     const response = await fetch(
-      `${import.meta.env.VITE_PROGNOSIS_API_URL}//EnrolleeProfile/GetEnrolleeBenefits?enrolleeid=${enrolleeId}`
+      `${import.meta.env.VITE_PROGNOSIS_API_URL}/EnrolleeProfile/GetEnrolleeBenefits?enrolleeid=${enrolleeId}`
     );
 
     if (!response.ok) {
