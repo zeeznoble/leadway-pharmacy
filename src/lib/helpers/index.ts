@@ -207,6 +207,9 @@ export const exportToPDFBen = (allData: BenefitsResponse | null, setError?: Disp
 };
 
 
+export const iconClasses = 'text-xl pointer-events-none flex-shrink-0';
+
+
 // const columns = [
 //   { key: "provider", label: "PROVIDER" },
 //   { key: "email", label: "EMAIL" },
