@@ -49,25 +49,23 @@ export default function SideNav() {
           stroke={router.pathname === "/" ? "#ffffff" : "#475467"}
           width={23}
           height={20}
-          className="hover-icon"
         />
       ),
       text: "Dashboard",
     },
     {
-      link: "/enrollee",
+      link: "/enrollees",
       icon: (
         <EnrolleeIcon
-          strokeWidth={router.pathname.startsWith("/enrollee") ? "1.5" : "1"}
+          strokeWidth={router.pathname.startsWith("/enrollees") ? "1.5" : "1"}
           stroke={
             router.pathname.startsWith("/enrollee") ? "#ffffff" : "#475467"
           }
           width={23}
           height={20}
-          className="hover-icon"
         />
       ),
-      text: "Enrollee",
+      text: "Enrollees",
     },
     {
       link: "/tasks",
@@ -77,7 +75,6 @@ export default function SideNav() {
           stroke={router.pathname.startsWith("/tasks") ? "#ffffff" : "#475467"}
           width={23}
           height={20}
-          className="hover-icon"
         />
       ),
       text: "My Tasks",
@@ -92,7 +89,6 @@ export default function SideNav() {
           }
           width={23}
           height={20}
-          className="hover-icon"
         />
       ),
       text: "Deliveries",
@@ -107,7 +103,6 @@ export default function SideNav() {
           }
           width={23}
           height={20}
-          className="hover-icon"
         />
       ),
       text: "Pharmacy",
@@ -120,7 +115,6 @@ export default function SideNav() {
           stroke={router.pathname.startsWith("/stock") ? "#ffffff" : "#475467"}
           width={23}
           height={20}
-          className="hover-icon"
         />
       ),
       text: "Stock",
@@ -135,7 +129,6 @@ export default function SideNav() {
           }
           width={23}
           height={20}
-          className="hover-icon"
         />
       ),
       text: "Reports",
@@ -143,7 +136,7 @@ export default function SideNav() {
   ];
 
   const renderNavItems = () => (
-    <div className="flex flex-col py-6 h-[100vh] bg-white">
+    <div className="flex flex-col py-6 h-screen bg-white">
       <div className="mb-6">
         <Brand />
       </div>
