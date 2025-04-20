@@ -7,21 +7,24 @@ export default function DefaultLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
-      <div className="flex items-start justify-between">
-        <div className="hidden sm:block sm:w-[261px] min-h-screen">
-          <SideNav />
-        </div>
-        <main className="grid w-full h-full">
-          <Header />
-          <div className="p-4 sm:p-10 bg-[#FCFCFA] h-full">{children}</div>
-        </main>
+    <div className="flex h-screen">
+      {/* Fixed SideNav for desktop */}
+      <div className="hidden sm:block sm:w-[261px] overflow-hidden h-screen">
+        <SideNav />
       </div>
+
+      {/* Scrollable main content */}
+      <main className="flex flex-col flex-1 overflow-auto relative">
+        <Header />
+        <div className="p-4 sm:p-10 bg-[#FCFCFA] min-h-0 flex-1">
+          {children}
+        </div>
+      </main>
 
       {/* Mobile SideNav controller */}
       <div className="sm:hidden">
         <SideNav />
       </div>
-    </>
+    </div>
   );
 }
