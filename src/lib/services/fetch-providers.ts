@@ -17,51 +17,48 @@ export type ProviderData = {
   }[];
 };
 
-type FetchProviderParams = {
-  enrolleeId: string;
-  stateId: string;
+
+export const fetchEnrollee = async ({
+  enrolleeId = "",
+  stateId = "0",
+  pageSize = 2000
+}: {
+  enrolleeId?: string;
+  stateId?: string;
   page?: number;
   pageSize?: number;
-  providerName?: string;
-  typeId?: string;
-  lgaId?: string;
-};
-
-
-export async function fetchEnrollee({
-  enrolleeId,
-  stateId,
-  page = 1,
-  pageSize = 10,
-  providerName = "",
-  typeId = "0",
-  // lgaId = "0"
-}: FetchProviderParams): Promise<ProviderData | null> {
-  if (!enrolleeId || !stateId) {
-    console.error("Enrollee ID and State ID are required");
-    return null;
-  }
-
+}) => {
   try {
-    const minimumID = (page - 1) * pageSize;
-    const baseUrl = `${import.meta.env.VITE_PROGNOSIS_API_URL}/EnrolleeProfile/GetEnrolleeProvidersListsAll`;
+    const apiUrl = `${import.meta.env.VITE_PROGNOSIS_API_URL}/EnrolleeProfile/GetEnrolleeProvidersListsAll`;
 
-    const url = `${baseUrl}?schemeid=0&MinimumID=${minimumID}&NoOfRecords=5000&pageSize=${pageSize}&ProviderName=${providerName}&TypeID=${typeId}&StateID=${stateId}&LGAID=0&enrolleeid=${enrolleeId}&provider_id=0`;
+    // Ensure we're using exactly the same parameters as your working example
+    const params = new URLSearchParams({
+      schemeid: "0",
+      MinimumID: "0",
+      NoOfRecords: "2000", // Keep this at 2000 as in your example
+      pageSize: pageSize.toString(),
+      ProviderName: "",
+      TypeID: "46",
+      StateID: stateId || "0",
+      LGAID: "0",
+      enrolleeid: enrolleeId || "",
+      provider_id: "0"
+    });
 
-    console.log("Final API URL:", url);
+    console.log(`Fetching from: ${apiUrl}?${params.toString()}`); // Log the exact URL being called
 
-    const response = await fetch(url);
+    const response = await fetch(`${apiUrl}?${params.toString()}`);
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("API Error Response:", errorText);
-      throw new Error(`API request failed with status ${response.status}`);
+      throw new Error(`API error: ${response.status}`);
     }
 
     const data = await response.json();
+    console.log("API response data:", data); // Log the response to see what we're getting back
+
     return data;
   } catch (error) {
     console.error("Error fetching enrollee data:", error);
     throw error;
   }
-}
+};
