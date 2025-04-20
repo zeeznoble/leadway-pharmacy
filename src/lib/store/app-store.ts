@@ -18,3 +18,11 @@ export const authStore = chunk<AuthState>({
   isLoading: false,
   user: null
 })
+
+export const resetProviderFilters = () => {
+  appChunk.set((state) => ({
+    ...state,
+    stateId: '',
+    enrolleeId: ''
+  }));
+};
