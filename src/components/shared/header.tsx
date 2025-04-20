@@ -8,10 +8,15 @@ import {
   DropdownItem,
 } from "@heroui/dropdown";
 
+import { useChunkValue } from "stunk/react";
+
 import { ToggleIcon } from "../icons/main-icons";
+
+import { authStore } from "@/lib/store/app-store";
 
 export default function Header() {
   const router = useLocation();
+  const state = useChunkValue(authStore);
 
   const getPageTitle = () => {
     const path = router.pathname;
@@ -26,7 +31,7 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 h-16 px-4 sm:px-6 flex items-center justify-between w-full">
+    <header className="bg-white border-b border-gray-200 py-4 px-4 sm:px-6 flex items-center justify-between w-full">
       <button
         className="block sm:hidden rounded p-2 focus:outline-none"
         onClick={toggleDrawer}
@@ -52,7 +57,7 @@ export default function Header() {
           <DropdownMenu aria-label="Profile Actions" variant="flat">
             <DropdownItem key="profile" className="h-14 gap-2">
               <p className="font-semibold">Signed in as</p>
-              <p className="font-semibold">admin@example.com</p>
+              <p className="font-semibold">{state.user?.Email}</p>
             </DropdownItem>
             <DropdownItem key="settings">My Settings</DropdownItem>
             <DropdownItem key="logout" color="danger">
