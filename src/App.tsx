@@ -4,6 +4,8 @@ import ProtectedRoute from "@/components/protected";
 
 import IndexPage from "@/pages/index";
 import LoginPage from "@/pages/login";
+import EnrolleesPage from "@/pages/enrollees";
+import PharmacyPage from "@/pages/pharmacy";
 
 function App() {
   return (
@@ -14,6 +16,22 @@ function App() {
         element={
           <ProtectedRoute>
             <IndexPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/enrollees"
+        element={
+          <ProtectedRoute>
+            <EnrolleesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pharmacy"
+        element={
+          <ProtectedRoute>
+            <PharmacyPage />
           </ProtectedRoute>
         }
       />
