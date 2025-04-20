@@ -44,7 +44,6 @@ export default function LoginPage() {
       }
     } catch (error) {
       setApiError("An unexpected error occurred");
-      console.error("Login error:", error);
     } finally {
       setIsLoading(false);
     }
