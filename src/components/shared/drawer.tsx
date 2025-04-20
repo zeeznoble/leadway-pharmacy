@@ -10,19 +10,28 @@ export default function Drawer({
   onClose,
   children,
 }: DrawerProps & PropsWithChildren) {
+  if (typeof document === "undefined") return null;
+
   return (
     <>
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40"
+          className="fixed inset-0 bg-black bg-opacity-50"
           onClick={onClose}
+          style={{
+            position: "fixed",
+            zIndex: 9998,
+          }}
         />
       )}
+
       <div
-        className={`
-        fixed top-0 left-0 h-full w-64 bg-white shadow-lg z-50 transform transition-transform duration-300 ease-in-out
-        ${isOpen ? "translate-x-0" : "-translate-x-full"}
-      `}
+        className={`fixed top-0 left-0 h-full w-80 bg-white shadow-lg transform transition-transform duration-300 ease-in-out`}
+        style={{
+          position: "fixed",
+          zIndex: 9999,
+          transform: isOpen ? "translateX(0)" : "translateX(-100%)",
+        }}
       >
         {children}
       </div>
