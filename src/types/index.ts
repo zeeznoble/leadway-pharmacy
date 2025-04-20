@@ -61,5 +61,5 @@ export type User = {
 export type LoginResponse = {
   status: number;
   result: User[] | null;
-  errorMessage: string;
+  ErrorMessage: string;
 };
