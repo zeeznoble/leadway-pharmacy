@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 
+import { useChunk } from "stunk/react";
+
 import { Input } from "@heroui/input";
 
 import SelectStates from "@/components/select-state";
 import ProvidersDataTable from "@/components/providers-table";
-import { useChunk, useChunkValue } from "stunk/react";
+
 import { appChunk } from "@/lib/store/app-store";
 
 export default function PharmacyPage() {
