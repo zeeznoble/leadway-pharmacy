@@ -43,6 +43,8 @@ export const loginUser = async (formData: BaseForm): Promise<LoginResponse> => {
       user: data.result && data.result[0] ? data.result[0] : null
     }));
 
+    console.log(data)
+
     if (!response.ok) {
       return standardizedResponse;
     }
