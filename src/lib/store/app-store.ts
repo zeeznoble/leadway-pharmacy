@@ -22,7 +22,7 @@ export const authStore = chunk<AuthState>({
 export const resetProviderFilters = (stateId: string) => {
   appChunk.set((state) => ({
     ...state,
-    stateId: stateId || '',
+    stateId,
     enrolleeId: ''
   }));
 };
