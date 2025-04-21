@@ -22,18 +22,14 @@ export const ProvidersColumns = [
 
 export const EnrolleeColumns = [
   { key: "serial", label: "S/N" },
-  { key: "Member_MemberUniqueID", label: "Unique ID" },
-  { key: "Member_PlanID", label: "Plan ID" },
-  { key: "Member_Plan", label: "Plan" },
   { key: "Member_FirstName", label: "First Name" },
   { key: "Member_Surname", label: "Surname" },
   { key: "Member_othernames", label: "Other Names" },
-  { key: "Member_MemberTitle", label: "Title" },
-  { key: "Member_DateOfBirth", label: "Date of Birth" },
+  { key: "Member_Phone_One", label: "Member Phone" },
+  { key: "Member_EmailAddress_One", label: "Member EmailAddress" },
   { key: "Member_Age", label: "Age" },
   { key: "Member_maritalstatusDescr", label: "Marital Status" },
   { key: "Member_Gender", label: "Gender" },
-  { key: "Member_Country", label: "Country" },
   { key: "Member_MemberStatus_Description", label: "Status" },
   { key: "Plan_Category", label: "Plan Category" },
 ];
