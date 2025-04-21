@@ -33,10 +33,7 @@ export default function PharmacyDataTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(20);
   const [error, setError] = useState("");
-  // Add search state
   const [searchQuery, setSearchQuery] = useState("");
-
-  // Add this to track if initial fetch has happened
   const [initialFetchDone, setInitialFetchDone] = useState(false);
 
   const getSelectedStateId = () => state.stateId;
@@ -104,7 +101,6 @@ export default function PharmacyDataTable() {
     }
   }, [initialFetchDone]);
 
-  // Modified to include search filtering
   const updateDisplayData = (
     data: ProviderData,
     page: number,
