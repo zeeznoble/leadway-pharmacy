@@ -39,7 +39,7 @@ export default function Header() {
         <ToggleIcon />
       </button>
 
-      <div className="text-lg font-semibold text-gray-800">
+      <div className="text-xl font-semibold text-gray-800">
         {getPageTitle()}
       </div>
 
