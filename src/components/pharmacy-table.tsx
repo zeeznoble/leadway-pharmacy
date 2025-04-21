@@ -19,10 +19,11 @@ import {
 import { ProviderData, fetchEnrollee } from "@/lib/services/fetch-providers";
 import { appChunk, resetProviderFilters } from "@/lib/store/app-store";
 import { ProvidersColumns } from "@/lib/helpers";
+import { ErrorText } from "./error-text";
 // import { DownloadIcon } from "./icons/icons";
 // import AllEnrollee from "./all-enrollee";
 
-export default function ProviderDataTable() {
+export default function PharmacyDataTable() {
   const state = useChunkValue(appChunk);
 
   const [allData, setAllData] = useState<ProviderData | null>(null);
@@ -95,7 +96,9 @@ export default function ProviderDataTable() {
   };
 
   useEffect(() => {
-    resetProviderFilters();
+    const stateId = getSelectedStateId();
+
+    resetProviderFilters(stateId || "");
     if (!initialFetchDone) {
       fetchAllData();
     }
@@ -182,12 +185,17 @@ export default function ProviderDataTable() {
           onPress={handleSearch}
           isDisabled={loading}
           color="warning"
-          className="text-white font-semibold w-full sm:w-auto"
+          className="text-white font-semibold w-full sm:w-auto mb-4"
         >
-          {loading ? "Loading..." : "View Provider List"}
+          {loading ? "Loading..." : "Search Pharmacy"}
         </Button>
       </div>
-      {error && <p className="text-red-500 mt-2 text-center">{error}</p>}
+      {error && <ErrorText text={error} />}
+      {loading && (
+        <div className="text-center mt-5">
+          <Spinner color="warning" />
+        </div>
+      )}
       {displayData && displayData.status === 200 && (
         <div className="mt-2 bg-white rounded-lg">
           <div className="overflow-x-auto">
@@ -197,7 +205,7 @@ export default function ProviderDataTable() {
               shadow="none"
               topContent={
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-4">
-                  <h3 className="text-lg font-semibold">Enrollee Providers</h3>
+                  <h3 className="text-lg font-semibold">Pharmacies</h3>
                   <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center w-full sm:w-auto">
                     <Input
                       className="w-full sm:w-64"
