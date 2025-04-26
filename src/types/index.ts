@@ -58,8 +58,70 @@ export type User = {
   rightofconnection: string | null;
 }
 
-export interface LoginResponse {
+export type LoginResponse = {
   status: number;
   result: User[] | null;
   ErrorMessage: string;
 }
+export type Diagnosis = {
+  DiagnosisId: string;
+  DiagnosisName: string;
+};
+
+export type Procedure = {
+  ProcedureId: string;
+  ProcedureName: string;
+  ProcedureQuantity: number;
+};
+
+export type Delivery = {
+  DeliveryFrequency: string;
+  DelStartDate: string;
+  NextDeliveryDate: string;
+  DiagnosisLines: Diagnosis[];
+  ProcedureLines: Procedure[];
+  Username: string;
+  AdditionalInformation: string;
+  IsDelivered: boolean;
+  EnrolleeId: string;
+  EnrolleeName: string;
+  EnrolleeAge: number;
+  SchemeName: string;
+  SchemeId: string;
+  FrequencyDuration: string;
+  EndDate: string;
+
+  EntryNo?: number;
+  DeliveryId?: string;
+};
+
+export type DeliveryData = {
+  Deliveries: Delivery[];
+};
+
+export type DeliveryApiResponse = {
+  entryno: number;
+  deliveryid: string;
+  deliveryfrequency: string;
+  delStartdate: string;
+  nextdeliverydate: string;
+  diagnosisname: string;
+  diagnosis_id: string;
+  procedurename: string;
+  procdeureid: string;
+  procedurequantity: number;
+  username: string;
+  inputteddate: string;
+  modifieddate: string;
+  additionalinformation: string;
+  isdelivered: boolean;
+  enrolleeid: string;
+  enrolleename: string;
+  enrollee_age: number;
+  schemename: string;
+  schemeid: string;
+  frequencyduration: string;
+  enddate: string;
+  pharmacyname: string | null;
+  pharmacyid: number;
+};
