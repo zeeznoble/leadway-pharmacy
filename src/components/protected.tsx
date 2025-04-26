@@ -1,15 +1,11 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 
 import Spinner from "@/components/shared/spinner";
 import DefaultLayout from "@/layout/default";
 
 import { useAuth } from "@/lib/hooks/use-auth";
 
-export default function ProtectedRoute({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function ProtectedRoute() {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
@@ -20,5 +16,9 @@ export default function ProtectedRoute({
     return <Navigate to="/auth/login" replace />;
   }
 
-  return <DefaultLayout>{children}</DefaultLayout>;
+  return (
+    <DefaultLayout>
+      <Outlet />
+    </DefaultLayout>
+  );
 }
