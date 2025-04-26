@@ -18,8 +18,8 @@ import {
 
 import { ProviderData, fetchEnrollee } from "@/lib/services/fetch-providers";
 import { appChunk, resetProviderFilters } from "@/lib/store/app-store";
-import { ProvidersColumns } from "@/lib/helpers";
 import { ErrorText } from "./error-text";
+import { PROVIDERS_COLUMNS } from "@/lib/constants";
 // import { DownloadIcon } from "./icons/icons";
 // import AllEnrollee from "./all-enrollee";
 
@@ -257,10 +257,10 @@ export default function PharmacyDataTable() {
                 )
               }
             >
-              <TableHeader>
-                {ProvidersColumns.map((column) => (
+              <TableHeader columns={PROVIDERS_COLUMNS}>
+                {(column) => (
                   <TableColumn key={column.key}>{column.label}</TableColumn>
-                ))}
+                )}
               </TableHeader>
               <TableBody
                 items={tableItems}
