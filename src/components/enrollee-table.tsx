@@ -165,53 +165,55 @@ export default function EnrolleeDataTable() {
         </div>
       )}
       {displayData && displayData.status === 200 && (
-        <Link to="/deliveries">
-          <div className="mt-2 bg-white rounded-lg">
-            <div className="overflow-x-auto">
-              <Table
-                aria-label="Enrollee Data Table"
-                isStriped
-                shadow="none"
-                topContent={
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-4">
-                    <h3 className="text-lg font-semibold">Enrollees</h3>
-                    <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center w-full sm:w-auto">
-                      <Input
-                        className="w-full sm:w-64"
-                        size="lg"
-                        placeholder="Search by first name or surname..."
-                        value={searchQuery}
-                        onChange={handleSearchChange}
-                        radius="sm"
-                        aria-label="Search enrollees"
-                      />
-                    </div>
+        <div className="mt-2 bg-white rounded-lg">
+          <div className="overflow-x-auto">
+            <Table
+              aria-label="Enrollee Data Table"
+              isStriped
+              shadow="none"
+              topContent={
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-4">
+                  <h3 className="text-lg font-semibold">Enrollees</h3>
+                  <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center w-full sm:w-auto">
+                    <Input
+                      className="w-full sm:w-64"
+                      size="lg"
+                      placeholder="Search by first name or surname..."
+                      value={searchQuery}
+                      onChange={handleSearchChange}
+                      radius="sm"
+                      aria-label="Search enrollees"
+                    />
                   </div>
-                }
+                </div>
+              }
+            >
+              <TableHeader columns={ENROLLEE_COLUMNS}>
+                {(column) => (
+                  <TableColumn key={column.key}>{column.label}</TableColumn>
+                )}
+              </TableHeader>
+              <TableBody
+                items={tableItems}
+                loadingContent={<Spinner color="warning" />}
+                loadingState={isStillLoading ? "loading" : "idle"}
+                emptyContent={"No Enrollee Results Found"}
               >
-                <TableHeader columns={ENROLLEE_COLUMNS}>
-                  {(column) => (
-                    <TableColumn key={column.key}>{column.label}</TableColumn>
-                  )}
-                </TableHeader>
-                <TableBody
-                  items={tableItems}
-                  loadingContent={<Spinner color="warning" />}
-                  loadingState={isStillLoading ? "loading" : "idle"}
-                  emptyContent={"No Enrollee Results Found"}
-                >
-                  {(item) => (
-                    <TableRow key={`${item.Member_MemberUniqueID}`}>
-                      {(columnKey) => (
-                        <TableCell>{getKeyValue(item, columnKey)}</TableCell>
-                      )}
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                {(item) => (
+                  <TableRow key={`${item.Member_MemberUniqueID}`}>
+                    {(columnKey) => (
+                      <TableCell>
+                        <Link to="/deliveries">
+                          {getKeyValue(item, columnKey)}
+                        </Link>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
           </div>
-        </Link>
+        </div>
       )}
     </>
   );
