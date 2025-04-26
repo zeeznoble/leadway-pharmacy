@@ -1,5 +1,7 @@
 import { BaseForm, LoginResponse } from "@/types";
 import { authStore } from "../store/app-store";
+import { API_URL } from "../helpers";
+import toast from "react-hot-toast";
 
 /**
  * Authenticates a user with email and password.
@@ -13,7 +15,7 @@ export const loginUser = async (formData: BaseForm): Promise<LoginResponse> => {
       isLoading: true
     }));
 
-    const apiUrl = `${import.meta.env.VITE_PROGNOSIS_API_URL}/Account/ExternalPortalLogin`;
+    const apiUrl = `${API_URL}/Account/ExternalPortalLogin`;
 
     const apiPayload = {
       email: formData.email,
@@ -49,12 +51,17 @@ export const loginUser = async (formData: BaseForm): Promise<LoginResponse> => {
       return standardizedResponse;
     }
 
+    toast.success('Login successfully')
+
     return standardizedResponse;
   } catch (error) {
+    const err = error as Error
     authStore.set((state) => ({
       ...state,
       isLoading: false
     }));
+
+    toast.error(err.message)
 
     return {
       status: 0,
