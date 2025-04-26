@@ -7,6 +7,7 @@ import LoginPage from "@/pages/login";
 import EnrolleesPage from "@/pages/enrollees";
 import PharmacyPage from "@/pages/pharmacy";
 import DeliveriesPage from "./pages/deliveries";
+import DeliveryDetailsPage from "./pages/delivery-details";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="/enrollees" element={<EnrolleesPage />} />
         <Route path="/pharmacy" element={<PharmacyPage />} />
         <Route path="/deliveries" element={<DeliveriesPage />} />
+        <Route path="/deliveries/:id" element={<DeliveryDetailsPage />} />
       </Route>
     </Routes>
   );
