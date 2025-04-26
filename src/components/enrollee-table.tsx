@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
@@ -13,14 +14,16 @@ import {
   TableRow,
 } from "@heroui/table";
 
+import { useChunkValue } from "stunk/react";
+
 import { ErrorText } from "./error-text";
+
 import {
   EnrolleeResponse,
   fetchEnrolleeById,
 } from "@/lib/services/fetch-enrolee";
-import { EnrolleeColumns } from "@/lib/helpers";
-import { useChunkValue } from "stunk/react";
 import { appChunk } from "@/lib/store/app-store";
+import { ENROLLEE_COLUMNS } from "@/lib/constants";
 
 export default function EnrolleeDataTable() {
   const { enrolleeId } = useChunkValue(appChunk);
@@ -53,6 +56,8 @@ export default function EnrolleeDataTable() {
         setLoading(false);
         return;
       }
+
+      console.log(data);
 
       setAllData(data);
       updateDisplayData(data, 1, searchQuery);
@@ -160,51 +165,53 @@ export default function EnrolleeDataTable() {
         </div>
       )}
       {displayData && displayData.status === 200 && (
-        <div className="mt-2 bg-white rounded-lg">
-          <div className="overflow-x-auto">
-            <Table
-              aria-label="Enrollee Data Table"
-              isStriped
-              shadow="none"
-              topContent={
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-4">
-                  <h3 className="text-lg font-semibold">Enrollees</h3>
-                  <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center w-full sm:w-auto">
-                    <Input
-                      className="w-full sm:w-64"
-                      size="lg"
-                      placeholder="Search by first name or surname..."
-                      value={searchQuery}
-                      onChange={handleSearchChange}
-                      radius="sm"
-                      aria-label="Search enrollees"
-                    />
+        <Link to="/deliveries">
+          <div className="mt-2 bg-white rounded-lg">
+            <div className="overflow-x-auto">
+              <Table
+                aria-label="Enrollee Data Table"
+                isStriped
+                shadow="none"
+                topContent={
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-4">
+                    <h3 className="text-lg font-semibold">Enrollees</h3>
+                    <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center w-full sm:w-auto">
+                      <Input
+                        className="w-full sm:w-64"
+                        size="lg"
+                        placeholder="Search by first name or surname..."
+                        value={searchQuery}
+                        onChange={handleSearchChange}
+                        radius="sm"
+                        aria-label="Search enrollees"
+                      />
+                    </div>
                   </div>
-                </div>
-              }
-            >
-              <TableHeader>
-                {EnrolleeColumns.map((column) => (
-                  <TableColumn key={column.key}>{column.label}</TableColumn>
-                ))}
-              </TableHeader>
-              <TableBody
-                items={tableItems}
-                loadingContent={<Spinner color="warning" />}
-                loadingState={isStillLoading ? "loading" : "idle"}
-                emptyContent={"No Enrollee Results Found"}
+                }
               >
-                {(item) => (
-                  <TableRow key={`${item.Member_MemberUniqueID}`}>
-                    {(columnKey) => (
-                      <TableCell>{getKeyValue(item, columnKey)}</TableCell>
-                    )}
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                <TableHeader columns={ENROLLEE_COLUMNS}>
+                  {(column) => (
+                    <TableColumn key={column.key}>{column.label}</TableColumn>
+                  )}
+                </TableHeader>
+                <TableBody
+                  items={tableItems}
+                  loadingContent={<Spinner color="warning" />}
+                  loadingState={isStillLoading ? "loading" : "idle"}
+                  emptyContent={"No Enrollee Results Found"}
+                >
+                  {(item) => (
+                    <TableRow key={`${item.Member_MemberUniqueID}`}>
+                      {(columnKey) => (
+                        <TableCell>{getKeyValue(item, columnKey)}</TableCell>
+                      )}
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </div>
-        </div>
+        </Link>
       )}
     </>
   );
