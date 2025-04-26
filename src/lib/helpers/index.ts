@@ -11,29 +11,8 @@ import { fetchEnrolleeById } from "../services/fetch-enrolee";
 
 import { appChunk } from "../store/app-store";
 import { BenefitsResponse } from "../services/fetch-benefit";
-
-
-export const ProvidersColumns = [
-  { key: "serial", label: "S/N" },
-  { key: "provider", label: "PROVIDER" },
-  // { key: "email", label: "EMAIL" },
-  { key: "ProviderAddress", label: "ADDRESS" },
-];
-
-export const EnrolleeColumns = [
-  { key: "serial", label: "S/N" },
-  { key: "Member_FirstName", label: "First Name" },
-  { key: "Member_Surname", label: "Surname" },
-  { key: "Member_othernames", label: "Other Names" },
-  { key: "Member_Phone_One", label: "Member Phone" },
-  { key: "Member_EmailAddress_One", label: "Member EmailAddress" },
-  { key: "Member_Age", label: "Age" },
-  { key: "Member_maritalstatusDescr", label: "Marital Status" },
-  { key: "Member_Gender", label: "Gender" },
-  { key: "Member_MemberStatus_Description", label: "Status" },
-  { key: "Plan_Category", label: "Plan Category" },
-];
-
+import { BENEFITS_COLUMNS, PROVIDERS_COLUMNS } from "../constants";
+import { Delivery } from "@/types";
 
 
 export const exportToExcel = (allData: ProviderData | null, setError?: Dispatch<SetStateAction<string>>) => {
@@ -80,7 +59,7 @@ export const exportToPDF = (allData: ProviderData | null, setError?: Dispatch<Se
       // item.ProviderAddress,
     ]);
 
-    const tableColumns = ProvidersColumns.map((col) => col.label);
+    const tableColumns = PROVIDERS_COLUMNS.map((col) => col.label);
 
     autoTable(doc, {
       head: [tableColumns],
@@ -148,13 +127,6 @@ export const fetchInfoAndRoute = async ({ enrolleeId, path, navigate, setFetchEr
 }
 
 
-export const BenefitsColumns = [
-  { key: "Benefit", label: "BENEFIT" },
-  { key: "Limit", label: "LIMIT" },
-  { key: "Used", label: "USED" },
-  { key: "Balance", label: "BALANCE" },
-];
-
 export const exportToExcelBen = (allData: BenefitsResponse | null, setError?: Dispatch<SetStateAction<string>>) => {
   if (!allData?.result?.length) {
     if (setError) setError("No data to export");
@@ -194,7 +166,7 @@ export const exportToPDFBen = (allData: BenefitsResponse | null, setError?: Disp
       item.Balance,
     ]);
 
-    const tableColumns = BenefitsColumns.map((col) => col.label);
+    const tableColumns = BENEFITS_COLUMNS.map((col) => col.label);
 
     autoTable(doc, {
       head: [tableColumns],
@@ -222,6 +194,64 @@ export const exportToPDFBen = (allData: BenefitsResponse | null, setError?: Disp
 
 
 export const iconClasses = 'text-xl pointer-events-none flex-shrink-0';
+
+export const API_URL = import.meta.env.VITE_PROGNOSIS_API_URL
+
+export const formatDate = (date: string | Date | undefined | null): string => {
+  if (!date) return "N/A";
+
+  try {
+    const dateObj = typeof date === "string" ? new Date(date) : date;
+
+    if (isNaN(dateObj.getTime())) {
+      console.warn("Invalid date:", date);
+      return "Invalid Date";
+    }
+
+    return dateObj.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  } catch (error) {
+    console.error("Error formatting date:", error);
+    return "Error";
+  }
+};
+
+export const transformApiResponse = (apiResponse: any): Delivery => {
+  return {
+    DeliveryFrequency: apiResponse.deliveryfrequency,
+    DelStartDate: apiResponse.delStartdate,
+    NextDeliveryDate: apiResponse.nextdeliverydate,
+    DiagnosisLines: [
+      {
+        DiagnosisName: apiResponse.diagnosisname,
+        DiagnosisId: apiResponse.diagnosis_id,
+      },
+    ],
+    ProcedureLines: [
+      {
+        ProcedureName: apiResponse.procedurename,
+        ProcedureId: apiResponse.procdeureid,
+        ProcedureQuantity: apiResponse.procedurequantity,
+      },
+    ],
+    Username: apiResponse.username,
+    AdditionalInformation: apiResponse.additionalinformation,
+    IsDelivered: apiResponse.isdelivered,
+    EnrolleeId: apiResponse.enrolleeid,
+    EnrolleeName: apiResponse.enrolleename,
+    EnrolleeAge: apiResponse.enrollee_age,
+    SchemeName: apiResponse.schemename,
+    SchemeId: apiResponse.schemeid,
+    FrequencyDuration: apiResponse.frequencyduration,
+    EndDate: apiResponse.enddate,
+    // Additional fields from API response
+    EntryNo: apiResponse.entryno,
+    DeliveryId: apiResponse.deliveryid,
+  };
+};
 
 
 // const columns = [
