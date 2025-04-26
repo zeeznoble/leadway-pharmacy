@@ -19,10 +19,7 @@ export const DELIVERY_COLUMNS = [
     key: "status",
     label: "STATUS",
   },
-  {
-    key: "actions",
-    label: "ACTIONS",
-  },
+
 ];
 
 export const BENEFITS_COLUMNS = [
