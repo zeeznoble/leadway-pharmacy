@@ -1,3 +1,5 @@
+import { API_URL } from "../helpers";
+
 export type ProviderData = {
   pageSize: number;
   currentPage: number;
@@ -29,7 +31,7 @@ export const fetchEnrollee = async ({
   pageSize?: number;
 }) => {
   try {
-    const apiUrl = `${import.meta.env.VITE_PROGNOSIS_API_URL}/EnrolleeProfile/GetEnrolleeProvidersListsAll`;
+    const apiUrl = `${API_URL}/EnrolleeProfile/GetEnrolleeProvidersListsAll`;
 
     // Ensure we're using exactly the same parameters as your working example
     const params = new URLSearchParams({
