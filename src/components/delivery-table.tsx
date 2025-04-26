@@ -8,7 +8,6 @@ import {
   getKeyValue,
 } from "@heroui/table";
 import { Badge } from "@heroui/badge";
-import { Button } from "@heroui/button";
 
 import { Key } from "@react-types/shared";
 
@@ -80,19 +79,6 @@ export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
           <Badge color={item.status ? "success" : "warning"}>
             {item.status ? "Delivered" : "Pending"}
           </Badge>
-        );
-      case "actions":
-        return (
-          <div className="flex gap-2">
-            <Button size="sm" variant="ghost">
-              View
-            </Button>
-            {!item.actions.isDelivered && (
-              <Button size="sm" color="primary">
-                Mark Delivered
-              </Button>
-            )}
-          </div>
         );
       default:
         return getKeyValue(item, columnKey);
