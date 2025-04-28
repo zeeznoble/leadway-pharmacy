@@ -11,6 +11,9 @@ const initialFormState = {
   schemeId: "",
   schemeName: "",
 
+  pharmacyName: "",
+  pharmacyId: "",
+
   deliveryFrequency: "",
   delStartDate: "",
   nextDeliveryDate: "",
@@ -23,7 +26,7 @@ const initialFormState = {
   additionalInformation: "",
 
   currentStep: 1,
-  totalSteps: 4
+  totalSteps: 5
 };
 
 export const deliveryFormState = chunk(initialFormState);
@@ -139,7 +142,10 @@ export const deliveryActions = {
         ProcedureLines: formData.procedureLines,
         AdditionalInformation: formData.additionalInformation,
         IsDelivered: false,
-        Username: user ? user.UserName : "Unknown"
+        Username: user ? user.UserName : "Unknown",
+        // Add the pharmacy information
+        Pharmacyid: formData.pharmacyId,
+        PharmacyName: formData.pharmacyName
       };
 
       const formattedData = {
