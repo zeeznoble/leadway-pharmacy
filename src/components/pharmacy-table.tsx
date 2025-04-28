@@ -16,7 +16,7 @@ import {
   TableRow,
 } from "@heroui/table";
 
-import { ProviderData, fetchEnrollee } from "@/lib/services/fetch-providers";
+import { ProviderData, fetchProvider } from "@/lib/services/fetch-providers";
 import { appChunk, resetProviderFilters } from "@/lib/store/app-store";
 import { ErrorText } from "./error-text";
 import { PROVIDERS_COLUMNS } from "@/lib/constants";
@@ -73,7 +73,7 @@ export default function PharmacyDataTable() {
         return;
       }
 
-      const data = await fetchEnrollee(params);
+      const data = await fetchProvider(params);
 
       if (!data || !data.result) {
         setError("No results found");
