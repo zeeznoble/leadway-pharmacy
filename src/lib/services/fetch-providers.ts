@@ -8,6 +8,7 @@ export type ProviderData = {
   status: number;
   result: {
     provider: string;
+    provider_id: string;
     ProviderAddress: string;
     phone1: string;
     region: string;
@@ -19,8 +20,7 @@ export type ProviderData = {
   }[];
 };
 
-
-export const fetchEnrollee = async ({
+export const fetchProvider = async ({
   enrolleeId = "",
   stateId = "0",
   pageSize = 2000
@@ -37,7 +37,7 @@ export const fetchEnrollee = async ({
     const params = new URLSearchParams({
       schemeid: "0",
       MinimumID: "0",
-      NoOfRecords: "2000", // Keep this at 2000 as in your example
+      NoOfRecords: "2000",
       pageSize: pageSize.toString(),
       ProviderName: "",
       TypeID: "46",
@@ -47,7 +47,7 @@ export const fetchEnrollee = async ({
       provider_id: "0"
     });
 
-    console.log(`Fetching from: ${apiUrl}?${params.toString()}`); // Log the exact URL being called
+    console.log(`Fetching from: ${apiUrl}?${params.toString()}`);
 
     const response = await fetch(`${apiUrl}?${params.toString()}`);
 
