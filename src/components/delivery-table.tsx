@@ -33,6 +33,10 @@ interface RowItem {
   nextDelivery: string;
   frequency: string;
   status: boolean;
+  diagnosisname: string;
+  diagnosis_id: string;
+  procedurename: string;
+  procedureid: string;
   actions: {
     isDelivered: boolean;
   };
@@ -63,6 +67,12 @@ export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
       nextDelivery: formatDate(transformedDelivery.NextDeliveryDate),
       frequency: transformedDelivery.DeliveryFrequency || "N/A",
       status: transformedDelivery.IsDelivered ?? false,
+      diagnosisname:
+        transformedDelivery.DiagnosisLines[0].DiagnosisName || "N/A", // New
+      diagnosis_id: transformedDelivery.DiagnosisLines[0].DiagnosisId || "N/A", // New
+      procedurename:
+        transformedDelivery.ProcedureLines[0].ProcedureName || "N/A", // New
+      procedureid: transformedDelivery.ProcedureLines[0].ProcedureId || "N/A", // New
       actions: {
         isDelivered: transformedDelivery.IsDelivered ?? false,
       },
@@ -108,6 +118,14 @@ export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
             )}
           </Button>
         );
+      case "diagnosisname":
+        return <span>{item.diagnosisname}</span>;
+      case "diagnosis_id":
+        return <span className="text-gray-500">{item.diagnosis_id}</span>;
+      case "procedurename":
+        return <span>{item.procedurename}</span>;
+      case "procedureid":
+        return <span className="text-gray-500">{item.procedureid}</span>;
       default:
         return getKeyValue(item, columnKey);
     }
