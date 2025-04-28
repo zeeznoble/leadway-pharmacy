@@ -63,6 +63,12 @@ export type LoginResponse = {
   result: User[] | null;
   ErrorMessage: string;
 }
+
+export type Provider = {
+  Pharmacyid: string;
+  PharmacyName: string;
+};
+
 export type Diagnosis = {
   DiagnosisId: string;
   DiagnosisName: string;
@@ -90,6 +96,8 @@ export type Delivery = {
   SchemeId: string;
   FrequencyDuration: string;
   EndDate: string;
+  Pharmacyid: string;
+  PharmacyName: string;
 
   EntryNo?: number;
   DeliveryId?: string;
