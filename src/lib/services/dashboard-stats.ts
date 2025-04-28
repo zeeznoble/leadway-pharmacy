@@ -1,4 +1,7 @@
 import { asyncChunk } from "stunk";
+import { fetchProvider } from "./fetch-providers";
+import { fetchDeliveries } from "./delivery-service";
+import { authStore } from "../store/app-store";
 
 type DashboardStats = {
   pharmacyCount: number;
@@ -9,34 +12,38 @@ type DashboardStats = {
   error: string | null;
 };
 
-export const dashboardStatsChunk = asyncChunk<DashboardStats>(
-  async () => {
-    try {
-      const response = await fetch("/api/dashboard/stats");
+export const dashboardStatsChunk = asyncChunk<DashboardStats>(async () => {
+  try {
+    const username = authStore.get().user?.UserName || '';
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch dashboard data");
-      }
+    // Use the fetchProvider function with default parameters
+    const pharmacyData = await fetchProvider({});
+    const enrolleeData = await fetchDeliveries(username, '');
 
-      const data = await response.json();
-      return {
-        pharmacyCount: data.pharmacyCount || 0,
-        enrolleeCount: data.enrolleeCount || 0,
-        totalSchedules: data.totalSchedules || 0,
-        pendingCount: data.pendingCount || 0,
-        isLoading: false,
-        error: null
-      };
-    } catch (error) {
-      console.error("Error fetching dashboard stats:", error);
-      return {
-        pharmacyCount: 0,
-        enrolleeCount: 0,
-        totalSchedules: 0,
-        pendingCount: 0,
-        isLoading: false,
-        error: error instanceof Error ? error.message : "Unknown error"
-      };
-    }
-  },
-);
+    // Calculate enrolleeCount safely
+    const enrolleeCount = enrolleeData?.result[0].enrolleeCount || 0;
+    const totalSchedules = enrolleeData?.result[0].scheduledcount || 0;
+    const deliverycount = enrolleeData?.result[0].Deliverycount || 0;
+
+    console.log(enrolleeCount, totalSchedules, deliverycount)
+
+    return {
+      pharmacyCount: pharmacyData.totalRecord || 0,
+      enrolleeCount,
+      totalSchedules,
+      pendingCount: deliverycount,
+      isLoading: false,
+      error: null,
+    };
+  } catch (error) {
+    console.error('Error fetching dashboard stats:', error);
+    return {
+      pharmacyCount: 0,
+      enrolleeCount: 0,
+      totalSchedules: 0,
+      pendingCount: 0,
+      isLoading: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+});
