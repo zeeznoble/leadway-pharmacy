@@ -108,16 +108,16 @@ export default function SideNav() {
       text: "Pharmacy",
     },
     {
-      link: "/stock",
+      link: "/pack",
       icon: (
         <StockIcon
-          strokeWidth={router.pathname.startsWith("/stock") ? "1.5" : "1"}
-          stroke={router.pathname.startsWith("/stock") ? "#ffffff" : "#475467"}
+          strokeWidth={router.pathname.startsWith("/pack") ? "1.5" : "1"}
+          stroke={router.pathname.startsWith("/pack") ? "#ffffff" : "#475467"}
           width={23}
           height={20}
         />
       ),
-      text: "Stock",
+      text: "Pack",
     },
     {
       link: "/reports",
