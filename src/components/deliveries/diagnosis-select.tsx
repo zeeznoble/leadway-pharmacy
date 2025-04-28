@@ -80,7 +80,7 @@ export default function DiagnosisAutocomplete({
 
   return (
     <Autocomplete
-      className="w-64"
+      className="w-full"
       defaultItems={items}
       isLoading={isLoading}
       label="Select Diagnosis"
