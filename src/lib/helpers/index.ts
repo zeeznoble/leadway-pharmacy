@@ -250,6 +250,8 @@ export const transformApiResponse = (apiResponse: any): Delivery => {
     // Additional fields from API response
     EntryNo: apiResponse.entryno,
     DeliveryId: apiResponse.deliveryid,
+    Pharmacyid: apiResponse.pharmacyid,
+    PharmacyName: apiResponse.pharmacyName
   };
 };
 
