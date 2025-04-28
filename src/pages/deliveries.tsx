@@ -13,7 +13,10 @@ import { useChunkValue } from "stunk/react";
 import DeliveryTable from "@/components/delivery-table";
 import EnrolleeSelectionStep from "@/components/deliveries/enrollee-step";
 import DeliveryDetailsStep from "@/components/deliveries/details-setup";
-import DiagnosisProcedureStep from "@/components/deliveries/precedure-setup";
+import DiagnosisProcedureStep from "@/components/deliveries/procedure-setup";
+import ProgressStep from "@/components/deliveries/progress-step";
+import ProviderSetup from "@/components/deliveries/provider-setup";
+import AdditionalInfoStep from "@/components/deliveries/additional-setup";
 
 import {
   deliveryActions,
@@ -21,9 +24,7 @@ import {
   deliveryStore,
 } from "@/lib/store/delivery-store";
 import { fetchDeliveries } from "@/lib/services/delivery-service";
-import AdditionalInfoStep from "@/components/deliveries/additional-setup";
 import { appChunk, authStore } from "@/lib/store/app-store";
-import ProgressStep from "@/components/deliveries/progress-step";
 
 export default function DeliveriesPage() {
   const { deliveries, isLoading, error, showModal, isSubmitting } =
@@ -51,8 +52,10 @@ export default function DeliveriesPage() {
       case 2:
         return <DeliveryDetailsStep />;
       case 3:
-        return <DiagnosisProcedureStep />;
+        return <ProviderSetup />;
       case 4:
+        return <DiagnosisProcedureStep />;
+      case 5:
         return <AdditionalInfoStep />;
       default:
         return null;
@@ -90,7 +93,7 @@ export default function DeliveriesPage() {
         shouldCloseOnInteractOutside={(element) => {
           return !element.className.includes("heroui-select");
         }}
-        size="2xl"
+        size="3xl"
       >
         <ModalContent>
           <ModalHeader className="flex flex-col gap-1">
