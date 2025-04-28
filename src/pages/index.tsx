@@ -1,4 +1,4 @@
-import { useAsyncChunk } from "stunk/react";
+import { useAsyncChunk, useChunkValue } from "stunk/react";
 
 import { StatsCard } from "@/components/stats-card";
 
@@ -9,9 +9,12 @@ import {
   PharmacyIcon,
   ScheduleIcon,
 } from "@/components/icons/main-icons";
+import StaticDeliveryTable from "@/components/static-del-table";
+import { deliveryStore } from "@/lib/store/delivery-store";
 
 export default function IndexPage() {
-  const { data: stats, error, loading } = useAsyncChunk(dashboardStatsChunk);
+  const { data: stats, error } = useAsyncChunk(dashboardStatsChunk);
+  const { deliveries } = useChunkValue(deliveryStore);
 
   return (
     <section className="py-6">
@@ -21,7 +24,7 @@ export default function IndexPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
         <StatsCard
           title="Total Pharmacies"
           value={stats?.pharmacyCount ?? 0}
@@ -37,25 +40,21 @@ export default function IndexPage() {
         />
 
         <StatsCard
-          title="Total Schedules"
+          title="Packed but not delivered"
           value={stats?.totalSchedules ?? 0}
           icon={<ScheduleIcon />}
           color="border-l-purple-500"
         />
 
         <StatsCard
-          title="Pending Approvals"
+          title="Delivered"
           value={stats?.pendingCount ?? 0}
           icon={<PendingIcon />}
           color="border-l-yellow-500"
         />
       </div>
 
-      {loading && (
-        <div className="flex justify-center mt-6">
-          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
-        </div>
-      )}
+      <StaticDeliveryTable deliveries={deliveries} />
     </section>
   );
 }
