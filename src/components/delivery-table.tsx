@@ -8,13 +8,16 @@ import {
   getKeyValue,
 } from "@heroui/table";
 import { Badge } from "@heroui/badge";
-
+import { useState } from "react";
 import { Key } from "@react-types/shared";
 
 import { DELIVERY_COLUMNS } from "@/lib/constants";
 import { formatDate, transformApiResponse } from "@/lib/helpers";
 
 import { Delivery } from "@/types";
+import { deleteDelivery } from "@/lib/services/delivery-service";
+import { DeleteIcon } from "./icons/icons";
+import { Button } from "@heroui/button";
 
 interface DeliveryTableProps {
   deliveries: Delivery[];
@@ -37,6 +40,8 @@ interface RowItem {
 }
 
 export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
+  const [isDeleting, setIsDeleting] = useState<Record<string, boolean>>({});
+
   if (deliveries.length === 0) {
     return (
       <div className="text-center p-8 text-gray-500">
@@ -65,6 +70,11 @@ export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
     };
   });
 
+  const columnsWithActions = [
+    ...DELIVERY_COLUMNS,
+    { key: "delete", label: "Actions" },
+  ];
+
   const renderCell = (item: RowItem, columnKey: Key): React.ReactNode => {
     switch (columnKey) {
       case "enrollee":
@@ -80,6 +90,24 @@ export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
             {item.status ? "Delivered" : "Pending"}
           </Badge>
         );
+      case "delete":
+        return (
+          <Button
+            isIconOnly
+            aria-label="Delete delivery"
+            onPress={() => deleteDelivery(item, setIsDeleting)}
+            isDisabled={isDeleting[item.key]}
+            color="danger"
+            variant="flat"
+            size="sm"
+          >
+            {isDeleting[item.key] ? (
+              <span className="text-sm">...</span>
+            ) : (
+              <DeleteIcon size={14} />
+            )}
+          </Button>
+        );
       default:
         return getKeyValue(item, columnKey);
     }
@@ -87,7 +115,7 @@ export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
 
   return (
     <Table aria-label="Deliveries Table">
-      <TableHeader columns={DELIVERY_COLUMNS}>
+      <TableHeader columns={columnsWithActions}>
         {(column) => <TableColumn key={column.key}>{column.label}</TableColumn>}
       </TableHeader>
       <TableBody items={rows}>
