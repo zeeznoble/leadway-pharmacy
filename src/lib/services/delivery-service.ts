@@ -1,9 +1,11 @@
-import { Delivery, Diagnosis } from "@/types";
-import { API_URL } from "../helpers";
+import { Dispatch, SetStateAction } from "react"
+import toast from "react-hot-toast";
+
 import { deliveryStore } from "../store/delivery-store";
 import { authStore } from "../store/app-store";
-import toast from "react-hot-toast";
-import { Dispatch, SetStateAction } from "react";
+
+import { API_URL } from "../helpers";
+import { Delivery, Diagnosis } from "@/types";
 
 export const createDelivery = async (deliveryData: { Deliveries: Delivery[] }): Promise<any> => {
   try {
@@ -64,41 +66,45 @@ export const createDelivery = async (deliveryData: { Deliveries: Delivery[] }): 
 };
 
 
-export const fetchDeliveries = async (username: string, enrolleeId: string): Promise<void> => {
+export const fetchDeliveries = async (username: string, enrolleeId: string): Promise<any> => {
   try {
     deliveryStore.set((state) => ({
       ...state,
       isLoading: true,
     }));
 
-    const apiUrl = `${API_URL}/PharmacyDelivery/GetTracking?username=${username}&enrolleeId=${enrolleeId}`;
+    // Include username in the API URL if provided, otherwise omit it
+    const apiUrl = `${API_URL}/PharmacyDelivery/GetTracking?username=${username || ''}&enrolleeId=${enrolleeId || ''}`;
+
+    console.log('Fetching deliveries from:', apiUrl);
 
     const response = await fetch(apiUrl);
 
-    console.log(apiUrl)
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
 
     const data = await response.json();
 
-    if (response.ok && data.result) {
+    if (data.result) {
       deliveryStore.set((state) => ({
         ...state,
         deliveries: data.result,
         isLoading: false,
         error: null,
       }));
+      return data; // Return the data for dashboardStatsChunk
     } else {
-      deliveryStore.set((state) => ({
-        ...state,
-        isLoading: false,
-        error: data.ReturnMessage || "Failed to fetch deliveries",
-      }));
+      throw new Error(data.ReturnMessage || 'Failed to fetch deliveries');
     }
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to connect to the server';
     deliveryStore.set((state) => ({
       ...state,
       isLoading: false,
-      error: "Failed to connect to the server",
+      error: errorMessage,
     }));
+    throw error; // Rethrow the error so dashboardStatsChunk can handle it
   }
 };
 
