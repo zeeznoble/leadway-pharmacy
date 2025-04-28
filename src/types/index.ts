@@ -108,28 +108,36 @@ export type DeliveryData = {
 };
 
 export type DeliveryApiResponse = {
-  entryno: number;
-  deliveryid: string;
-  deliveryfrequency: string;
-  delStartdate: string;
-  nextdeliverydate: string;
-  diagnosisname: string;
-  diagnosis_id: string;
-  procedurename: string;
-  procdeureid: string;
-  procedurequantity: number;
-  username: string;
-  inputteddate: string;
-  modifieddate: string;
-  additionalinformation: string;
-  isdelivered: boolean;
-  enrolleeid: string;
-  enrolleename: string;
-  enrollee_age: number;
-  schemename: string;
-  schemeid: string;
-  frequencyduration: string;
-  enddate: string;
-  pharmacyname: string | null;
-  pharmacyid: number;
+  status: number;
+  result: {
+    entryno: number;
+    deliveryid: string;
+    deliveryfrequency: string;
+    delStartdate: string;
+    nextdeliverydate: string;
+    diagnosisname: string;
+    diagnosis_id: string;
+    procedurename: string;
+    procdeureid: string;
+    procedurequantity: number;
+    username: string;
+    inputteddate: string;
+    modifieddate: string;
+    additionalinformation: string;
+    isdelivered: boolean;
+    enrolleeid: string;
+    enrolleename: string;
+    enrollee_age: number;
+    schemename: string;
+    schemeid: string;
+    frequencyduration: string;
+    enddate: string;
+    pharmacyname: string | null;
+    pharmacyid: number;
+    approveddate: null,
+    Packdate: null,
+    enrolleeCount: number;
+    scheduledcount: number,
+    Deliverycount: number
+  }[]
 };
