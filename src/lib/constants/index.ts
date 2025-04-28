@@ -1,25 +1,13 @@
 export const DELIVERY_COLUMNS = [
-  {
-    key: "enrollee",
-    label: "ENROLLEE",
-  },
-  {
-    key: "startDate",
-    label: "START DATE",
-  },
-  {
-    key: "nextDelivery",
-    label: "NEXT DELIVERY",
-  },
-  {
-    key: "frequency",
-    label: "FREQUENCY",
-  },
-  {
-    key: "status",
-    label: "STATUS",
-  },
-
+  { key: "enrollee", label: "Enrollee" },
+  { key: "startDate", label: "Start Date" },
+  { key: "nextDelivery", label: "Next Delivery" },
+  { key: "frequency", label: "Frequency" },
+  { key: "status", label: "Status" },
+  { key: "diagnosisname", label: "Diagnosis" }, // New
+  { key: "diagnosis_id", label: "Diagnosis ID" }, // New
+  { key: "procedurename", label: "Procedure" }, // New
+  { key: "procedureid", label: "Procedure ID" }, // New
 ];
 
 export const BENEFITS_COLUMNS = [
