@@ -13,6 +13,7 @@ export type EnrolleeData = {
   Member_Gender: string,
   Member_MemberStatus: number,
   Member_MemberStatus_Description: string,
+  Member_Address: string;
   Plan_Category: string,
   Member_Phone_One: string,
   Member_EmailAddress_One: string,
