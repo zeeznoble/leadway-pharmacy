@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 import { useChunkValue } from "stunk/react";
 
+import { Input } from "@heroui/input";
+
 import { appChunk, authStore } from "@/lib/store/app-store";
 import { deliveryActions, deliveryFormState } from "@/lib/store/delivery-store";
 
@@ -8,8 +10,6 @@ export default function EnrolleeSelectionStep() {
   const formState = useChunkValue(deliveryFormState);
   const { user } = useChunkValue(authStore);
   const { enrolleeId, enrolleeData } = useChunkValue(appChunk);
-
-  console.log(enrolleeId);
 
   useEffect(() => {
     if (user) {
@@ -24,8 +24,24 @@ export default function EnrolleeSelectionStep() {
         "schemeName",
         enrolleeData?.client_schemename
       );
+      if (!formState.deliveryaddress) {
+        deliveryActions.updateFormField(
+          "deliveryaddress",
+          enrolleeData?.Member_Address
+        );
+      }
+      if (!formState.phonenumber) {
+        deliveryActions.updateFormField(
+          "phonenumber",
+          enrolleeData?.Member_Phone_One
+        );
+      }
     }
   }, [user]);
+
+  const handleInputChange = (field: string, value: string) => {
+    deliveryActions.updateFormField(field, value);
+  };
 
   return (
     <div>
@@ -48,6 +64,28 @@ export default function EnrolleeSelectionStep() {
           <div>
             <p className="text-sm text-gray-500">Scheme</p>
             <p className="font-medium">{formState.schemeName}</p>
+          </div>
+        </div>
+
+        {/* Add the new editable input fields */}
+        <div className="mt-6 grid grid-cols-2 gap-6">
+          <div>
+            <Input
+              label="Delivery Address"
+              value={formState.deliveryaddress || ""}
+              onChange={(e) =>
+                handleInputChange("deliveryaddress", e.target.value)
+              }
+              placeholder="Enter delivery address"
+            />
+          </div>
+          <div>
+            <Input
+              label="Phone Number"
+              value={formState.phonenumber || ""}
+              onChange={(e) => handleInputChange("phonenumber", e.target.value)}
+              placeholder="Enter phone number"
+            />
           </div>
         </div>
 
