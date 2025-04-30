@@ -40,11 +40,9 @@ interface RowItem {
 export default function StaticDeliveryTable({
   deliveries,
 }: DeliveryTableProps) {
-  if (deliveries.length === 0) {
+  if (deliveries && deliveries.length === 0) {
     return (
-      <div className="text-center p-8 text-gray-500">
-        No deliveries found. Create a new delivery to get started.
-      </div>
+      <div className="text-center p-8 text-gray-500">No deliveries found</div>
     );
   }
 
