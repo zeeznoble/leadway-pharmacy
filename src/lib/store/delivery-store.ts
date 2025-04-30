@@ -10,6 +10,8 @@ const initialFormState = {
   enrolleeAge: 0,
   schemeId: "",
   schemeName: "",
+  deliveryaddress: "",
+  phonenumber: "",
 
   pharmacyName: "",
   pharmacyId: "",
@@ -127,7 +129,7 @@ export const deliveryActions = {
       const formData = deliveryFormState.get();
       const { user } = authStore.get();
 
-      const delivery = {
+      const delivery: Delivery = {
         EnrolleeId: formData.enrolleeId,
         EnrolleeName: formData.enrolleeName,
         EnrolleeAge: formData.enrolleeAge,
@@ -143,6 +145,8 @@ export const deliveryActions = {
         AdditionalInformation: formData.additionalInformation,
         IsDelivered: false,
         Username: user ? user.UserName : "Unknown",
+        deliveryaddress: formData.deliveryaddress,
+        phonenumber: formData.phonenumber,
         // Add the pharmacy information
         Pharmacyid: formData.pharmacyId,
         PharmacyName: formData.pharmacyName
