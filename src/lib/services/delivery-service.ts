@@ -137,6 +137,134 @@ export const fetchDiagnoses = async (): Promise<Diagnosis[]> => {
   }
 };
 
+// export const editDelivery = async (deliveryData: any): Promise<any> => {
+//   try {
+//     deliveryStore.set((state) => ({
+//       ...state,
+//       isSubmitting: true,
+//     }));
+
+//     const apiUrl = `${API_URL}/PharmacyDelivery/UpdateDeliveryLine`;
+
+//     const payload = {
+//       Entryno: deliveryData.EntryNo,
+//       DeliveryFrequency: deliveryData.DeliveryFrequency,
+//       DelStartDate: deliveryData.DelStartDate,
+//       NextDeliveryDate: deliveryData.NextDeliveryDate,
+//       DiagnosisName: deliveryData.DiagnosisLines[0]?.DiagnosisName,
+//       DiagnosisId: deliveryData.DiagnosisLines[0]?.DiagnosisId,
+//       ProcedureName: deliveryData.ProcedureLines[0]?.ProcedureName,
+//       ProcedureId: deliveryData.ProcedureLines[0]?.ProcedureId,
+//       ProcedureQuantity: deliveryData.ProcedureLines[0]?.Quantity,
+//       Username: deliveryData.Username,
+//       AdditionalInformation: deliveryData.AdditionalInformation,
+//       IsDelivered: deliveryData.IsDelivered,
+//       FrequencyDuration: deliveryData.FrequencyDuration,
+//       PharmacyName: deliveryData.PharmacyName,
+//       Pharmacyid: deliveryData.PharmacyId,
+//       EndDate: deliveryData.EndDate,
+//       deliveryaddress: deliveryData.deliveryaddress,
+//       phonenumber: deliveryData.phonenumber
+//     };
+
+//     const response = await fetch(apiUrl, {
+//       method: "POST",
+//       headers: {
+//         "Content-Type": "application/json",
+//       },
+//       body: JSON.stringify(payload),
+//     });
+
+//     const data = await response.json();
+
+//     deliveryStore.set((state) => ({
+//       ...state,
+//       isSubmitting: false,
+//     }));
+
+//     if (!response.ok) {
+//       return {
+//         status: response.status,
+//         result: null,
+//         ReturnMessage: data.ReturnMessage || `Failed to update delivery: ${response.status} ${response.statusText}`,
+//       };
+//     }
+
+//     const { user } = authStore.get();
+//     if (user?.UserName) {
+//       fetchDeliveries(user.UserName, deliveryData.EnrolleeId);
+//     }
+
+//     return {
+//       status: response.status,
+//       result: data,
+//       ReturnMessage: data.ReturnMessage || "Delivery updated successfully",
+//     };
+//   } catch (error) {
+//     deliveryStore.set((state) => ({
+//       ...state,
+//       isSubmitting: false,
+//     }));
+
+//     console.error("Update delivery error:", error);
+//     return {
+//       status: 0,
+//       result: null,
+//       ReturnMessage: "Failed to connect to the server",
+//     };
+//   }
+// };
+
+export const editDelivery = async (formData: Delivery): Promise<any> => {
+  try {
+    deliveryStore.set((state) => ({
+      ...state,
+      isSubmitting: true,
+    }));
+
+    const apiUrl = `${API_URL}/PharmacyDelivery/UpdateDeliveryLine`;
+
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(formData),
+    });
+
+    const data = await response.json();
+
+    deliveryStore.set((state) => ({
+      ...state,
+      isSubmitting: false,
+    }));
+
+    if (!response.ok) {
+      toast.error(data.ReturnMessage || "Failed to update delivery");
+      return;
+    }
+
+    toast.success(data.ReturnMessage || "Delivery updated successfully");
+
+    // Refresh the deliveries list
+    const { user } = authStore.get();
+    if (user?.UserName) {
+      fetchDeliveries(user.UserName, formData?.EnrolleeId);
+    }
+
+    return data;
+  } catch (error) {
+    deliveryStore.set((state) => ({
+      ...state,
+      isSubmitting: false,
+    }));
+
+    console.error("Update delivery error:", error);
+    toast.error("Failed to connect to the server");
+    throw error;
+  }
+};
+
 export const deleteDelivery = async (delivery: any, setIsDeleting: Dispatch<SetStateAction<Record<string, boolean>>>) => {
   try {
     // Get the deliveryId directly (this one is correct)
@@ -147,8 +275,6 @@ export const deleteDelivery = async (delivery: any, setIsDeleting: Dispatch<SetS
 
     // Extract diagnosisId from the DiagnosisLines array (first item)
     const diagnosisId = delivery.original?.DiagnosisLines?.[0]?.DiagnosisId;
-
-    console.log("Extracted IDs:", { deliveryId, procedureId, diagnosisId });
 
     if (!deliveryId || !procedureId || !diagnosisId) {
       toast.error("Missing required information for deletion");

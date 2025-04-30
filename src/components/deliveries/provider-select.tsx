@@ -13,6 +13,7 @@ interface ProviderAutocompleteProps {
   isDisabled?: boolean;
   enrolleeId?: string;
   stateId?: string;
+  defaultValue?: { Pharmacyid: string; PharmacyName: string } | null;
 }
 
 export function useProviderList({
@@ -98,6 +99,7 @@ export default function ProviderAutocomplete({
   stateId = "0",
 }: ProviderAutocompleteProps) {
   const [isOpen, setIsOpen] = useState(false);
+
   const { items, hasMore, isLoading, onLoadMore } = useProviderList({
     fetchDelay: 500,
     enrolleeId,

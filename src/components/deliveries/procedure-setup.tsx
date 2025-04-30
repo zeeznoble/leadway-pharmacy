@@ -21,6 +21,8 @@ export default function DiagnosisProcedureStep() {
     null
   );
 
+  console.log(formState);
+
   const handleAddDiagnosis = () => {
     if (selectedDiagnosis) {
       deliveryActions.addDiagnosis(selectedDiagnosis);
@@ -41,156 +43,144 @@ export default function DiagnosisProcedureStep() {
         Diagnosis and Procedures
       </h3>
 
+      {/* Diagnosis Section */}
       <Card className="shadow-sm">
         <CardBody className="p-4">
-          <div className="flex items-center mb-4 gap-2">
-            <h4
-              className="text-base font-medium text-gray-700"
-              style={{ flex: "0 0 25%" }}
-            >
-              Add Diagnosis
-            </h4>
-            <div
-              className="flex sm:items-center sm:flex-row flex-col gap-2"
-              style={{ flex: "0 0 65%" }}
-            >
-              <div style={{ flex: "0 0 85%" }}>
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            Add Diagnosis
+          </h3>
+
+          <div className="space-y-4">
+            <div className="flex items-center flex-wrap gap-3">
+              <div className="flex-1">
                 <DiagnosisAutocomplete
                   onSelect={setSelectedDiagnosis}
                   isDisabled={formState.diagnosisLines.length >= 5}
                 />
               </div>
-              <div style={{ flex: "0 0 15%" }}>
+
+              <div>
                 <Button
-                  size="sm"
                   color="primary"
                   onPress={handleAddDiagnosis}
                   isDisabled={
                     !selectedDiagnosis || formState.diagnosisLines.length >= 5
                   }
-                  className="w-full sm:w-auto"
                 >
                   Add Diagnosis
                 </Button>
               </div>
             </div>
-          </div>
 
-          {formState.diagnosisLines.length === 0 ? (
-            <p className="text-gray-500 text-sm text-center py-4">
-              No diagnoses added yet
-            </p>
-          ) : (
-            <ul className="divide-y divide-gray-200">
-              {formState.diagnosisLines.map((diagnosis) => (
-                <li
-                  key={diagnosis.DiagnosisId}
-                  className="flex justify-between items-center py-3 px-2 hover:bg-gray-50 transition-colors"
-                >
-                  <span className="text-gray-700">
-                    {diagnosis.DiagnosisName}
-                  </span>
-                  <Button
-                    size="sm"
-                    color="danger"
-                    variant="light"
-                    onPress={() =>
-                      deliveryActions.removeDiagnosis(diagnosis.DiagnosisId)
-                    }
+            {formState.diagnosisLines.length === 0 ? (
+              <p className="text-gray-500 text-sm">No diagnoses added yet</p>
+            ) : (
+              <ul className="space-y-2 mt-4">
+                {formState.diagnosisLines.map((diagnosis) => (
+                  <li
+                    key={diagnosis.DiagnosisId}
+                    className="flex justify-between items-center p-3 bg-gray-50 rounded-md"
                   >
-                    Remove
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          )}
+                    <div>
+                      <p className="font-medium text-gray-800">
+                        {diagnosis.DiagnosisName}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        ID: {diagnosis.DiagnosisId}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      color="danger"
+                      variant="light"
+                      onPress={() =>
+                        deliveryActions.removeDiagnosis(diagnosis.DiagnosisId)
+                      }
+                    >
+                      Remove
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </CardBody>
       </Card>
 
       {/* Procedures Section */}
       <Card className="shadow-sm">
         <CardBody className="p-4">
-          <div className="flex items-center mb-4 gap-2">
-            <div
-              className="flex items-center gap-2"
-              style={{ flex: "0 0 25%" }}
-            >
-              <h4 className="text-base font-medium text-gray-700">
-                Add Procedures
-              </h4>
-            </div>
-            <div
-              className="flex sm:items-center sm:flex-row flex-col gap-2"
-              style={{ flex: "0 0 65%" }}
-            >
-              <div style={{ flex: "0 0 85%" }}>
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            Add Procedures
+          </h3>
+
+          <div className="space-y-4">
+            <div className="flex items-center flex-wrap gap-3">
+              <div className="flex-1">
                 <ProcedureAutocomplete
                   onSelect={setSelectedProcedure}
                   isDisabled={formState.procedureLines.length >= 5}
                 />
               </div>
-              <div style={{ flex: "0 0 15%" }}>
+
+              <div>
                 <Button
-                  size="sm"
                   color="primary"
                   onPress={handleAddProcedure}
-                  isDisabled={
-                    !selectedProcedure || formState.procedureLines.length >= 5
-                  }
-                  className="w-full sm:w-auto truncate"
-                  style={{ minWidth: "80px" }}
+                  isDisabled={!selectedProcedure}
                 >
                   Add Procedure
                 </Button>
               </div>
             </div>
-          </div>
 
-          {formState.procedureLines.length === 0 ? (
-            <p className="text-gray-500 text-sm text-center py-4">
-              No procedures added yet
-            </p>
-          ) : (
-            <ul className="divide-y divide-gray-200">
-              {formState.procedureLines.map((procedure) => (
-                <li
-                  key={procedure.ProcedureId}
-                  className="flex justify-between items-center py-3 px-2 hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex-1">
-                    <span className="text-gray-700">
-                      {procedure.ProcedureName}
-                    </span>
-                    <div className="mt-2 w-24">
-                      <Input
-                        type="number"
-                        min="1"
-                        size="sm"
-                        value={procedure.ProcedureQuantity.toString()}
-                        onChange={(e) =>
-                          deliveryActions.updateProcedureQuantity(
-                            procedure.ProcedureId,
-                            parseInt(e.target.value) || 1
-                          )
-                        }
-                        placeholder="Quantity"
-                      />
-                    </div>
-                  </div>
-                  <Button
-                    size="sm"
-                    color="danger"
-                    variant="light"
-                    onPress={() =>
-                      deliveryActions.removeProcedure(procedure.ProcedureId)
-                    }
+            {formState.procedureLines.length === 0 ? (
+              <p className="text-gray-500 text-sm">No procedures added yet</p>
+            ) : (
+              <ul className="space-y-2 mt-4">
+                {formState.procedureLines.map((procedure) => (
+                  <li
+                    key={procedure.ProcedureId}
+                    className="flex justify-between items-center p-3 bg-gray-50 rounded-md"
                   >
-                    Remove
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          )}
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-800">
+                        {procedure.ProcedureName}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        ID: {procedure.ProcedureId}
+                      </p>
+                      <div className="mt-2 w-24">
+                        <Input
+                          type="number"
+                          min="1"
+                          size="sm"
+                          value={procedure.ProcedureQuantity.toString()}
+                          onChange={(e) =>
+                            deliveryActions.updateProcedureQuantity(
+                              procedure.ProcedureId,
+                              parseInt(e.target.value) || 1
+                            )
+                          }
+                          placeholder="Quantity"
+                        />
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      color="danger"
+                      variant="light"
+                      onPress={() =>
+                        deliveryActions.removeProcedure(procedure.ProcedureId)
+                      }
+                    >
+                      Remove
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </CardBody>
       </Card>
     </div>

@@ -1,10 +1,10 @@
 import { chunk } from "stunk";
-import { Delivery, Diagnosis, Procedure } from "@/types";
+import { Delivery, Diagnosis, Procedure, Provider } from "@/types";
 import { appChunk, authStore } from "./app-store";
 import toast from "react-hot-toast";
 import { fetchDeliveries } from "../services/delivery-service";
 
-const initialFormState = {
+export const initialFormState = {
   enrolleeId: "",
   enrolleeName: "",
   enrolleeAge: 0,
@@ -13,8 +13,8 @@ const initialFormState = {
   deliveryaddress: "",
   phonenumber: "",
 
-  pharmacyName: "",
   pharmacyId: "",
+  pharmacyName: "",
 
   deliveryFrequency: "",
   delStartDate: "",
@@ -28,7 +28,9 @@ const initialFormState = {
   additionalInformation: "",
 
   currentStep: 1,
-  totalSteps: 5
+  totalSteps: 5,
+  isEditing: false,
+  entryno: 0
 };
 
 export const deliveryFormState = chunk(initialFormState);
@@ -83,6 +85,7 @@ export const deliveryActions = {
       ...state,
       [field]: value
     }));
+
   },
 
   addDiagnosis: (diagnosis: Diagnosis) => {
@@ -106,6 +109,23 @@ export const deliveryActions = {
     }));
   },
 
+  setProvider: (provider: Provider) => {
+    deliveryFormState.set(state => ({
+      ...state,
+      pharmacyId: provider.Pharmacyid,
+      pharmacyName: provider.PharmacyName
+    }));
+  },
+
+  removeProvider: () => {
+    deliveryFormState.set(state => ({
+      ...state,
+      pharmacyId: "",
+      pharmacyName: ""
+    }));
+  },
+
+
   removeProcedure: (procedureId: string) => {
     deliveryFormState.set(state => ({
       ...state,
@@ -122,10 +142,42 @@ export const deliveryActions = {
     }));
   },
 
+  setFormData: (data: any) => {
+    // Transform the API response to match your form state structure
+    const formData = {
+      enrolleeId: data.EnrolleeId || "",
+      enrolleeName: data.EnrolleeName || "",
+      enrolleeAge: data.EnrolleeAge || 0,
+      schemeId: data.SchemeId || "",
+      schemeName: data.SchemeName || "",
+      deliveryaddress: data.deliveryaddress || "",
+      phonenumber: data.phonenumber || "",
+      pharmacyName: data.PharmacyName || "",
+      pharmacyId: data.PharmacyId || "",
+      deliveryFrequency: data.DeliveryFrequency || "",
+      delStartDate: data.DelStartDate || "",
+      nextDeliveryDate: data.NextDeliveryDate || "",
+      frequencyDuration: data.FrequencyDuration || "",
+      endDate: data.EndDate || "",
+      diagnosisLines: data.DiagnosisLines || [],
+      procedureLines: data.ProcedureLines || [],
+      additionalInformation: data.AdditionalInformation || "",
+      currentStep: 1,
+      totalSteps: 5,
+      isEditing: true,
+      entryno: data.EntryNo
+    };
+
+    deliveryFormState.set(formData);
+  },
+
+  resetForm: () => {
+    deliveryFormState.reset();
+  },
+
   submitForm: async () => {
     try {
       deliveryStore.set(state => ({ ...state, isSubmitting: true }));
-
       const formData = deliveryFormState.get();
       const { user } = authStore.get();
 
@@ -147,36 +199,45 @@ export const deliveryActions = {
         Username: user ? user.UserName : "Unknown",
         deliveryaddress: formData.deliveryaddress,
         phonenumber: formData.phonenumber,
-        // Add the pharmacy information
         Pharmacyid: formData.pharmacyId,
-        PharmacyName: formData.pharmacyName
+        PharmacyName: formData.pharmacyName,
+        // Include EntryNo for edit operations
+        EntryNo: formData.isEditing ? formData.entryno : undefined
       };
 
-      const formattedData = {
-        Deliveries: [delivery]
-      };
+      let response;
+      if (formData.isEditing) {
+        // For edit operations
+        const { editDelivery } = await import("../services/delivery-service");
+        response = await editDelivery(delivery);
+      } else {
+        // For create operations
+        const formattedData = { Deliveries: [delivery] };
+        const { createDelivery } = await import("../services/delivery-service");
+        response = await createDelivery(formattedData);
+      }
 
-      console.log("Submitting delivery:", formattedData);
-
-      const { createDelivery } = await import("../services/delivery-service");
-      const response = await createDelivery(formattedData);
-
+      // Handle response
       if (response.status !== 200 || response.Errors?.length > 0 ||
         (response.ReturnMessage &&
           (response.ReturnMessage.toLowerCase().includes("error") ||
             response.ReturnMessage.toLowerCase().includes("invalid")))) {
-        toast.error(response.ReturnMessage || "Failed to create delivery");
-        return response;
-      } else {
-        toast.success(response.ReturnMessage || "Delivery created successfully!");
-        deliveryActions.closeModal();
-
-        const { user } = authStore.get();
-        const { enrolleeId } = appChunk.get();
-        fetchDeliveries(user?.UserName!, enrolleeId);
-
+        toast.error(response.ReturnMessage ||
+          (formData.isEditing ? "Failed to update delivery" : "Failed to create delivery"));
         return response;
       }
+
+      toast.success(response.ReturnMessage ||
+        (formData.isEditing ? "Delivery updated successfully!" : "Delivery created successfully!"));
+
+      deliveryActions.closeModal();
+      deliveryFormState.reset();
+
+      // Refresh deliveries
+      const { enrolleeId } = appChunk.get();
+      fetchDeliveries(user?.UserName!, enrolleeId);
+
+      return response;
     } catch (error) {
       console.error("Error submitting delivery:", error);
       toast.error("An unexpected error occurred");
@@ -184,5 +245,5 @@ export const deliveryActions = {
     } finally {
       deliveryStore.set(state => ({ ...state, isSubmitting: false }));
     }
-  }
+  },
 };

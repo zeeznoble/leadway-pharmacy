@@ -5,11 +5,7 @@ import { DatePicker } from "@heroui/date-picker";
 import { Input } from "@heroui/input";
 import { Select, SelectItem } from "@heroui/select";
 import { SharedSelection } from "@heroui/system";
-import {
-  DateValue,
-  getLocalTimeZone,
-  parseDate,
-} from "@internationalized/date";
+import { DateValue, parseDate } from "@internationalized/date";
 
 import { deliveryActions, deliveryFormState } from "@/lib/store/delivery-store";
 
@@ -20,7 +16,7 @@ export default function DeliveryDetailsStep() {
   );
 
   const startDateValue = formState.delStartDate
-    ? parseDate(formState.delStartDate)
+    ? parseDate(formState.delStartDate.split("T")[0])
     : undefined;
 
   const frequencyOptions = [
@@ -31,14 +27,12 @@ export default function DeliveryDetailsStep() {
     { key: "Quarterly", label: "Quarterly" },
   ];
 
-  // Update form state when frequency selection changes
   useEffect(() => {
-    const frequency = Array.from(frequencyValue)[0] as string;
+    const frequency = Array.from(frequencyValue)[0];
     if (frequency) {
       deliveryActions.updateFormField("deliveryFrequency", frequency);
-
       if (formState.delStartDate) {
-        handleStartDateChange(parseDate(formState.delStartDate));
+        handleStartDateChange(parseDate(formState.delStartDate.split("T")[0]));
       }
     }
   }, [frequencyValue]);
@@ -46,61 +40,48 @@ export default function DeliveryDetailsStep() {
   const handleStartDateChange = (date: DateValue | null) => {
     if (!date) return;
 
-    const dateString = date
-      .toDate(getLocalTimeZone())
-      .toISOString()
-      .split("T")[0];
-    deliveryActions.updateFormField("delStartDate", dateString);
+    deliveryActions.updateFormField("delStartDate", date.toString());
 
-    const startDate = date.toDate(getLocalTimeZone());
-    let nextDate = new Date(startDate);
-
-    switch (formState.deliveryFrequency) {
-      case "Daily":
-        nextDate.setDate(startDate.getDate() + 1);
-        break;
-      case "Weekly":
-        nextDate.setDate(startDate.getDate() + 7);
-        break;
-      case "Bi-weekly":
-        nextDate.setDate(startDate.getDate() + 14);
-        break;
-      case "Monthly":
-        nextDate.setMonth(startDate.getMonth() + 1);
-        break;
-      case "Quarterly":
-        nextDate.setMonth(startDate.getMonth() + 3);
-        break;
+    const frequency = formState.deliveryFrequency;
+    if (frequency) {
+      const nextDate = calculateNextDate(date, frequency);
+      deliveryActions.updateFormField("nextDeliveryDate", nextDate.toString());
     }
-
-    deliveryActions.updateFormField(
-      "nextDeliveryDate",
-      nextDate.toISOString().split("T")[0]
-    );
 
     if (formState.frequencyDuration) {
-      const months = parseInt(formState.frequencyDuration);
-      const endDate = new Date(startDate);
-      endDate.setMonth(endDate.getMonth() + months);
-      deliveryActions.updateFormField(
-        "endDate",
-        endDate.toISOString().split("T")[0]
-      );
+      const endDate = calculateEndDate(date, formState.frequencyDuration);
+      deliveryActions.updateFormField("endDate", endDate.toString());
     }
+  };
+
+  const calculateNextDate = (date: DateValue, frequency: string): DateValue => {
+    switch (frequency) {
+      case "Daily":
+        return date.add({ days: 1 });
+      case "Weekly":
+        return date.add({ weeks: 1 });
+      case "Bi-weekly":
+        return date.add({ weeks: 2 });
+      case "Monthly":
+        return date.add({ months: 1 });
+      case "Quarterly":
+        return date.add({ months: 3 });
+      default:
+        return date.add({ days: 1 });
+    }
+  };
+
+  const calculateEndDate = (date: DateValue, duration: string): DateValue => {
+    const months = parseInt(duration);
+    return date.add({ months });
   };
 
   const handleFrequencyDurationChange = (value: string) => {
     deliveryActions.updateFormField("frequencyDuration", value);
-
     if (formState.delStartDate) {
-      const startDate = new Date(formState.delStartDate);
-      const months = parseInt(value);
-      const endDate = new Date(startDate);
-      endDate.setMonth(endDate.getMonth() + months);
-      deliveryActions.updateFormField(
-        "endDate",
-        endDate.toISOString().split("T")[0]
-      );
+      const date = parseDate(formState.delStartDate.split("T")[0]);
+      const endDate = calculateEndDate(date, value);
+      deliveryActions.updateFormField("endDate", endDate.toString());
     }
   };
 
@@ -111,68 +92,51 @@ export default function DeliveryDetailsStep() {
   return (
     <div>
       <h3 className="text-lg font-medium mb-4">Delivery Details</h3>
-
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Select
-            label="Delivery Frequency"
-            placeholder="Select frequency"
-            selectedKeys={frequencyValue}
-            onSelectionChange={handleSelectionChange}
-            className="w-full"
-          >
-            {frequencyOptions.map((option) => (
-              <SelectItem key={option.key}>{option.label}</SelectItem>
-            ))}
-          </Select>
-        </div>
+        <Select
+          label="Delivery Frequency"
+          selectedKeys={frequencyValue}
+          onSelectionChange={handleSelectionChange}
+        >
+          {frequencyOptions.map((option) => (
+            <SelectItem key={option.key}>{option.label}</SelectItem>
+          ))}
+        </Select>
 
-        <div>
-          <Input
-            label="Frequency Duration (months)"
-            type="number"
-            placeholder="1"
-            min="1"
-            value={formState.frequencyDuration}
-            onChange={(e) => handleFrequencyDurationChange(e.target.value)}
-            required
-          />
-        </div>
+        <Input
+          label="Frequency Duration (months)"
+          type="number"
+          value={formState.frequencyDuration}
+          onChange={(e) => handleFrequencyDurationChange(e.target.value)}
+          min="1"
+        />
 
-        <div>
-          <DatePicker
-            label="Start Date"
-            value={startDateValue}
-            onChange={(date) => handleStartDateChange(date)}
-            isRequired
-          />
-        </div>
+        <DatePicker
+          label="Start Date"
+          value={startDateValue}
+          onChange={handleStartDateChange}
+          isRequired
+        />
 
-        <div>
-          <DatePicker
-            label="Next Delivery Date"
-            value={
-              formState.nextDeliveryDate
-                ? parseDate(formState.nextDeliveryDate)
-                : undefined
-            }
-            onChange={(date) =>
-              deliveryActions.updateFormField("nextDeliveryDate", date)
-            }
-            isDisabled
-          />
-        </div>
+        <DatePicker
+          label="Next Delivery Date"
+          value={
+            formState.nextDeliveryDate
+              ? parseDate(formState.nextDeliveryDate.split("T")[0])
+              : undefined
+          }
+          isDisabled
+        />
 
-        <div>
-          <DatePicker
-            label="End Date"
-            value={formState.endDate ? parseDate(formState.endDate) : undefined}
-            onChange={(date) =>
-              deliveryActions.updateFormField("endDate", date)
-            }
-            isDisabled
-          />
-        </div>
+        <DatePicker
+          label="End Date"
+          value={
+            formState.endDate
+              ? parseDate(formState.endDate.split("T")[0])
+              : undefined
+          }
+          isDisabled
+        />
       </div>
     </div>
   );

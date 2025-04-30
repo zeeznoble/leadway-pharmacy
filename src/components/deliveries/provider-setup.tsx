@@ -19,86 +19,70 @@ export default function ProviderSetup() {
 
   const handleAddProvider = () => {
     if (selectedProvider) {
-      // Update the form state with the selected provider
-      deliveryActions.updateFormField(
-        "pharmacyId",
-        selectedProvider.Pharmacyid
-      );
-      deliveryActions.updateFormField(
-        "pharmacyName",
-        selectedProvider.PharmacyName
-      );
-
-      // Optionally clear the selectedProvider state if you want to select a new one
-      // setSelectedProvider(null);
+      // Using the new dedicated action instead of separate field updates
+      deliveryActions.setProvider(selectedProvider);
+      setSelectedProvider(null);
     }
   };
 
-  return (
-    <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-gray-800">
-        Provider Selection
-      </h3>
+  const handleRemoveProvider = () => {
+    // Using the new dedicated action
+    deliveryActions.removeProvider();
+    setSelectedProvider(null);
+  };
 
-      <Card className="shadow-sm">
-        <CardBody className="p-4">
-          <div className="flex items-center mb-4 gap-2">
-            <h4
-              className="text-base font-medium text-gray-700"
-              style={{ flex: "0 0 25%" }}
-            >
-              Add Provider
-            </h4>
-            <div
-              className="flex sm:items-center sm:flex-row flex-col gap-2"
-              style={{ flex: "0 0 65%" }}
-            >
-              <div style={{ flex: "0 0 85%" }}>
-                <ProviderAutocomplete
-                  onSelect={setSelectedProvider}
-                  enrolleeId={formState.enrolleeId}
-                  isDisabled={!!formState.pharmacyId}
-                />
-              </div>
-              <div style={{ flex: "0 0 15%" }}>
-                <Button
-                  size="sm"
-                  color="primary"
-                  onPress={handleAddProvider}
-                  isDisabled={!selectedProvider || !!formState.pharmacyId}
-                  className="w-full sm:w-auto"
-                >
-                  Add Pharmacy
-                </Button>
-              </div>
+  return (
+    <Card className="shadow-sm">
+      <CardBody className="p-4">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">
+          Provider Selection
+        </h3>
+
+        <div className="space-y-4">
+          <div className="flex items-center flex-wrap gap-3">
+            <div className="flex-1">
+              <ProviderAutocomplete
+                onSelect={setSelectedProvider}
+                enrolleeId={formState.enrolleeId}
+                isDisabled={!!formState.pharmacyId}
+              />
+            </div>
+
+            <div>
+              <Button
+                color="primary"
+                onPress={handleAddProvider}
+                isDisabled={!selectedProvider}
+              >
+                Add Pharmacy
+              </Button>
             </div>
           </div>
 
-          {formState.pharmacyId && formState.pharmacyName ? (
-            <ul className="divide-y divide-gray-200">
-              <li className="flex justify-between items-center py-3 px-2 hover:bg-gray-50 transition-colors">
-                <span className="text-gray-700">{formState.pharmacyName}</span>
-                <Button
-                  size="sm"
-                  color="danger"
-                  variant="light"
-                  onPress={() => {
-                    deliveryActions.updateFormField("pharmacyId", "");
-                    deliveryActions.updateFormField("pharmacyName", "");
-                    setSelectedProvider(null);
-                  }}
-                >
-                  Remove
-                </Button>
-              </li>
-            </ul>
+          {formState.pharmacyId ? (
+            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+              <div>
+                <p className="font-medium text-gray-800">
+                  {formState.pharmacyName}
+                </p>
+                <p className="text-sm text-gray-500">
+                  ID: {formState.pharmacyId}
+                </p>
+              </div>
+              <Button
+                size="sm"
+                color="danger"
+                variant="light"
+                onPress={handleRemoveProvider}
+              >
+                Remove
+              </Button>
+            </div>
           ) : (
-            <p className="text-gray-500 text-sm text-center py-4">
-              No provider selected
-            </p>
+            <p className="text-gray-500 text-sm">No provider selected</p>
           )}
-        </CardBody>
-      </Card>
-    </div>
+        </div>
+      </CardBody>
+    </Card>
   );
 }

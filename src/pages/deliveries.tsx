@@ -42,9 +42,9 @@ export default function DeliveriesPage() {
       deliveryActions.openModal();
     } else {
       deliveryActions.closeModal();
+      deliveryFormState.reset();
     }
   };
-
   const renderFormStep = () => {
     switch (formState.currentStep) {
       case 1:
@@ -84,7 +84,6 @@ export default function DeliveriesPage() {
         <DeliveryTable deliveries={deliveries} />
       )}
 
-      {/* Multi-step Modal */}
       <Modal
         backdrop="blur"
         isOpen={showModal}
@@ -97,8 +96,8 @@ export default function DeliveriesPage() {
       >
         <ModalContent>
           <ModalHeader className="flex flex-col gap-1">
-            Create Delivery - Step {formState.currentStep} of{" "}
-            {formState.totalSteps}
+            {formState.isEditing ? "Edit Delivery" : "Create Delivery"} - Step{" "}
+            {formState.currentStep} of {formState.totalSteps}
           </ModalHeader>
           <ModalBody>
             <ProgressStep />
