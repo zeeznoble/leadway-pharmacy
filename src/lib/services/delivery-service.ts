@@ -26,6 +26,7 @@ export const createDelivery = async (deliveryData: { Deliveries: Delivery[] }): 
 
     const data = await response.json();
 
+
     deliveryStore.set((state) => ({
       ...state,
       isSubmitting: false,
@@ -73,10 +74,9 @@ export const fetchDeliveries = async (username: string, enrolleeId: string): Pro
       isLoading: true,
     }));
 
-    // Include username in the API URL if provided, otherwise omit it
-    const apiUrl = `${API_URL}/PharmacyDelivery/GetTracking?username=${username || ''}&enrolleeId=${enrolleeId || ''}`;
+    const apiUrl = `${API_URL}/PharmacyDelivery/GetTracking?username=${encodeURIComponent(username || "")}&enrolleeId=${encodeURIComponent(enrolleeId || "")}`;
 
-    console.log('Fetching deliveries from:', apiUrl);
+    console.log("Fetching deliveries from:", apiUrl);
 
     const response = await fetch(apiUrl);
 
@@ -86,6 +86,8 @@ export const fetchDeliveries = async (username: string, enrolleeId: string): Pro
 
     const data = await response.json();
 
+    console.log("Deliveries API response:", data);
+
     if (data.result) {
       deliveryStore.set((state) => ({
         ...state,
@@ -93,18 +95,18 @@ export const fetchDeliveries = async (username: string, enrolleeId: string): Pro
         isLoading: false,
         error: null,
       }));
-      return data; // Return the data for dashboardStatsChunk
+      return data;
     } else {
-      throw new Error(data.ReturnMessage || 'Failed to fetch deliveries');
+      throw new Error(data.ReturnMessage || "Failed to fetch deliveries");
     }
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to connect to the server';
+    const errorMessage = error instanceof Error ? error.message : "Failed to connect to the server";
     deliveryStore.set((state) => ({
       ...state,
       isLoading: false,
       error: errorMessage,
     }));
-    throw error; // Rethrow the error so dashboardStatsChunk can handle it
+    throw error;
   }
 };
 
