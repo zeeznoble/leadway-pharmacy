@@ -98,6 +98,8 @@ export type Delivery = {
   EndDate: string;
   Pharmacyid: string;
   PharmacyName: string;
+  deliveryaddress: string,
+  phonenumber: string
 
   EntryNo?: number;
   DeliveryId?: string;
