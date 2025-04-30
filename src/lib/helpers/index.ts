@@ -9,7 +9,7 @@ import autoTable from "jspdf-autotable";
 import { ProviderData } from "../services/fetch-providers";
 import { fetchEnrolleeById } from "../services/fetch-enrolee";
 
-import { appChunk } from "../store/app-store";
+import { appChunk, authStore } from "../store/app-store";
 import { BenefitsResponse } from "../services/fetch-benefit";
 import { BENEFITS_COLUMNS, PROVIDERS_COLUMNS } from "../constants";
 import { Delivery } from "@/types";
@@ -251,8 +251,26 @@ export const transformApiResponse = (apiResponse: any): Delivery => {
     EntryNo: apiResponse.entryno,
     DeliveryId: apiResponse.deliveryid,
     Pharmacyid: apiResponse.pharmacyid,
-    PharmacyName: apiResponse.pharmacyName
+    PharmacyName: apiResponse.pharmacyName,
+    deliveryaddress: apiResponse.deliveryaddress,
+    phonenumber: apiResponse.phonenumber
   };
+};
+
+export const getUsername = async (): Promise<string> => {
+  return new Promise((resolve) => {
+    const unsubscribe = authStore.subscribe((state) => {
+      if (state.user?.UserName) {
+        unsubscribe();
+        resolve(state.user.UserName);
+      }
+    });
+    const currentUsername = authStore.get().user?.UserName;
+    if (currentUsername) {
+      unsubscribe();
+      resolve(currentUsername);
+    }
+  });
 };
 
 
