@@ -65,7 +65,7 @@ export type LoginResponse = {
 }
 
 export type Provider = {
-  Pharmacyid: string;
+  Pharmacyid: number;
   PharmacyName: string;
 };
 
@@ -96,7 +96,7 @@ export type Delivery = {
   SchemeId: string;
   FrequencyDuration: string;
   EndDate: string;
-  Pharmacyid: string;
+  Pharmacyid: number;
   PharmacyName: string;
   deliveryaddress: string,
   phonenumber: string

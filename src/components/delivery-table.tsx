@@ -8,18 +8,20 @@ import {
   getKeyValue,
 } from "@heroui/table";
 import { Badge } from "@heroui/badge";
+import { Button } from "@heroui/button";
 import { useState, useMemo } from "react";
 import { Key } from "@react-types/shared";
 import toast from "react-hot-toast";
 
+import { DeleteIcon, EditIcon } from "./icons/icons";
 import { DELIVERY_COLUMNS } from "@/lib/constants";
+
+import { deliveryActions } from "@/lib/store/delivery-store";
+import { deleteDelivery } from "@/lib/services/delivery-service";
+
 import { formatDate, transformApiResponse } from "@/lib/helpers";
 
 import { Delivery } from "@/types";
-import { deleteDelivery } from "@/lib/services/delivery-service";
-import { DeleteIcon, EditIcon } from "./icons/icons";
-import { Button } from "@heroui/button";
-import { deliveryActions } from "@/lib/store/delivery-store";
 import {
   Modal,
   ModalContent,
@@ -46,6 +48,8 @@ interface RowItem {
   diagnosis_id: string;
   procedurename: string;
   procedureid: string;
+  pharmacyname: string;
+  pharmacyid: number;
   actions: {
     isDelivered: boolean;
   };
@@ -81,6 +85,7 @@ export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
     try {
       setIsEditing((prev) => ({ ...prev, [delivery.key]: true }));
       deliveryActions.openModal();
+      console.log("Editing delivery.original:", delivery.original); // Debug log
       deliveryActions.setFormData(delivery.original);
     } catch (error) {
       toast.error("Failed to load delivery for editing");
@@ -115,14 +120,16 @@ export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
           actions: {
             isDelivered: transformedDelivery.IsDelivered ?? false,
           },
-          Pharmacyid: transformedDelivery.Pharmacyid || "",
-          PharmacyName: transformedDelivery.PharmacyName || "",
+          pharmacyid: transformedDelivery.Pharmacyid || 0,
+          pharmacyname: transformedDelivery.PharmacyName || "",
 
           original: transformedDelivery,
         };
       }),
     [deliveries]
   );
+
+  console.log(rows);
 
   const columnsWithActions = useMemo(
     () => [
@@ -190,6 +197,10 @@ export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
         return <span>{item.procedurename}</span>;
       case "procedureid":
         return <span className="text-gray-500">{item.procedureid}</span>;
+      case "pharmacyname":
+        return <span className="text-gray-500">{item.pharmacyname}</span>;
+      case "pharmacyid":
+        return <span className="text-gray-500">{item.pharmacyid}</span>;
       default:
         return getKeyValue(item, columnKey);
     }

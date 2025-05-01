@@ -17,7 +17,9 @@ import "@/styles/globals.css";
 initializeDiagnosesData();
 initializeProvidersData();
 
-if (deliveryFormState.get().pharmacyId !== "") {
+const pharmacyid = deliveryFormState.get().pharmacyId;
+
+if (pharmacyid !== 0) {
   initializeProceduresData();
 }
 

@@ -33,6 +33,8 @@ interface RowItem {
   diagnosis_id: string;
   procedurename: string;
   procedureid: string;
+  pharmacyid: number;
+  pharmacyname: string;
 
   original: any;
 }
@@ -65,6 +67,9 @@ export default function StaticDeliveryTable({
       procedurename:
         transformedDelivery.ProcedureLines[0].ProcedureName || "N/A", // New
       procedureid: transformedDelivery.ProcedureLines[0].ProcedureId || "N/A", // New
+      pharmacyid: transformedDelivery.Pharmacyid || 0,
+      pharmacyname: transformedDelivery.PharmacyName || "",
+
       original: transformedDelivery,
     };
   });
@@ -92,6 +97,10 @@ export default function StaticDeliveryTable({
         return <span>{item.procedurename}</span>;
       case "procedureid":
         return <span className="text-gray-500">{item.procedureid}</span>;
+      case "pharmacyname":
+        return <span className="text-gray-500">{item.pharmacyname}</span>;
+      case "pharmacyid":
+        return <span className="text-gray-500">{item.pharmacyid}</span>;
       default:
         return getKeyValue(item, columnKey);
     }

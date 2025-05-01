@@ -42,7 +42,10 @@ export default function DeliveriesPage() {
       deliveryActions.openModal();
     } else {
       deliveryActions.closeModal();
-      deliveryFormState.reset();
+      // Only reset form if not editing
+      if (!formState.isEditing) {
+        deliveryFormState.reset();
+      }
     }
   };
   const renderFormStep = () => {

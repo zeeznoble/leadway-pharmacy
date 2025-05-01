@@ -2,31 +2,40 @@ import { deliveryFormState, deliveryActions } from "@/lib/store/delivery-store";
 import { Provider } from "@/types";
 import { Button } from "@heroui/button";
 import { Card, CardBody } from "@heroui/card";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useChunkValue } from "stunk/react";
 import ProviderAutocomplete from "./provider-select";
 
 export default function ProviderSetup() {
   const formState = useChunkValue(deliveryFormState);
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(
-    formState.pharmacyId && formState.pharmacyName
-      ? {
-          Pharmacyid: formState.pharmacyId,
-          PharmacyName: formState.pharmacyName,
-        }
-      : null
+    null
   );
+
+  // Synchronize selectedProvider with formState
+  useEffect(() => {
+    console.log("ProviderSetup formState:", formState); // Debug log
+    if (formState.pharmacyId && formState.pharmacyName) {
+      setSelectedProvider({
+        Pharmacyid: formState.pharmacyId,
+        PharmacyName: formState.pharmacyName,
+      });
+    } else {
+      setSelectedProvider(null);
+    }
+  }, [formState.pharmacyId, formState.pharmacyName]);
 
   const handleAddProvider = () => {
     if (selectedProvider) {
-      // Using the new dedicated action instead of separate field updates
+      console.log("Adding provider:", selectedProvider); // Debug log
       deliveryActions.setProvider(selectedProvider);
-      setSelectedProvider(null);
+      // Keep the selected provider in the autocomplete for editing
+      // setSelectedProvider(null);
     }
   };
 
   const handleRemoveProvider = () => {
-    // Using the new dedicated action
+    console.log("Removing provider"); // Debug log
     deliveryActions.removeProvider();
     setSelectedProvider(null);
   };
@@ -42,9 +51,20 @@ export default function ProviderSetup() {
           <div className="flex items-center flex-wrap gap-3">
             <div className="flex-1">
               <ProviderAutocomplete
-                onSelect={setSelectedProvider}
+                onSelect={(provider) => {
+                  console.log("ProviderAutocomplete selected:", provider); // Debug log
+                  setSelectedProvider(provider);
+                }}
                 enrolleeId={formState.enrolleeId}
                 isDisabled={!!formState.pharmacyId}
+                selectedProvider={
+                  formState.pharmacyId && formState.pharmacyName
+                    ? {
+                        Pharmacyid: formState.pharmacyId,
+                        PharmacyName: formState.pharmacyName,
+                      }
+                    : null
+                }
               />
             </div>
 
@@ -52,7 +72,7 @@ export default function ProviderSetup() {
               <Button
                 color="primary"
                 onPress={handleAddProvider}
-                isDisabled={!selectedProvider}
+                isDisabled={!selectedProvider || !!formState.pharmacyId}
               >
                 Add Pharmacy
               </Button>

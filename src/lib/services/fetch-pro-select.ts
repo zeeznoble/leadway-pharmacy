@@ -3,7 +3,7 @@ import { API_URL } from "@/lib/helpers";
 import { Provider } from "@/types";
 
 interface ProviderApiItem {
-  provider_id: string;
+  provider_id: number;
   provider: string;
 }
 

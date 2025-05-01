@@ -27,6 +27,8 @@ export default function DeliveryDetailsStep() {
     { key: "Quarterly", label: "Quarterly" },
   ];
 
+  console.log(formState);
+
   useEffect(() => {
     const frequency = Array.from(frequencyValue)[0];
     if (frequency) {

@@ -1,52 +1,44 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Autocomplete, AutocompleteItem } from "@heroui/autocomplete";
 import { useInfiniteScroll } from "@heroui/use-infinite-scroll";
 
 import { Provider } from "@/types";
-import {
-  fetchSelectProviders,
-  clearProvidersCache,
-} from "@/lib/services/fetch-pro-select";
+import { fetchSelectProviders } from "@/lib/services/fetch-pro-select";
 
 interface ProviderAutocompleteProps {
   onSelect: (provider: Provider | null) => void;
+  enrolleeId: string;
   isDisabled?: boolean;
-  enrolleeId?: string;
-  stateId?: string;
-  defaultValue?: { Pharmacyid: string; PharmacyName: string } | null;
+  selectedProvider?: Provider | null;
 }
 
 export function useProviderList({
+  enrolleeId,
   fetchDelay = 0,
-  enrolleeId = "",
-  stateId = "0",
-} = {}) {
+}: { enrolleeId?: string; fetchDelay?: number } = {}) {
   const [displayedItems, setDisplayedItems] = useState<Provider[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [page, setPage] = useState(0);
   const limit = 20;
 
-  // Create a cache key based on enrolleeId and stateId
-  const cacheKey = useMemo(
-    () => `${enrolleeId}-${stateId}`,
-    [enrolleeId, stateId]
-  );
-
   const loadProviders = async (pageNum = 0) => {
-    if (!hasMore && pageNum !== 0) return; // Prevent fetching if no more data
-
     try {
       setIsLoading(true);
       if (fetchDelay > 0) {
         await new Promise((resolve) => setTimeout(resolve, fetchDelay));
       }
 
+      if (!enrolleeId) {
+        setDisplayedItems([]);
+        setHasMore(false);
+        return;
+      }
+
       const { providers, hasMore: moreAvailable } = await fetchSelectProviders(
         pageNum,
         limit,
-        enrolleeId,
-        stateId
+        enrolleeId
       );
 
       if (pageNum === 0) {
@@ -64,16 +56,12 @@ export function useProviderList({
   };
 
   useEffect(() => {
-    // Clear cache and reset state when enrolleeId or stateId changes
-    clearProvidersCache();
-    setDisplayedItems([]);
-    setHasMore(true);
-    setPage(0);
-    loadProviders(0);
-  }, [cacheKey]);
+    if (enrolleeId) {
+      loadProviders(0);
+    }
+  }, [enrolleeId]);
 
   const onLoadMore = () => {
-    if (isLoading || !hasMore) return;
     const nextPage = page + 1;
     setPage(nextPage);
     loadProviders(nextPage);
@@ -84,26 +72,20 @@ export function useProviderList({
     hasMore,
     isLoading,
     onLoadMore,
-    reload: () => {
-      clearProvidersCache();
-      setPage(0);
-      loadProviders(0);
-    },
+    setDisplayedItems, // Export this so we can update items if needed
   };
 }
 
 export default function ProviderAutocomplete({
   onSelect,
+  enrolleeId,
   isDisabled,
-  enrolleeId = "",
-  stateId = "0",
+  selectedProvider,
 }: ProviderAutocompleteProps) {
   const [isOpen, setIsOpen] = useState(false);
-
   const { items, hasMore, isLoading, onLoadMore } = useProviderList({
-    fetchDelay: 500,
     enrolleeId,
-    stateId,
+    fetchDelay: 500,
   });
 
   const [, scrollerRef] = useInfiniteScroll({
@@ -113,24 +95,36 @@ export default function ProviderAutocomplete({
     onLoadMore,
   });
 
+  // Log selectedProvider for debugging
+  console.log("ProviderAutocomplete selectedProvider:", selectedProvider);
+
+  // Set default selected key
+  const defaultKey = selectedProvider
+    ? `${selectedProvider.Pharmacyid}-${selectedProvider.PharmacyName}`
+    : undefined;
+
   return (
     <Autocomplete
       className="w-full"
       defaultItems={items}
       isLoading={isLoading}
-      label="Select Provider"
-      placeholder="Search for a provider"
+      label="Select Pharmacy"
+      placeholder="Search for a pharmacy"
       scrollRef={scrollerRef}
       variant="bordered"
       isDisabled={isDisabled}
       onOpenChange={setIsOpen}
+      defaultSelectedKey={defaultKey}
       onSelectionChange={(key) => {
-        const selected = items.find((item) => `${item.Pharmacyid}` === key);
+        const selected = items.find(
+          (item) => `${item.Pharmacyid}-${item.PharmacyName}` === key
+        );
+        console.log("ProviderAutocomplete onSelect:", selected); // Debug log
         onSelect(selected || null);
       }}
     >
-      {(item) => (
-        <AutocompleteItem key={`${item.Pharmacyid}`}>
+      {(item: Provider) => (
+        <AutocompleteItem key={`${item.Pharmacyid}-${item.PharmacyName}`}>
           {item.PharmacyName}
         </AutocompleteItem>
       )}

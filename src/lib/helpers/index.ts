@@ -251,10 +251,11 @@ export const transformApiResponse = (apiResponse: any): Delivery => {
     EntryNo: apiResponse.entryno,
     DeliveryId: apiResponse.deliveryid,
     Pharmacyid: apiResponse.pharmacyid,
-    PharmacyName: apiResponse.pharmacyName,
+    PharmacyName: apiResponse.pharmacyname,
     deliveryaddress: apiResponse.deliveryaddress,
     phonenumber: apiResponse.phonenumber
   };
+
 };
 
 export const getUsername = async (): Promise<string> => {

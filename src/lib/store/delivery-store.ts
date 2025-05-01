@@ -13,7 +13,7 @@ export const initialFormState = {
   deliveryaddress: "",
   phonenumber: "",
 
-  pharmacyId: "",
+  pharmacyId: 0,
   pharmacyName: "",
 
   deliveryFrequency: "",
@@ -120,7 +120,7 @@ export const deliveryActions = {
   removeProvider: () => {
     deliveryFormState.set(state => ({
       ...state,
-      pharmacyId: "",
+      pharmacyId: 0,
       pharmacyName: ""
     }));
   },
@@ -153,7 +153,7 @@ export const deliveryActions = {
       deliveryaddress: data.deliveryaddress || "",
       phonenumber: data.phonenumber || "",
       pharmacyName: data.PharmacyName || "",
-      pharmacyId: data.PharmacyId || "",
+      pharmacyId: data.PharmacyId || 0,
       deliveryFrequency: data.DeliveryFrequency || "",
       delStartDate: data.DelStartDate || "",
       nextDeliveryDate: data.NextDeliveryDate || "",

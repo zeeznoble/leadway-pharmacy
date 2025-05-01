@@ -8,6 +8,8 @@ export const DELIVERY_COLUMNS = [
   { key: "diagnosis_id", label: "Diagnosis ID" }, // New
   { key: "procedurename", label: "Procedure" }, // New
   { key: "procedureid", label: "Procedure ID" }, // New
+  { key: "pharmacyname", label: "Pharmacy Name" }, // New
+  { key: "pharmacyid", label: "Pharmacy ID" }, // New
 ];
 
 export const BENEFITS_COLUMNS = [
