@@ -54,46 +54,6 @@ export default function SideNav() {
       text: "Dashboard",
     },
     {
-      link: "/enrollees",
-      icon: (
-        <EnrolleeIcon
-          strokeWidth={router.pathname.startsWith("/enrollees") ? "1.5" : "1"}
-          stroke={
-            router.pathname.startsWith("/enrollee") ? "#ffffff" : "#475467"
-          }
-          width={23}
-          height={20}
-        />
-      ),
-      text: "Enrollees",
-    },
-    {
-      link: "/tasks",
-      icon: (
-        <TasksIcon
-          strokeWidth={router.pathname.startsWith("/tasks") ? "1.5" : "1"}
-          stroke={router.pathname.startsWith("/tasks") ? "#ffffff" : "#475467"}
-          width={23}
-          height={20}
-        />
-      ),
-      text: "My Tasks",
-    },
-    {
-      link: "/deliveries",
-      icon: (
-        <DeliveriesIcon
-          strokeWidth={router.pathname.startsWith("/deliveries") ? "1.5" : "1"}
-          stroke={
-            router.pathname.startsWith("/deliveries") ? "#ffffff" : "#475467"
-          }
-          width={23}
-          height={20}
-        />
-      ),
-      text: "Deliveries",
-    },
-    {
       link: "/pharmacy",
       icon: (
         <PharmacyIcon
@@ -108,6 +68,34 @@ export default function SideNav() {
       text: "Pharmacy",
     },
     {
+      link: "/enrollees",
+      icon: (
+        <EnrolleeIcon
+          strokeWidth={router.pathname.startsWith("/enrollees") ? "1.5" : "1"}
+          stroke={
+            router.pathname.startsWith("/enrollee") ? "#ffffff" : "#475467"
+          }
+          width={23}
+          height={20}
+        />
+      ),
+      text: "Enrollees",
+    },
+    {
+      link: "/create-deliveries",
+      icon: (
+        <DeliveriesIcon
+          strokeWidth={router.pathname.startsWith("/deliveries") ? "1.5" : "1"}
+          stroke={
+            router.pathname.startsWith("/deliveries") ? "#ffffff" : "#475467"
+          }
+          width={23}
+          height={20}
+        />
+      ),
+      text: "Deliveries",
+    },
+    {
       link: "/pack",
       icon: (
         <StockIcon
@@ -118,6 +106,18 @@ export default function SideNav() {
         />
       ),
       text: "Pack",
+    },
+    {
+      link: "/to-be-delivered",
+      icon: (
+        <TasksIcon
+          strokeWidth={router.pathname.startsWith("/tasks") ? "1.5" : "1"}
+          stroke={router.pathname.startsWith("/tasks") ? "#ffffff" : "#475467"}
+          width={23}
+          height={20}
+        />
+      ),
+      text: "To be Delivered",
     },
     {
       link: "/reports",
