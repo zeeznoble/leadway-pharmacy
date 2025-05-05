@@ -85,15 +85,19 @@ export default function SideNav() {
       link: "/create-deliveries",
       icon: (
         <DeliveriesIcon
-          strokeWidth={router.pathname.startsWith("/deliveries") ? "1.5" : "1"}
+          strokeWidth={
+            router.pathname.startsWith("/create-deliveries") ? "1.5" : "1"
+          }
           stroke={
-            router.pathname.startsWith("/deliveries") ? "#ffffff" : "#475467"
+            router.pathname.startsWith("/create-deliveries")
+              ? "#ffffff"
+              : "#475467"
           }
           width={23}
           height={20}
         />
       ),
-      text: "Deliveries",
+      text: "Create Deliveries",
     },
     {
       link: "/pack",
@@ -111,8 +115,14 @@ export default function SideNav() {
       link: "/to-be-delivered",
       icon: (
         <TasksIcon
-          strokeWidth={router.pathname.startsWith("/tasks") ? "1.5" : "1"}
-          stroke={router.pathname.startsWith("/tasks") ? "#ffffff" : "#475467"}
+          strokeWidth={
+            router.pathname.startsWith("/to-be-delivered") ? "1.5" : "1"
+          }
+          stroke={
+            router.pathname.startsWith("/to-be-delivered")
+              ? "#ffffff"
+              : "#475467"
+          }
           width={23}
           height={20}
         />
