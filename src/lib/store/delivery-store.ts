@@ -39,7 +39,11 @@ export const deliveryStore = chunk({
   deliveries: [] as Delivery[],
   isLoading: false,
   isSubmitting: false,
+  isPackingLoading: false,
   error: null as string | null,
+  packingError: null as string | null,
+  packingSuccess: false,
+  lastSearchedEnrolleeId: null as string | null,
   showModal: false
 });
 
@@ -85,7 +89,6 @@ export const deliveryActions = {
       ...state,
       [field]: value
     }));
-
   },
 
   addDiagnosis: (diagnosis: Diagnosis) => {
@@ -124,7 +127,6 @@ export const deliveryActions = {
       pharmacyName: ""
     }));
   },
-
 
   removeProcedure: (procedureId: string) => {
     deliveryFormState.set(state => ({
@@ -246,4 +248,27 @@ export const deliveryActions = {
       deliveryStore.set(state => ({ ...state, isSubmitting: false }));
     }
   },
+
+  resetDeliveryErrors: () => {
+    deliveryStore.set(state => ({
+      ...state,
+      error: null,
+      packingError: null,
+      packingSuccess: false,
+    }));
+  },
+
+  setPackingSuccess: (success: boolean) => {
+    deliveryStore.set(state => ({
+      ...state,
+      packingSuccess: success,
+    }));
+  },
+
+  updateLastSearchedEnrolleeId: (enrolleeId: string) => {
+    deliveryStore.set(state => ({
+      ...state,
+      lastSearchedEnrolleeId: enrolleeId,
+    }));
+  }
 };
