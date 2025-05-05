@@ -323,3 +323,96 @@ export const deleteDelivery = async (delivery: any, setIsDeleting: Dispatch<SetS
     setIsDeleting(prev => ({ ...prev, [delivery.key]: false }));
   }
 };
+
+
+export const packDeliveries = async (deliveryLines: any[]): Promise<any> => {
+  try {
+    deliveryStore.set((state) => ({
+      ...state,
+      isPackingLoading: true,
+      packingError: null,
+    }));
+
+    const apiUrl = `${API_URL}/PharmacyDelivery/PackDeliveryLine`;
+
+    console.log("Packing deliveries with data:", deliveryLines);
+
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(deliveryLines),
+    });
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    console.log("Pack Delivery API response:", data);
+
+    deliveryStore.set((state) => ({
+      ...state,
+      isPackingLoading: false,
+      packingError: null,
+    }));
+
+    // Refresh the deliveries list to reflect the updated status
+    return data;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Failed to pack deliveries";
+    deliveryStore.set((state) => ({
+      ...state,
+      isPackingLoading: false,
+      packingError: errorMessage,
+    }));
+    throw error;
+  }
+};
+
+export const deliverPackDeliveries = async (deliveryLines: any[]): Promise<any> => {
+  try {
+    deliveryStore.set((state) => ({
+      ...state,
+      isPackingLoading: true,
+      packingError: null,
+    }));
+
+    const apiUrl = `${API_URL}/PharmacyDelivery/DeliverDeliveryLine`;
+
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(deliveryLines),
+    });
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    console.log("Pack Delivery API response:", data);
+
+    deliveryStore.set((state) => ({
+      ...state,
+      isPackingLoading: false,
+      packingError: null,
+    }));
+
+    // Refresh the deliveries list to reflect the updated status
+    return data;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Failed to pack deliveries";
+    deliveryStore.set((state) => ({
+      ...state,
+      isPackingLoading: false,
+      packingError: errorMessage,
+    }));
+    throw error;
+  }
+};
