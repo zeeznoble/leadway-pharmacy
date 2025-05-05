@@ -8,6 +8,8 @@ import EnrolleesPage from "@/pages/enrollees";
 import PharmacyPage from "@/pages/pharmacy";
 import DeliveriesPage from "./pages/deliveries";
 import DeliveryDetailsPage from "./pages/delivery-details";
+import PackPage from "./pages/pack";
+import ToBeDeliveredPage from "./pages/to-be-delivered";
 
 function App() {
   return (
@@ -15,9 +17,11 @@ function App() {
       <Route path="/auth/login" element={<LoginPage />} />
       <Route element={<ProtectedRoute />}>
         <Route path="/" element={<IndexPage />} />
-        <Route path="/enrollees" element={<EnrolleesPage />} />
         <Route path="/pharmacy" element={<PharmacyPage />} />
-        <Route path="/deliveries" element={<DeliveriesPage />} />
+        <Route path="/enrollees" element={<EnrolleesPage />} />
+        <Route path="/create-deliveries" element={<DeliveriesPage />} />
+        <Route path="/pack" element={<PackPage />} />
+        <Route path="/to-be-delivered" element={<ToBeDeliveredPage />} />
         <Route path="/deliveries/:id" element={<DeliveryDetailsPage />} />
       </Route>
     </Routes>
