@@ -123,15 +123,13 @@ export default function PackTable({
     setSelectedKeys(keys);
   };
 
-  // Filter out delivered items from selection
   const filteredRows = useMemo(() => {
     return rows.filter((row) => !row.status);
   }, [rows]);
 
-  // Calculate the number of selected items safely handling both Set and "all" cases
   const getSelectedCount = (selection: Selection): number => {
     if (selection === "all") {
-      return filteredRows.length; // All non-delivered items
+      return filteredRows.length;
     }
     return selection.size;
   };
@@ -147,7 +145,6 @@ export default function PackTable({
     let selectedDeliveries: any[] = [];
 
     if (selectedKeys === "all") {
-      // Handle the case when all items are selected
       if (router.pathname === "/pack") {
         selectedDeliveries = filteredRows.map((row) => ({
           DeliveryEntryNo: row.original.EntryNo,
@@ -164,7 +161,6 @@ export default function PackTable({
         }));
       }
     } else {
-      // Handle the case when specific items are selected via Set
       selectedDeliveries = Array.from(selectedKeys as Set<Key>)
         .map((key) => {
           const selectedRow = rows.find((row) => row.key === key);
@@ -190,7 +186,6 @@ export default function PackTable({
     }
 
     onPackDelivery(selectedDeliveries);
-    // Reset selection after packing
     setSelectedKeys(new Set([]));
   }, [selectedKeys, rows, filteredRows, onPackDelivery]);
 
@@ -226,12 +221,10 @@ export default function PackTable({
     }
   };
 
-  // Disable selection for already delivered items
   const disabledKeys = useMemo(() => {
     return new Set(rows.filter((row) => row.status).map((row) => row.key));
   }, [rows]);
 
-  // Get selected count safely
   const selectedCount = getSelectedCount(selectedKeys);
 
   if (deliveries.length === 0 && !isLoading && !error) {
@@ -270,7 +263,8 @@ export default function PackTable({
           isDisabled={selectedCount === 0 || isLoading}
           onPress={handlePackDelivery}
         >
-          Pack Selected ({selectedCount})
+          {router.pathname === "/pack" ? "Pack Selected" : "Mark as Packed"} (
+          {selectedCount})
         </Button>
       </div>
 
