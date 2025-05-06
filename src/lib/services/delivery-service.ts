@@ -5,7 +5,7 @@ import { deliveryStore } from "../store/delivery-store";
 import { authStore } from "../store/app-store";
 
 import { API_URL } from "../helpers";
-import { Delivery, Diagnosis } from "@/types";
+import { DeliveredPackResponse, Delivery, Diagnosis, PackResponse } from "@/types";
 
 export const createDelivery = async (deliveryData: { Deliveries: Delivery[] }): Promise<any> => {
   try {
@@ -267,13 +267,8 @@ export const editDelivery = async (formData: Delivery): Promise<any> => {
 
 export const deleteDelivery = async (delivery: any, setIsDeleting: Dispatch<SetStateAction<Record<string, boolean>>>) => {
   try {
-    // Get the deliveryId directly (this one is correct)
     const deliveryId = delivery.original?.DeliveryId;
-
-    // Extract procedureId from the ProcedureLines array (first item)
     const procedureId = delivery.original?.ProcedureLines?.[0]?.ProcedureId;
-
-    // Extract diagnosisId from the DiagnosisLines array (first item)
     const diagnosisId = delivery.original?.DiagnosisLines?.[0]?.DiagnosisId;
 
     if (!deliveryId || !procedureId || !diagnosisId) {
@@ -281,7 +276,6 @@ export const deleteDelivery = async (delivery: any, setIsDeleting: Dispatch<SetS
       return;
     }
 
-    // Set deleting state for this specific delivery
     setIsDeleting(prev => ({ ...prev, [delivery.key]: true }));
 
     const deleteData = {
@@ -325,7 +319,9 @@ export const deleteDelivery = async (delivery: any, setIsDeleting: Dispatch<SetS
 };
 
 
-export const packDeliveries = async (deliveryLines: any[]): Promise<any> => {
+
+
+export const packDeliveries = async (deliveryLines: any[]): Promise<PackResponse> => {
   try {
     deliveryStore.set((state) => ({
       ...state,
@@ -349,7 +345,7 @@ export const packDeliveries = async (deliveryLines: any[]): Promise<any> => {
       throw new Error(`API error: ${response.status}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as PackResponse;
 
     console.log("Pack Delivery API response:", data);
 
@@ -357,9 +353,9 @@ export const packDeliveries = async (deliveryLines: any[]): Promise<any> => {
       ...state,
       isPackingLoading: false,
       packingError: null,
+      packingSuccess: true,
     }));
 
-    // Refresh the deliveries list to reflect the updated status
     return data;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Failed to pack deliveries";
@@ -367,17 +363,19 @@ export const packDeliveries = async (deliveryLines: any[]): Promise<any> => {
       ...state,
       isPackingLoading: false,
       packingError: errorMessage,
+      packingSuccess: false
     }));
     throw error;
   }
 };
 
-export const deliverPackDeliveries = async (deliveryLines: any[]): Promise<any> => {
+export const deliverPackDeliveries = async (deliveryLines: any[]): Promise<DeliveredPackResponse> => {
   try {
     deliveryStore.set((state) => ({
       ...state,
       isPackingLoading: true,
       packingError: null,
+      packingSuccess: false
     }));
 
     const apiUrl = `${API_URL}/PharmacyDelivery/DeliverDeliveryLine`;
@@ -394,17 +392,17 @@ export const deliverPackDeliveries = async (deliveryLines: any[]): Promise<any> 
       throw new Error(`API error: ${response.status}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as DeliveredPackResponse;
 
-    console.log("Pack Delivery API response:", data);
+    console.log("Delivered Pack Delivery API response:", data);
 
     deliveryStore.set((state) => ({
       ...state,
       isPackingLoading: false,
       packingError: null,
+      packingSuccess: true
     }));
 
-    // Refresh the deliveries list to reflect the updated status
     return data;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Failed to pack deliveries";
