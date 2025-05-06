@@ -24,12 +24,10 @@ export default function PackPage() {
   const { user } = useChunkValue(authStore);
 
   useEffect(() => {
-    // Initial fetch with just the username
     if (user?.UserName) {
       fetchDeliveries(user.UserName, "");
     }
 
-    // Cleanup
     return () => {
       deliveryActions.resetDeliveryErrors();
     };
@@ -37,8 +35,6 @@ export default function PackPage() {
 
   useEffect(() => {
     if (packingSuccess) {
-      toast.success("Deliveries packed successfully!");
-      // Refresh the delivery list after successful packing
       if (user?.UserName) {
         fetchDeliveries(user.UserName, lastSearchedEnrolleeId || "");
       }
@@ -62,8 +58,8 @@ export default function PackPage() {
       deliveryActions.updateLastSearchedEnrolleeId(enrolleeId);
       await fetchDeliveries(user.UserName, enrolleeId);
     } catch (error) {
-      // Error is already handled in the service
-      console.error("Search error:", error);
+      const err = error as Error;
+      toast.error(err.message);
     }
   };
 
@@ -75,11 +71,10 @@ export default function PackPage() {
 
     try {
       const result = await packDeliveries(selectedDeliveries);
-      if (result && result.status === 200) {
-        toast.success(result.ReturnMessage);
+      if (result && result.Results[0].status === 200) {
+        toast.success(result.Results[0].ReturnMessage);
       }
     } catch (error) {
-      // Error is already handled in the service
       console.error("Pack error:", error);
     }
   };
