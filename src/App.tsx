@@ -2,14 +2,16 @@ import { Route, Routes } from "react-router-dom";
 
 import ProtectedRoute from "@/components/protected";
 
-import IndexPage from "@/pages/index";
 import LoginPage from "@/pages/login";
-import EnrolleesPage from "@/pages/enrollees";
+import IndexPage from "@/pages/index";
 import PharmacyPage from "@/pages/pharmacy";
-import DeliveriesPage from "./pages/deliveries";
-import DeliveryDetailsPage from "./pages/delivery-details";
-import PackPage from "./pages/pack";
-import ToBeDeliveredPage from "./pages/to-be-delivered";
+import EnrolleesPage from "@/pages/enrollees";
+import DeliveriesPage from "@/pages/deliveries";
+import PackPage from "@/pages/pack";
+import ToBeDeliveredPage from "@/pages/to-be-delivered";
+import ReportsPage from "@/pages/reports";
+
+import DeliveryDetailsPage from "@/pages/delivery-details";
 
 function App() {
   return (
@@ -22,6 +24,7 @@ function App() {
         <Route path="/create-deliveries" element={<DeliveriesPage />} />
         <Route path="/pack" element={<PackPage />} />
         <Route path="/to-be-delivered" element={<ToBeDeliveredPage />} />
+        <Route path="/reports" element={<ReportsPage />} />
         <Route path="/deliveries/:id" element={<DeliveryDetailsPage />} />
       </Route>
     </Routes>
