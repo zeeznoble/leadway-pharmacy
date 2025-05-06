@@ -69,14 +69,17 @@ export default function DeliveriesPage() {
     <section className="py-3 px-2">
       <div className="flex justify-between mb-4">
         <p className="text-xl">List of Deliveries</p>
-        <Button
-          size="lg"
-          radius="sm"
-          color="primary"
-          onPress={deliveryActions.openModal}
-        >
-          Create Delivery
-        </Button>
+        <p className="text-medium">Select an Enrollee to Create Delivery</p>
+        {enrolleeId !== "" && (
+          <Button
+            size="lg"
+            radius="sm"
+            color="primary"
+            onPress={deliveryActions.openModal}
+          >
+            Create Delivery
+          </Button>
+        )}
       </div>
 
       {isLoading ? (
