@@ -36,7 +36,6 @@ export default function ToBeDeliveredPage() {
 
   useEffect(() => {
     if (packingSuccess) {
-      toast.success("Deliveries packed successfully!");
       if (user?.UserName) {
         fetchDeliveries(user.UserName, lastSearchedEnrolleeId || "");
       }
@@ -60,7 +59,6 @@ export default function ToBeDeliveredPage() {
       deliveryActions.updateLastSearchedEnrolleeId(enrolleeId);
       await fetchDeliveries(user.UserName, enrolleeId);
     } catch (error) {
-      // Error is already handled in the service
       console.error("Search error:", error);
     }
   };
@@ -73,11 +71,10 @@ export default function ToBeDeliveredPage() {
 
     try {
       const result = await deliverPackDeliveries(selectedDeliveries);
-      if (result && result.status === 200) {
-        toast.success(result.ReturnMessage);
+      if (result.IndividualResults[0].Status === "Success") {
+        toast.success(result.IndividualResults[0].Message);
       }
     } catch (error) {
-      // Error is already handled in the service
       console.error("Pack error:", error);
     }
   };
