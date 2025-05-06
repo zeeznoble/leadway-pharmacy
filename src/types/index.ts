@@ -143,3 +143,25 @@ export type DeliveryApiResponse = {
     Deliverycount: number
   }[]
 };
+
+export type PackResponse = {
+  Results: {
+    DeliveryEntryNo: string
+    ReturnMessage: string
+    RowsAffected: number
+    status: number
+  }[]
+}
+
+export type DeliveredPackResponse = {
+  status: number,
+  ReturnMessage: string,
+  TotalRowsAffected: number,
+  IndividualResults: [
+    {
+      DeliveryEntryNo: string,
+      Status: string,
+      Message: string
+    }
+  ]
+}
