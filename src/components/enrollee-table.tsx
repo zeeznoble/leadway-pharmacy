@@ -203,7 +203,7 @@ export default function EnrolleeDataTable() {
                   <TableRow key={`${item.Member_MemberUniqueID}`}>
                     {(columnKey) => (
                       <TableCell>
-                        <Link to="/deliveries">
+                        <Link to="/create-deliveries">
                           {getKeyValue(item, columnKey)}
                         </Link>
                       </TableCell>
