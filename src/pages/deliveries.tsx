@@ -69,8 +69,7 @@ export default function DeliveriesPage() {
     <section className="py-3 px-2">
       <div className="flex justify-between mb-4">
         <p className="text-xl">List of Deliveries</p>
-        <p className="text-medium">Select an Enrollee to Create Delivery</p>
-        {enrolleeId !== "" && (
+        {enrolleeId !== "" ? (
           <Button
             size="lg"
             radius="sm"
@@ -79,6 +78,8 @@ export default function DeliveriesPage() {
           >
             Create Delivery
           </Button>
+        ) : (
+          <p className="text-medium">Select an Enrollee to Create Delivery</p>
         )}
       </div>
 
