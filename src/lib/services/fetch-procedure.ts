@@ -60,7 +60,7 @@ export async function fetchProcedures(
     const procedures: Procedure[] = data.result.map((item: ProcedureApiItem) => ({
       ProcedureId: item.tariff_code,
       ProcedureName: item.tariff_desc,
-      ProcedureQuantity: 1, // Default quantity, adjusted in UI
+      ProcedureQuantity: 1,
     }));
 
     // Append to cache for pagination
