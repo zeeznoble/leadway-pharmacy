@@ -1,4 +1,3 @@
-// src/lib/services/fetch-procedures.ts
 import { toast } from "react-hot-toast";
 import { API_URL } from "@/lib/helpers";
 import { Procedure } from "@/types";
