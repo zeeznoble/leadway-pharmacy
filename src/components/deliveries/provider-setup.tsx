@@ -43,9 +43,7 @@ export default function ProviderSetup() {
   return (
     <Card className="shadow-sm">
       <CardBody className="p-4">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">
-          Provider Selection
-        </h3>
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">Pharmacy</h3>
 
         <div className="space-y-4">
           <div className="flex items-center flex-wrap gap-3">

@@ -39,15 +39,11 @@ export default function DiagnosisProcedureStep() {
 
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-gray-800">
-        Diagnosis and Procedures
-      </h3>
-
       {/* Diagnosis Section */}
       <Card className="shadow-sm">
         <CardBody className="p-4">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            Add Diagnosis
+            Diagnosis
           </h3>
 
           <div className="space-y-4">
@@ -111,7 +107,7 @@ export default function DiagnosisProcedureStep() {
       <Card className="shadow-sm">
         <CardBody className="p-4">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            Add Procedures
+            Medication
           </h3>
 
           <div className="space-y-4">
@@ -129,7 +125,7 @@ export default function DiagnosisProcedureStep() {
                   onPress={handleAddProcedure}
                   isDisabled={!selectedProcedure}
                 >
-                  Add Procedure
+                  Add Medication
                 </Button>
               </div>
             </div>
