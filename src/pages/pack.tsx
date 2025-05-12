@@ -1,6 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useChunkValue } from "stunk/react";
 import toast from "react-hot-toast";
+import { CalendarDate } from "@internationalized/date";
 
 import { deliveryStore, deliveryActions } from "@/lib/store/delivery-store";
 import { authStore } from "@/lib/store/app-store";
@@ -9,6 +10,7 @@ import {
   packDeliveries,
 } from "@/lib/services/delivery-service";
 import PackTable from "@/components/pack-table";
+import PackDateModal from "@/components/pack-date-modal";
 
 export default function PackPage() {
   const {
@@ -22,6 +24,10 @@ export default function PackPage() {
   } = useChunkValue(deliveryStore);
 
   const { user } = useChunkValue(authStore);
+  const [showDateModal, setShowDateModal] = useState(false);
+  const [selectedDeliveriesToPack, setSelectedDeliveriesToPack] = useState<any>(
+    []
+  );
 
   useEffect(() => {
     if (user?.UserName) {
@@ -69,13 +75,33 @@ export default function PackPage() {
       return;
     }
 
+    // Save selected deliveries and show date modal instead of immediately packing
+    setSelectedDeliveriesToPack(selectedDeliveries);
+    setShowDateModal(true);
+  };
+
+  const handleConfirmPack = async (nextPackDate: CalendarDate) => {
     try {
-      const result = await packDeliveries(selectedDeliveries);
+      // Format the date as needed for your API
+      const formattedDate = nextPackDate.toString();
+
+      // Add the nextPackDate to each delivery
+      const deliveriesWithDate = selectedDeliveriesToPack.map(
+        (delivery: any) => ({
+          ...delivery,
+          nextpackdate: formattedDate,
+        })
+      );
+
+      const result = await packDeliveries(deliveriesWithDate);
       if (result && result.Results[0].status === 200) {
         toast.success(result.Results[0].ReturnMessage);
       }
     } catch (error) {
       console.error("Pack error:", error);
+      toast.error("Failed to pack deliveries");
+    } finally {
+      setSelectedDeliveriesToPack([]);
     }
   };
 
@@ -91,6 +117,12 @@ export default function PackPage() {
         error={error}
         onSearch={handleSearch}
         onPackDelivery={handlePackDelivery}
+      />
+
+      <PackDateModal
+        isOpen={showDateModal}
+        onClose={() => setShowDateModal(false)}
+        onConfirm={handleConfirmPack}
       />
     </section>
   );

@@ -1,6 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useChunkValue } from "stunk/react";
 import toast from "react-hot-toast";
+import { CalendarDate } from "@internationalized/date";
 
 import PackTable from "@/components/pack-table";
 
@@ -10,6 +11,7 @@ import {
   deliverPackDeliveries,
   fetchDeliveries,
 } from "@/lib/services/delivery-service";
+import PackDateModal from "@/components/pack-date-modal";
 
 export default function ToBeDeliveredPage() {
   const {
@@ -23,6 +25,10 @@ export default function ToBeDeliveredPage() {
   } = useChunkValue(deliveryStore);
 
   const { user } = useChunkValue(authStore);
+  const [showDateModal, setShowDateModal] = useState(false);
+  const [selectedDeliveriesToPack, setSelectedDeliveriesToPack] = useState<any>(
+    []
+  );
 
   useEffect(() => {
     if (user?.UserName) {
@@ -60,6 +66,7 @@ export default function ToBeDeliveredPage() {
       await fetchDeliveries(user.UserName, enrolleeId);
     } catch (error) {
       console.error("Search error:", error);
+      toast.error("Failed to search for enrollee");
     }
   };
 
@@ -69,13 +76,37 @@ export default function ToBeDeliveredPage() {
       return;
     }
 
+    // Save selected deliveries and show date modal instead of immediately packing
+    setSelectedDeliveriesToPack(selectedDeliveries);
+    setShowDateModal(true);
+  };
+
+  const handleConfirmPack = async (nextPackDate: CalendarDate) => {
     try {
-      const result = await deliverPackDeliveries(selectedDeliveries);
+      // Format the date as needed for your API
+      const formattedDate = nextPackDate.toString();
+
+      // Add the nextPackDate to each delivery
+      const deliveriesWithDate = selectedDeliveriesToPack.map(
+        (delivery: any) => ({
+          ...delivery,
+          nextdeliverydate: formattedDate,
+        })
+      );
+
+      const result = await deliverPackDeliveries(deliveriesWithDate);
       if (result.IndividualResults[0].Status === "Success") {
         toast.success(result.IndividualResults[0].Message);
+      } else {
+        toast.error(
+          result.IndividualResults[0].Message || "Failed to deliver packs"
+        );
       }
     } catch (error) {
-      console.error("Pack error:", error);
+      console.error("Pack delivery error:", error);
+      toast.error("Failed to deliver packs");
+    } finally {
+      setSelectedDeliveriesToPack([]);
     }
   };
 
@@ -91,6 +122,12 @@ export default function ToBeDeliveredPage() {
         error={error}
         onSearch={handleSearch}
         onPackDelivery={handlePackDelivery}
+      />
+
+      <PackDateModal
+        isOpen={showDateModal}
+        onClose={() => setShowDateModal(false)}
+        onConfirm={handleConfirmPack}
       />
     </section>
   );
