@@ -6,41 +6,52 @@ export function useProviderList({
   enrolleeId,
   fetchDelay = 0,
 }: { enrolleeId?: string; fetchDelay?: number } = {}) {
-  const [items, setItems] = useState<Provider[]>([]);
+  const [displayedItems, setDisplayedItems] = useState<Provider[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [offset, setOffset] = useState(0);
   const limit = 20;
 
-  const loadProviders = async (currentOffset: number) => {
+  const loadProviders = async (reset = false) => {
     if (!enrolleeId) {
-      setItems([]);
+      setDisplayedItems([]);
       setHasMore(false);
       return;
     }
 
     try {
       setIsLoading(true);
+
       if (fetchDelay > 0) {
         await new Promise((resolve) => setTimeout(resolve, fetchDelay));
       }
 
-      const { providers, hasMore: moreAvailable } = await fetchSelectProviders(
-        currentOffset,
-        limit,
-        enrolleeId
-      );
+      const currentOffset = reset ? 0 : offset;
+      console.log("Loading providers with offset:", currentOffset);
 
-      setItems((prev) => {
-        // Deduplicate by creating a Map of unique providers
-        const providerMap = new Map<string, Provider>();
-        const allProviders = currentOffset === 0 ? providers : [...prev, ...providers];
-        allProviders.forEach((provider) => {
-          const key = `${provider.Pharmacyid}-${provider.PharmacyName}`;
-          providerMap.set(key, provider);
-        });
-        return Array.from(providerMap.values());
+      const { providers, hasMore: moreAvailable, currentPage, totalPages } =
+        await fetchSelectProviders(currentOffset, limit, enrolleeId);
+
+      console.log("Loaded providers:", {
+        providersCount: providers.length,
+        currentPage,
+        totalPages,
+        hasMore: moreAvailable,
+        providerIds: providers.map((p) => p.Pharmacyid),
       });
+
+      if (reset) {
+        setDisplayedItems(providers);
+      } else {
+        const existingIds = new Set(displayedItems.map((item) => item.Pharmacyid));
+        const newItems = providers.filter((item) => !existingIds.has(item.Pharmacyid));
+        setDisplayedItems((prev) => [...prev, ...newItems]);
+      }
+
+      // Log all displayed provider IDs
+      console.log("Current displayed provider IDs:", displayedItems.map((item) => item.Pharmacyid));
+      console.log("Current displayed provider IDs:", displayedItems.map((item) => item.PharmacyName));
+
       setHasMore(moreAvailable);
     } catch (error) {
       console.error("Load providers error:", error);
@@ -50,19 +61,23 @@ export function useProviderList({
   };
 
   useEffect(() => {
-    loadProviders(0);
+    setOffset(0);
+    loadProviders(true);
   }, [enrolleeId]);
 
   const onLoadMore = () => {
-    const newOffset = offset + limit;
-    setOffset(newOffset);
-    loadProviders(newOffset);
+    if (!isLoading && hasMore) {
+      console.log("onLoadMore triggered, new offset:", offset + limit);
+      setOffset((prev) => prev + limit);
+      loadProviders(false);
+    }
   };
 
   return {
-    items,
+    items: displayedItems,
     hasMore,
     isLoading,
     onLoadMore,
+    setDisplayedItems,
   };
 }
