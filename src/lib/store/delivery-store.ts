@@ -44,8 +44,11 @@ export const deliveryStore = chunk({
   packingError: null as string | null,
   packingSuccess: false,
   lastSearchedEnrolleeId: null as string | null,
-  showModal: false
-});
+  showModal: false,
+  showPackModal: false,
+  nextPackDate: null as string | null,
+  nextDeliveryDate: null as string | null,
+})
 
 export const deliveryActions = {
   openModal: () => {
@@ -55,6 +58,22 @@ export const deliveryActions = {
 
   closeModal: () => {
     deliveryStore.set(state => ({ ...state, showModal: false }));
+  },
+
+  openPackModal: () => {
+    deliveryStore.set(state => ({ ...state, showPackModal: true }));
+  },
+
+  closePackModal: () => {
+    deliveryStore.set(state => ({ ...state, showPackModal: false, nextPackDate: null }));
+  },
+
+  setNextPackDate: (date: string | null) => {
+    deliveryStore.set(state => ({ ...state, nextPackDate: date }));
+  },
+
+  setNextDeliveryDate: (date: string | null) => {
+    deliveryStore.set(state => ({ ...state, nextDeliveryDate: date }));
   },
 
   nextStep: () => {
