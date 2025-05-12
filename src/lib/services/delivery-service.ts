@@ -331,8 +331,6 @@ export const packDeliveries = async (deliveryLines: any[]): Promise<PackResponse
 
     const apiUrl = `${API_URL}/PharmacyDelivery/PackDeliveryLine`;
 
-    console.log("Packing deliveries with data:", deliveryLines);
-
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
