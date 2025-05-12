@@ -7,10 +7,10 @@ import { Input } from "@heroui/input";
 import { Card, CardBody } from "@heroui/card";
 
 import DiagnosisAutocomplete from "./diagnosis-select";
+import ProcedureAutocomplete from "./procedure-select";
 
 import { deliveryActions, deliveryFormState } from "@/lib/store/delivery-store";
 import { Diagnosis, Procedure } from "@/types";
-import ProcedureAutocomplete from "./procedure-select";
 
 export default function DiagnosisProcedureStep() {
   const formState = useChunkValue(deliveryFormState);
