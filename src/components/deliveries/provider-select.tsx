@@ -1,79 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Autocomplete, AutocompleteItem } from "@heroui/autocomplete";
 import { useInfiniteScroll } from "@heroui/use-infinite-scroll";
-
+import { useProviderList } from "@/lib/hooks/use-provider-list";
 import { Provider } from "@/types";
-import { fetchSelectProviders } from "@/lib/services/fetch-pro-select";
 
 interface ProviderAutocompleteProps {
   onSelect: (provider: Provider | null) => void;
   enrolleeId: string;
   isDisabled?: boolean;
   selectedProvider?: Provider | null;
-}
-
-export function useProviderList({
-  enrolleeId,
-  fetchDelay = 0,
-}: { enrolleeId?: string; fetchDelay?: number } = {}) {
-  const [displayedItems, setDisplayedItems] = useState<Provider[]>([]);
-  const [hasMore, setHasMore] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
-  const [page, setPage] = useState(0);
-  const limit = 20;
-
-  const loadProviders = async (pageNum = 0) => {
-    try {
-      setIsLoading(true);
-      if (fetchDelay > 0) {
-        await new Promise((resolve) => setTimeout(resolve, fetchDelay));
-      }
-
-      if (!enrolleeId) {
-        setDisplayedItems([]);
-        setHasMore(false);
-        return;
-      }
-
-      const { providers, hasMore: moreAvailable } = await fetchSelectProviders(
-        pageNum,
-        limit,
-        enrolleeId
-      );
-
-      if (pageNum === 0) {
-        setDisplayedItems(providers);
-      } else {
-        setDisplayedItems((prev) => [...prev, ...providers]);
-      }
-
-      setHasMore(moreAvailable);
-    } catch (error) {
-      console.error("Load providers error:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (enrolleeId) {
-      loadProviders(0);
-    }
-  }, [enrolleeId]);
-
-  const onLoadMore = () => {
-    const nextPage = page + 1;
-    setPage(nextPage);
-    loadProviders(nextPage);
-  };
-
-  return {
-    items: displayedItems,
-    hasMore,
-    isLoading,
-    onLoadMore,
-    setDisplayedItems, // Export this so we can update items if needed
-  };
 }
 
 export default function ProviderAutocomplete({
@@ -83,51 +18,73 @@ export default function ProviderAutocomplete({
   selectedProvider,
 }: ProviderAutocompleteProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const { items, hasMore, isLoading, onLoadMore } = useProviderList({
     enrolleeId,
-    fetchDelay: 500,
+    fetchDelay: 300,
   });
 
   const [, scrollerRef] = useInfiniteScroll({
     hasMore,
-    isEnabled: isOpen,
+    isEnabled: isOpen && !isLoading,
     shouldUseLoader: false,
     onLoadMore,
   });
 
-  // Log selectedProvider for debugging
-  console.log("ProviderAutocomplete selectedProvider:", selectedProvider);
+  const filteredItems = searchQuery
+    ? items.filter((item) =>
+        item.PharmacyName.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : items;
 
-  // Set default selected key
   const defaultKey = selectedProvider
     ? `${selectedProvider.Pharmacyid}-${selectedProvider.PharmacyName}`
     : undefined;
 
   return (
-    <Autocomplete
-      className="w-full"
-      defaultItems={items}
-      isLoading={isLoading}
-      label="Select Pharmacy"
-      placeholder="Search for a pharmacy"
-      scrollRef={scrollerRef}
-      variant="bordered"
-      isDisabled={isDisabled}
-      onOpenChange={setIsOpen}
-      defaultSelectedKey={defaultKey}
-      onSelectionChange={(key) => {
-        const selected = items.find(
-          (item) => `${item.Pharmacyid}-${item.PharmacyName}` === key
-        );
-        console.log("ProviderAutocomplete onSelect:", selected); // Debug log
-        onSelect(selected || null);
-      }}
-    >
-      {(item: Provider) => (
-        <AutocompleteItem key={`${item.Pharmacyid}-${item.PharmacyName}`}>
-          {item.PharmacyName}
-        </AutocompleteItem>
+    <div className="w-full">
+      <Autocomplete
+        className="w-full"
+        defaultItems={items}
+        items={filteredItems}
+        isLoading={isLoading}
+        label="Select Pharmacy"
+        placeholder="Search for a pharmacy"
+        scrollRef={scrollerRef}
+        variant="bordered"
+        isDisabled={isDisabled}
+        onOpenChange={(open) => {
+          console.log("Autocomplete open state:", open);
+          setIsOpen(open);
+        }}
+        onInputChange={(value) => {
+          console.log("Input changed:", value);
+          setSearchQuery(value);
+        }}
+        defaultSelectedKey={defaultKey}
+        onSelectionChange={(key) => {
+          const selected = items.find(
+            (item) => `${item.Pharmacyid}-${item.PharmacyName}` === key
+          );
+          onSelect(selected || null);
+        }}
+      >
+        {(item: Provider) => (
+          <AutocompleteItem key={`${item.Pharmacyid}-${item.PharmacyName}`}>
+            {item.PharmacyName}
+          </AutocompleteItem>
+        )}
+      </Autocomplete>
+      {isLoading && isOpen && items.length > 0 && (
+        <div className="text-center py-2 text-sm text-gray-500">
+          Loading more options...
+        </div>
       )}
-    </Autocomplete>
+      {filteredItems.length === 0 && searchQuery && !isLoading && (
+        <div className="text-center py-2 text-sm text-gray-500">
+          No providers found for "{searchQuery}"
+        </div>
+      )}
+    </div>
   );
 }
