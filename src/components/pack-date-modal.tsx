@@ -1,9 +1,5 @@
 import React from "react";
-import {
-  parseDate,
-  getLocalTimeZone,
-  CalendarDate,
-} from "@internationalized/date";
+import { getLocalTimeZone, CalendarDate, today } from "@internationalized/date";
 import { DateInput } from "@heroui/date-input";
 import { useDateFormatter } from "@react-aria/i18n";
 import { Button } from "@heroui/button";
@@ -20,17 +16,23 @@ export default function PackDateModal({
   onClose,
   onConfirm,
 }: PackDateModalProps) {
-  const [selectedDate, setSelectedDate] = React.useState<CalendarDate>(
-    parseDate(new Date().toISOString().split("T")[0])
+  const [selectedDate, setSelectedDate] = React.useState<CalendarDate | null>(
+    null
   );
   const formatter = useDateFormatter({ dateStyle: "full" });
-
   const location = useLocation();
+  const todayDate = today(getLocalTimeZone());
 
   const label =
     location.pathname === "/pack" ? "Next Pack Date" : "Next Delivery Date";
 
+  // Check if date is invalid (before today or not selected)
+  const isDateInvalid = !selectedDate || selectedDate.compare(todayDate) < 0;
+
   const handleConfirm = () => {
+    if (isDateInvalid || !selectedDate) {
+      return; // Prevent confirming if no date or invalid date
+    }
     onConfirm(selectedDate);
     onClose();
   };
@@ -47,12 +49,13 @@ export default function PackDateModal({
             label={label}
             value={selectedDate as any}
             onChange={setSelectedDate as any}
+            minValue={todayDate}
           />
           <p className="text-gray-500 text-sm mt-2">
             Selected date:{" "}
             {selectedDate
               ? formatter.format(selectedDate.toDate(getLocalTimeZone()))
-              : "--"}
+              : "None"}
           </p>
         </div>
 
@@ -60,7 +63,12 @@ export default function PackDateModal({
           <Button onPress={onClose} radius="sm" color="default">
             Cancel
           </Button>
-          <Button onPress={handleConfirm} color="primary" radius="sm">
+          <Button
+            onPress={handleConfirm}
+            color="primary"
+            radius="sm"
+            isDisabled={isDateInvalid}
+          >
             Confirm
           </Button>
         </div>
