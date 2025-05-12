@@ -65,7 +65,7 @@ export const deliveryActions = {
   },
 
   closePackModal: () => {
-    deliveryStore.set(state => ({ ...state, showPackModal: false, nextPackDate: null }));
+    deliveryStore.set(state => ({ ...state, showPackModal: false, nextPackDate: null, nextDeliveryDate: null }));
   },
 
   setNextPackDate: (date: string | null) => {
