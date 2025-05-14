@@ -49,6 +49,9 @@ export default function AdditionalInfoStep() {
           <p>
             <strong>Procedures:</strong> {formState.procedureLines.length}
           </p>
+          <p>
+            <strong>Cost:</strong> {formState.cost}
+          </p>
         </div>
       </div>
     </div>

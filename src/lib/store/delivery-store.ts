@@ -12,6 +12,7 @@ export const initialFormState = {
   schemeName: "",
   deliveryaddress: "",
   phonenumber: "",
+  cost: "",
 
   pharmacyId: 0,
   pharmacyName: "",
@@ -48,6 +49,7 @@ export const deliveryStore = chunk({
   showPackModal: false,
   nextPackDate: null as string | null,
   nextDeliveryDate: null as string | null,
+  cost: "" as string
 })
 
 export const deliveryActions = {
@@ -163,6 +165,15 @@ export const deliveryActions = {
     }));
   },
 
+  updateProcedureCost: (procedureId: string, cost: string) => {
+    deliveryFormState.set(state => ({
+      ...state,
+      procedureLines: state.procedureLines.map(c =>
+        c.ProcedureId === procedureId ? { ...c, cost } : c
+      )
+    }));
+  },
+
   setFormData: (data: any) => {
     // Transform the API response to match your form state structure
     const formData = {
@@ -173,6 +184,7 @@ export const deliveryActions = {
       schemeName: data.SchemeName || "",
       deliveryaddress: data.deliveryaddress || "",
       phonenumber: data.phonenumber || "",
+      cost: data.cost || "",
       pharmacyName: data.PharmacyName || "",
       pharmacyId: data.PharmacyId || 0,
       deliveryFrequency: data.DeliveryFrequency || "",
@@ -222,8 +234,9 @@ export const deliveryActions = {
         phonenumber: formData.phonenumber,
         Pharmacyid: formData.pharmacyId,
         PharmacyName: formData.pharmacyName,
+        cost: formData.cost,
         // Include EntryNo for edit operations
-        EntryNo: formData.isEditing ? formData.entryno : undefined
+        EntryNo: formData.isEditing ? formData.entryno : undefined,
       };
 
       let response;

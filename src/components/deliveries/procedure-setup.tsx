@@ -21,8 +21,6 @@ export default function DiagnosisProcedureStep() {
     null
   );
 
-  console.log(formState);
-
   const handleAddDiagnosis = () => {
     if (selectedDiagnosis) {
       deliveryActions.addDiagnosis(selectedDiagnosis);
@@ -146,7 +144,7 @@ export default function DiagnosisProcedureStep() {
                       <p className="text-sm text-gray-500">
                         ID: {procedure.ProcedureId}
                       </p>
-                      <div className="mt-2 w-24">
+                      <div className="mt-2 w-24 space-y-3">
                         <Input
                           type="number"
                           min="1"
@@ -159,6 +157,18 @@ export default function DiagnosisProcedureStep() {
                             )
                           }
                           placeholder="Quantity"
+                        />
+                        <Input
+                          type="text"
+                          size="sm"
+                          value={formState.cost || ""}
+                          onChange={(e) =>
+                            deliveryActions.updateFormField(
+                              procedure.cost,
+                              e.target.value
+                            )
+                          }
+                          placeholder="Cost"
                         />
                       </div>
                     </div>

@@ -54,6 +54,7 @@ interface RowItem {
     isDelivered: boolean;
   };
   original: any;
+  cost: string;
 }
 
 export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
@@ -99,6 +100,7 @@ export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
       deliveries.map((delivery) => {
         const transformedDelivery = transformApiResponse(delivery);
 
+        console.log("Delivery", delivery);
         return {
           key: `${transformedDelivery.EntryNo}`,
           enrollee: {
@@ -122,6 +124,7 @@ export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
           },
           pharmacyid: transformedDelivery.Pharmacyid || 0,
           pharmacyname: transformedDelivery.PharmacyName || "",
+          cost: transformedDelivery.cost || "",
 
           original: transformedDelivery,
         };
@@ -201,6 +204,10 @@ export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
         return <span className="text-gray-500">{item.pharmacyname}</span>;
       case "pharmacyid":
         return <span className="text-gray-500">{item.pharmacyid}</span>;
+      case "pharmacyid":
+        return <span className="text-gray-500">{item.pharmacyid}</span>;
+      case "cost":
+        return <span className="text-gray-500">{item.cost}</span>;
       default:
         return getKeyValue(item, columnKey);
     }

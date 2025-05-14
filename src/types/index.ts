@@ -78,6 +78,7 @@ export type Procedure = {
   ProcedureId: string;
   ProcedureName: string;
   ProcedureQuantity: number;
+  cost: string;
 };
 
 export type Delivery = {
@@ -99,7 +100,8 @@ export type Delivery = {
   Pharmacyid: number;
   PharmacyName: string;
   deliveryaddress: string,
-  phonenumber: string
+  phonenumber: string;
+  cost: string;
 
   EntryNo?: number;
   DeliveryId?: string;

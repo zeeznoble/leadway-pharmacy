@@ -235,6 +235,7 @@ export const transformApiResponse = (apiResponse: any): Delivery => {
         ProcedureName: apiResponse.procedurename,
         ProcedureId: apiResponse.procdeureid,
         ProcedureQuantity: apiResponse.procedurequantity,
+        cost: apiResponse.cost
       },
     ],
     Username: apiResponse.username,
@@ -253,7 +254,8 @@ export const transformApiResponse = (apiResponse: any): Delivery => {
     Pharmacyid: apiResponse.pharmacyid,
     PharmacyName: apiResponse.pharmacyname,
     deliveryaddress: apiResponse.deliveryaddress,
-    phonenumber: apiResponse.phonenumber
+    phonenumber: apiResponse.phonenumber,
+    cost: apiResponse.cost
   };
 
 };
