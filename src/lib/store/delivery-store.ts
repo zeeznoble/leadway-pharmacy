@@ -169,7 +169,7 @@ export const deliveryActions = {
     deliveryFormState.set(state => ({
       ...state,
       procedureLines: state.procedureLines.map(c =>
-        c.ProcedureId === procedureId ? { ...c, cost } : c
+        c.ProcedureId === procedureId ? { ...c, cost: cost } : c
       )
     }));
   },
@@ -239,15 +239,14 @@ export const deliveryActions = {
         EntryNo: formData.isEditing ? formData.entryno : undefined,
       };
 
+      const { editDelivery, createDelivery } = await import("../services/delivery-service");
+
       let response;
       if (formData.isEditing) {
-        // For edit operations
-        const { editDelivery } = await import("../services/delivery-service");
-        response = await editDelivery(delivery);
+        console.log(delivery)
+        // response = await editDelivery(delivery);
       } else {
-        // For create operations
         const formattedData = { Deliveries: [delivery] };
-        const { createDelivery } = await import("../services/delivery-service");
         response = await createDelivery(formattedData);
       }
 

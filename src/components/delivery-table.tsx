@@ -204,8 +204,6 @@ export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
         return <span className="text-gray-500">{item.pharmacyname}</span>;
       case "pharmacyid":
         return <span className="text-gray-500">{item.pharmacyid}</span>;
-      case "pharmacyid":
-        return <span className="text-gray-500">{item.pharmacyid}</span>;
       case "cost":
         return <span className="text-gray-500">{item.cost}</span>;
       default:

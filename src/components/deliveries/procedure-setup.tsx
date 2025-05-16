@@ -161,10 +161,10 @@ export default function DiagnosisProcedureStep() {
                         <Input
                           type="text"
                           size="sm"
-                          value={formState.cost || ""}
+                          value={procedure.cost || ""}
                           onChange={(e) =>
-                            deliveryActions.updateFormField(
-                              procedure.cost,
+                            deliveryActions.updateProcedureCost(
+                              procedure.ProcedureId,
                               e.target.value
                             )
                           }

@@ -6,6 +6,19 @@ import { Textarea } from "@heroui/input";
 export default function AdditionalInfoStep() {
   const formState = useChunkValue(deliveryFormState);
 
+  const calculateTotalCost = () => {
+    if (!formState.procedureLines || formState.procedureLines.length === 0) {
+      return "0";
+    }
+
+    return formState.procedureLines
+      .map((proc) => {
+        const costValue = proc.cost ? proc.cost : "0";
+        return costValue;
+      })
+      .join(" + ");
+  };
+
   return (
     <div>
       <h3 className="text-lg font-medium mb-4">Additional Information</h3>
@@ -50,7 +63,7 @@ export default function AdditionalInfoStep() {
             <strong>Procedures:</strong> {formState.procedureLines.length}
           </p>
           <p>
-            <strong>Cost:</strong> {formState.cost}
+            <strong>Cost:</strong> {calculateTotalCost()}
           </p>
         </div>
       </div>
