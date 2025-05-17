@@ -61,6 +61,7 @@ export async function fetchProcedures(
       ProcedureId: item.tariff_code,
       ProcedureName: item.tariff_desc,
       ProcedureQuantity: 1,
+      cost: ""
     }));
 
     // Append to cache for pagination
