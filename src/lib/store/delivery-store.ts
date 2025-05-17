@@ -239,12 +239,43 @@ export const deliveryActions = {
         EntryNo: formData.isEditing ? formData.entryno : undefined,
       };
 
+      const deliveryEdit = {
+        EnrolleeId: formData.enrolleeId,
+        EnrolleeName: formData.enrolleeName,
+        EnrolleeAge: formData.enrolleeAge,
+        SchemeId: formData.schemeId,
+        SchemeName: formData.schemeName,
+        DeliveryFrequency: formData.deliveryFrequency,
+        DelStartDate: formData.delStartDate,
+        NextDeliveryDate: formData.nextDeliveryDate,
+        FrequencyDuration: formData.frequencyDuration,
+        EndDate: formData.endDate,
+        // Flatten DiagnosisLines
+        DiagnosisName: formData.diagnosisLines[0]?.DiagnosisName || "",
+        DiagnosisId: formData.diagnosisLines[0]?.DiagnosisId || "",
+        // Flatten ProcedureLines
+        ProcedureName: formData.procedureLines[0]?.ProcedureName || "",
+        ProcedureId: formData.procedureLines[0]?.ProcedureId || "",
+        ProcedureQuantity: formData.procedureLines[0]?.ProcedureQuantity || 1,
+        // Use cost from ProcedureLines
+        cost: formData.procedureLines[0]?.cost || formData.cost || "0",
+        AdditionalInformation: formData.additionalInformation,
+        IsDelivered: false,
+        Username: user ? user.UserName : "Unknown",
+        deliveryaddress: formData.deliveryaddress,
+        phonenumber: formData.phonenumber,
+        Pharmacyid: formData.pharmacyId,
+        PharmacyName: formData.pharmacyName,
+        // Include EntryNo for edit operations
+        EntryNo: formData.isEditing ? formData.entryno : undefined,
+      };
+
       const { editDelivery, createDelivery } = await import("../services/delivery-service");
 
       let response;
       if (formData.isEditing) {
-        console.log(delivery)
-        // response = await editDelivery(delivery);
+        console.log(deliveryEdit)
+        response = await editDelivery(deliveryEdit);
       } else {
         const formattedData = { Deliveries: [delivery] };
         response = await createDelivery(formattedData);
