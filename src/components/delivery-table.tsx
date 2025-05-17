@@ -137,6 +137,8 @@ export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
   const columnsWithActions = useMemo(
     () => [
       ...DELIVERY_COLUMNS,
+      { key: "cost", label: "Cost" },
+
       {
         key: "actions",
         label: "Actions",
