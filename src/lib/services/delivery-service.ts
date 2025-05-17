@@ -215,7 +215,7 @@ export const fetchDiagnoses = async (): Promise<Diagnosis[]> => {
 //   }
 // };
 
-export const editDelivery = async (formData: Delivery): Promise<any> => {
+export const editDelivery = async (formData: any): Promise<any> => {
   try {
     deliveryStore.set((state) => ({
       ...state,
