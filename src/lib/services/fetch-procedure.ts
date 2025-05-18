@@ -64,7 +64,6 @@ export async function fetchProcedures(
       cost: ""
     }));
 
-    // Append to cache for pagination
     proceduresCache = page === 0 ? procedures : [...proceduresCache, ...procedures];
     isInitialFetchDone = true;
 
