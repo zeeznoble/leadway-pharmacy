@@ -78,7 +78,7 @@ export default function RiderTable({ riders }: RiderTableProps) {
           <div className="relative flex items-center gap-2">
             <Button
               size="sm"
-              color="secondary"
+              color="default"
               variant="flat"
               onPress={() => viewRiderActions.openViewModal(rider.rider_id!)}
             >
