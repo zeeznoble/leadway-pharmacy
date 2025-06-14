@@ -1,5 +1,6 @@
 import { Dispatch, SetStateAction } from "react";
 import { To } from "react-router-dom";
+import { parseDate } from "@internationalized/date";
 
 
 import * as XLSX from "xlsx";
@@ -216,6 +217,16 @@ export const formatDate = (date: string | Date | undefined | null): string => {
   } catch (error) {
     console.error("Error formatting date:", error);
     return "Error";
+  }
+};
+
+export const parseDateString = (dateString: string) => {
+  if (!dateString) return null;
+  try {
+    const dateOnly = dateString.split("T")[0];
+    return parseDate(dateOnly);
+  } catch (error) {
+    return null;
   }
 };
 
