@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@heroui/button";
 import {
   Modal,
@@ -38,6 +39,9 @@ export default function RidersPage() {
   const { showViewModal, selectedRiderId } = useChunkValue(viewRiderStore);
   const formData = useChunkValue(riderFormData);
 
+  // Local state to track form validity
+  const [isFormCurrentlyValid, setIsFormCurrentlyValid] = useState(false);
+
   const handleOpenChange = (isOpen: boolean) => {
     if (isOpen) {
       riderActions.openModal();
@@ -46,7 +50,8 @@ export default function RidersPage() {
     }
   };
 
-  const isFormValid = () => {
+  // Modified to accept data parameter for validation
+  const isFormValid = (data = formData) => {
     const requiredFields = [
       "first_name",
       "last_name",
@@ -63,9 +68,13 @@ export default function RidersPage() {
     ];
 
     return requiredFields.every((field) => {
-      const value = formData[field as keyof typeof formData];
+      const value = data[field as keyof typeof data];
       return value && value.toString().trim() !== "";
     });
+  };
+
+  const handleFormValidityChange = (isValid: boolean) => {
+    setIsFormCurrentlyValid(isValid);
   };
 
   const handleSubmit = async () => {
@@ -138,7 +147,7 @@ export default function RidersPage() {
           </ModalHeader>
           <ModalBody>
             {error && <ErrorText text={error} />}
-            <RiderForm />
+            <RiderForm onFormChange={handleFormValidityChange} />
           </ModalBody>
           <ModalFooter>
             <Button
@@ -153,7 +162,7 @@ export default function RidersPage() {
               color="primary"
               onPress={handleSubmit}
               isLoading={isSubmitting}
-              isDisabled={isSubmitting || !isFormValid()}
+              isDisabled={isSubmitting || !isFormCurrentlyValid}
             >
               {editingRider ? "Update Rider" : "Create Rider"}
             </Button>
