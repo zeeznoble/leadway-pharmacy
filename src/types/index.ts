@@ -167,3 +167,30 @@ export type DeliveredPackResponse = {
     }
   ]
 }
+
+export interface Rider {
+  rider_id: number | null;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone_number: string;
+  date_of_birth: string;
+  gender: string;
+  address_line1: string;
+  address_line2?: string;
+  city: string;
+  state_province: string;
+  postal_code: string;
+  country: string;
+  emergency_contact_name: string;
+  emergency_contact_phone: string;
+  license_number: string;
+  license_expiry_date: string;
+  status: 'Active' | 'Inactive' | 'Suspended' | 'Pending';
+  profile_picture_url?: string;
+  notes?: string;
+}
+
+export interface CreateRiderRequest extends Omit<Rider, 'rider_id'> { }
+
+export type RiderResponse = { success: boolean; message: string; response?: Rider }
