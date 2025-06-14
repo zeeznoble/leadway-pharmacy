@@ -51,7 +51,7 @@ export const loginUser = async (formData: BaseForm): Promise<LoginResponse> => {
       return standardizedResponse;
     }
 
-    if (response.status === 200) {
+    if (data.result && data.result[0]) {
       toast.success('Login successfully')
     }
 
