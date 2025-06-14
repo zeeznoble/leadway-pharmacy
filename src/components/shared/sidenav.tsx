@@ -10,7 +10,7 @@ import {
   EnrolleeIcon,
   HelpIcon,
   PharmacyIcon,
-  ReportsIcon,
+  RiderIcon,
   StockIcon,
   TasksIcon,
 } from "../icons/main-icons";
@@ -130,18 +130,16 @@ export default function SideNav() {
       text: "To be Delivered",
     },
     {
-      link: "/reports",
+      link: "/rider",
       icon: (
-        <ReportsIcon
-          strokeWidth={router.pathname.startsWith("/reports") ? "1.5" : "1"}
-          stroke={
-            router.pathname.startsWith("/reports") ? "#ffffff" : "#475467"
-          }
+        <RiderIcon
+          strokeWidth={router.pathname.startsWith("/rider") ? "1.5" : "1"}
+          stroke={router.pathname.startsWith("/rider") ? "#ffffff" : "#475467"}
           width={23}
           height={20}
         />
       ),
-      text: "Reports",
+      text: "Create Rider",
     },
   ];
 
