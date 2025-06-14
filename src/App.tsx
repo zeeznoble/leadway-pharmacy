@@ -10,6 +10,7 @@ import DeliveriesPage from "@/pages/deliveries";
 import PackPage from "@/pages/pack";
 import ToBeDeliveredPage from "@/pages/to-be-delivered";
 import ReportsPage from "@/pages/reports";
+import RiderPage from "@/pages/rider";
 
 import DeliveryDetailsPage from "@/pages/delivery-details";
 
@@ -25,6 +26,7 @@ function App() {
         <Route path="/pack" element={<PackPage />} />
         <Route path="/to-be-delivered" element={<ToBeDeliveredPage />} />
         <Route path="/reports" element={<ReportsPage />} />
+        <Route path="/rider" element={<RiderPage />} />
         <Route path="/deliveries/:id" element={<DeliveryDetailsPage />} />
       </Route>
     </Routes>
