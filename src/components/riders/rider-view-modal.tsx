@@ -15,7 +15,7 @@ import { fetchRiderById } from "@/lib/services/rider-service";
 interface RiderViewModalProps {
   isOpen: boolean;
   onClose: () => void;
-  riderId: number | undefined;
+  riderId: number;
 }
 
 export default function RiderViewModal({
