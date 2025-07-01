@@ -170,11 +170,13 @@ export default function RidersPage() {
         </ModalContent>
       </Modal>
 
-      <RiderViewModal
-        isOpen={showViewModal}
-        onClose={viewRiderActions.closeViewModal}
-        riderId={selectedRiderId}
-      />
+      {selectedRiderId && (
+        <RiderViewModal
+          isOpen={showViewModal}
+          onClose={viewRiderActions.closeViewModal}
+          riderId={selectedRiderId}
+        />
+      )}
     </section>
   );
 }
