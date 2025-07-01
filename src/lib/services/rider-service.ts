@@ -1,6 +1,8 @@
-import { CreateRiderRequest, Rider, RiderResponse } from "@/types";
 import { asyncChunk } from "stunk";
+
 import { API_URL } from "../helpers";
+
+import { CreateRiderRequest, Rider, RiderResponse } from "@/types";
 
 export const fetchAllRiders = asyncChunk(async () => {
   const response = await fetch(`${API_URL}/Riders/GetAllRiders`);
@@ -9,10 +11,6 @@ export const fetchAllRiders = asyncChunk(async () => {
   }
   const data = await response.json();
   return data.result as Rider[];
-}, {
-  refresh: {
-    staleTime: 0,
-  }
 });
 
 export const fetchRiderById = asyncChunk(async (riderId: number) => {
