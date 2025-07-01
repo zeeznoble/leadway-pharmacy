@@ -263,7 +263,7 @@ export default function PackTable({
           isDisabled={selectedCount === 0 || isLoading}
           onPress={handlePackDelivery}
         >
-          {router.pathname === "/pack" ? "Pack Selected" : "Mark as Packed"} (
+          {router.pathname === "/pack" ? "Pack Selected" : "Send for Delivery"}(
           {selectedCount})
         </Button>
       </div>
