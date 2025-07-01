@@ -6,9 +6,10 @@ import { parseDate } from "@internationalized/date";
 import { useChunk } from "stunk/react";
 
 import { riderFormData } from "@/lib/store/rider-store";
+import { appChunk } from "@/lib/store/app-store";
 import { parseDateString } from "@/lib/helpers";
-
-import countriesData from "@/data/country-state.json";
+import SelectStates from "../select-state";
+import SelectCities from "../select-cities";
 
 const genderOptions = [
   { key: "Male", label: "Male" },
@@ -23,38 +24,14 @@ const statusOptions = [
   { key: "Pending", label: "Pending" },
 ];
 
-const getCountryOptions = (countriesData: any) => {
-  return countriesData.map((country: any) => ({
-    key: country.name,
-    label: `${country.name}`,
-    iso2: country.iso2,
-    iso3: country.iso3,
-    phonecode: country.phonecode,
-  }));
-};
-
-const getStateOptions = (countriesData: any, selectedCountry: string) => {
-  const country = countriesData.find((c: any) => c.name === selectedCountry);
-  if (!country || !country.states) return [];
-
-  return country.states.map((state: any) => ({
-    key: state.name,
-    label: state.name,
-    state_code: state.state_code,
-    type: state.type,
-  }));
-};
-
 interface RiderFormProps {
   onFormChange?: (isValid: boolean, formData?: any) => void;
 }
 
 export default function RiderForm({ onFormChange }: RiderFormProps) {
   const [globalFormData, setGlobalFormData] = useChunk(riderFormData);
+  const [appState] = useChunk(appChunk);
   const [localFormData, setLocalFormData] = useState(globalFormData);
-
-  const countryOptions = getCountryOptions(countriesData);
-  const stateOptions = getStateOptions(countriesData, localFormData.country);
 
   // Sync local state when global state changes (for edit mode)
   useEffect(() => {
@@ -122,13 +99,20 @@ export default function RiderForm({ onFormChange }: RiderFormProps) {
   ) => {
     setLocalFormData((prev) => ({ ...prev, [field]: value }));
     updateGlobalField(field, value);
-
-    // Clear state/province when country changes
-    if (field === "country") {
-      setLocalFormData((prev) => ({ ...prev, state_province: "" }));
-      updateGlobalField("state_province", "");
-    }
   };
+
+  const handleCityChange = (cityName: string) => {
+    updateLocalField("city", cityName);
+    updateGlobalField("city", cityName);
+  };
+
+  // Set default country to Nigeria
+  useEffect(() => {
+    if (!localFormData.country) {
+      updateLocalField("country", "Nigeria");
+      updateGlobalField("country", "Nigeria");
+    }
+  }, []);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -203,56 +187,24 @@ export default function RiderForm({ onFormChange }: RiderFormProps) {
         onBlur={() => handleBlur("address_line2")}
       />
 
-      {/* Updated Country field as Select */}
-      <Select
-        label="Country"
-        placeholder="Select country"
-        selectedKeys={localFormData.country ? [localFormData.country] : []}
-        onSelectionChange={(keys) =>
-          handleSelectChange("country", (Array.from(keys)[0] as string) || "")
-        }
-        isRequired
-        className="max-h-60"
-      >
-        {countryOptions.map((option: any) => (
-          <SelectItem key={option.key}>{option.label}</SelectItem>
-        ))}
-      </Select>
-
-      <Select
-        label="State/Province"
-        placeholder={
-          localFormData.country
-            ? "Select state/province"
-            : "Select country first"
-        }
-        selectedKeys={
-          localFormData.state_province ? [localFormData.state_province] : []
-        }
-        onSelectionChange={(keys) =>
-          handleSelectChange(
-            "state_province",
-            (Array.from(keys)[0] as string) || ""
-          )
-        }
-        isRequired
-        isDisabled={!localFormData.country || stateOptions.length === 0}
-        className="max-h-60"
-      >
-        {stateOptions.map((option: any) => (
-          <SelectItem key={option.key} textValue={option.key}>
-            {option.label}
-          </SelectItem>
-        ))}
-      </Select>
+      {/* Country - hardcoded to Nigeria */}
       <Input
-        label="City"
-        placeholder="Enter city"
-        value={localFormData.city}
-        onChange={(e) => updateLocalField("city", e.target.value)}
-        onBlur={() => handleBlur("city")}
+        label="Country"
+        value="Nigeria"
+        isReadOnly
         isRequired
+        className="bg-gray-50"
       />
+
+      {/* State selector using existing SelectStates component */}
+      <SelectStates />
+
+      {/* City selector - depends on selected state */}
+      <SelectCities
+        stateId={appState.stateId}
+        onCityChange={handleCityChange}
+      />
+
       <Input
         label="Postal Code"
         placeholder="Enter postal code"
@@ -312,17 +264,6 @@ export default function RiderForm({ onFormChange }: RiderFormProps) {
           <SelectItem key={option.key}>{option.label}</SelectItem>
         ))}
       </Select>
-
-      {/* Profile Picture URL - Optional */}
-      {/* <Input
-        label="Profile Picture URL"
-        placeholder="Enter profile picture URL"
-        value={localFormData.profile_picture_url}
-        onChange={(e) =>
-          updateLocalField("profile_picture_url", e.target.value)
-        }
-        onBlur={() => handleBlur("profile_picture_url")}
-      /> */}
 
       {/* Notes - Optional, spans full width */}
       <div className="md:col-span-3">
