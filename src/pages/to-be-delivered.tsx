@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useChunkValue } from "stunk/react";
+import { useAsyncChunk, useChunkValue } from "stunk/react";
 import toast from "react-hot-toast";
 import { CalendarDate, today, getLocalTimeZone } from "@internationalized/date";
 import { DatePicker } from "@heroui/date-picker";
@@ -14,8 +14,17 @@ import {
   fetchPacked,
 } from "@/lib/services/delivery-service";
 import PackDateModal from "@/components/pack-date-modal";
-import { formatDateForAPI } from "@/lib/helpers";
+import {
+  formatDateForAPI,
+  generateDeliveryCode,
+  generateVerificationCode,
+  getEnrolleeSmsMessage,
+  getRiderSmsMessage,
+} from "@/lib/helpers";
 import { Button } from "@heroui/button";
+import { fetchAllRiders } from "@/lib/services/rider-service";
+import RiderSelectionModal from "@/components/rider-selection-modal";
+import { sendSms, SmsPayload } from "@/lib/services/send-sms";
 
 export default function ToBeDeliveredPage() {
   const state = useChunkValue(deliveryStore);
@@ -29,6 +38,19 @@ export default function ToBeDeliveredPage() {
   // Date picker states
   const [fromDate, setFromDate] = useState<CalendarDate | null>(null);
   const [toDate, setToDate] = useState<CalendarDate | null>(null);
+
+  const [showRiderModal, setShowRiderModal] = useState(false);
+  const [_, setSelectedRider] = useState<any>(null);
+  const [nextDeliveryDate, setNextDeliveryDate] = useState<CalendarDate | null>(
+    null
+  );
+
+  const {
+    data: ridersData,
+    loading: ridersLoading,
+    error: ridersError,
+  } = useAsyncChunk(fetchAllRiders);
+  const riders = ridersData || []; // This ensures riders is always Rider[]
 
   // Load packed deliveries with date filters
   const loadPackedDeliveries = (enrolleeId: string = "") => {
@@ -99,34 +121,150 @@ export default function ToBeDeliveredPage() {
     setShowDateModal(true);
   };
 
+  const sendDeliverySms = async (
+    rider: any,
+    enrolleeCode: string,
+    riderCode: string,
+    deliveryDate: string
+  ) => {
+    try {
+      // Format the delivery date for display
+      const formattedDisplayDate = new Date(deliveryDate).toLocaleDateString(
+        "en-US",
+        {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        }
+      );
+
+      // Assuming you have enrollee information in your selected deliveries
+      const enrolleeInfo = selectedDeliveriesToPack[0]; // or however you access enrollee data
+
+      // Send SMS to rider
+      const riderSmsPayload: SmsPayload = {
+        To: rider.phone_number,
+        Message: getRiderSmsMessage(
+          `${rider.first_name} ${rider.last_name}`,
+          riderCode,
+          formattedDisplayDate,
+          enrolleeInfo.enrollee?.name || "Patient"
+        ),
+        Source: "Drug Delivery",
+        SourceId: 1,
+        TemplateId: 5,
+        PolicyNumber: "",
+        ReferenceNo: `DELIVERY_${Date.now()}`,
+        UserId: user?.User_id || 0,
+      };
+
+      // Send SMS to enrollee (you'll need to get enrollee phone from your data)
+      const enrolleeSmsPayload: SmsPayload = {
+        To: enrolleeInfo.enrolleePhone || "", // You'll need to get this from your data
+        Message: getEnrolleeSmsMessage(
+          enrolleeInfo.enrollee?.name || "Patient",
+          enrolleeCode,
+          formattedDisplayDate,
+          `${rider.first_name} ${rider.last_name}`
+        ),
+        Source: "Drug Delivery",
+        SourceId: 1,
+        TemplateId: 5,
+        PolicyNumber: "",
+        ReferenceNo: `VERIFICATION_${Date.now()}`,
+        UserId: user?.User_id || 0,
+      };
+
+      // Send both SMS messages
+      const [riderSmsResult, enrolleeSmsResult] = await Promise.all([
+        sendSms(riderSmsPayload),
+        sendSms(enrolleeSmsPayload),
+      ]);
+
+      // Log results for debugging
+      console.log("Rider SMS result:", riderSmsResult);
+      console.log("Enrollee SMS result:", enrolleeSmsResult);
+
+      // Check if both SMS were sent successfully
+      if (riderSmsResult.success && enrolleeSmsResult.success) {
+        console.log("Both SMS notifications sent successfully");
+      } else {
+        console.warn("Some SMS notifications may have failed");
+      }
+    } catch (error) {
+      console.error("Error sending SMS notifications:", error);
+      // Don't throw error here as delivery was already successful
+      toast.error("Delivery scheduled but SMS notifications failed");
+    }
+  };
+
   const handleConfirmPack = async (nextPackDate: CalendarDate) => {
     try {
-      // Format the date as needed for your API
-      const formattedDate = nextPackDate.toString();
+      // Store the selected date and deliveries
+      setNextDeliveryDate(nextPackDate);
+      setShowDateModal(false);
+      setShowRiderModal(true);
+    } catch (error) {
+      console.error("Error in handleConfirmPack:", error);
+      toast.error("Failed to proceed with delivery setup");
+    }
+  };
 
-      // Add the nextdeliverydate to each delivery (different from pack page)
+  const handleRiderConfirm = async (rider: any) => {
+    try {
+      if (!nextDeliveryDate) {
+        toast.error("Delivery date not selected");
+        return;
+      }
+
+      // Generate verification codes
+      const enrolleeVerificationCode = generateVerificationCode();
+      const riderDeliveryCode = generateDeliveryCode();
+
+      // Format the date as needed for your API
+      const formattedDate = nextDeliveryDate.toString();
+
+      // Add the delivery information to each delivery
       const deliveriesWithDate = selectedDeliveriesToPack.map(
         (delivery: any) => ({
           ...delivery,
           nextdeliverydate: formattedDate,
+          rider_id: rider.rider_id,
+          enrollee_verification_code: enrolleeVerificationCode,
+          rider_delivery_code: riderDeliveryCode,
         })
       );
 
+      console.log("Deliveries with date:", deliveriesWithDate);
+
+      // Send for delivery
       const result = await deliverPackDeliveries(deliveriesWithDate);
+
       if (result.IndividualResults[0].Status === "Success") {
-        toast.success(result.IndividualResults[0].Message);
-        // Refresh the data after successful delivery marking
+        // Send SMS notifications after successful delivery marking
+        await sendDeliverySms(
+          rider,
+          enrolleeVerificationCode,
+          riderDeliveryCode,
+          formattedDate
+        );
+
+        toast.success(
+          "Delivery scheduled and SMS notifications sent successfully!"
+        );
         loadPackedDeliveries();
       } else {
         toast.error(
-          result.IndividualResults[0].Message || "Failed to deliver packs"
+          result.IndividualResults[0].Message || "Failed to schedule delivery"
         );
       }
     } catch (error) {
-      console.error("Pack delivery error:", error);
-      toast.error("Failed to deliver packs");
+      console.error("Delivery scheduling error:", error);
+      toast.error("Failed to schedule delivery");
     } finally {
       setSelectedDeliveriesToPack([]);
+      setSelectedRider(null);
+      setNextDeliveryDate(null);
     }
   };
 
@@ -140,7 +278,6 @@ export default function ToBeDeliveredPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Packs to be Delivered</h1>
       </div>
-
       {/* Date Filter Section */}
       <div className="mb-4 p-4 bg-gray-50 rounded-lg">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
@@ -185,7 +322,6 @@ export default function ToBeDeliveredPage() {
           </div>
         )}
       </div>
-
       <PackTable
         deliveries={state.deliveries}
         isLoading={state.isLoading || state.isPackingLoading}
@@ -193,11 +329,18 @@ export default function ToBeDeliveredPage() {
         onSearch={handleSearch}
         onPackDelivery={handlePackDelivery}
       />
-
       <PackDateModal
         isOpen={showDateModal}
         onClose={() => setShowDateModal(false)}
         onConfirm={handleConfirmPack}
+      />
+      <RiderSelectionModal
+        isOpen={showRiderModal}
+        onClose={() => setShowRiderModal(false)}
+        onConfirm={handleRiderConfirm}
+        riders={riders}
+        loading={ridersLoading}
+        error={ridersError}
       />
     </section>
   );
