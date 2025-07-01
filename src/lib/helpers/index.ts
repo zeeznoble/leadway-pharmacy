@@ -292,6 +292,35 @@ export const formatDateForAPI = (date: CalendarDate | null): string => {
   return `${date.year}-${String(date.month).padStart(2, "0")}-${String(date.day).padStart(2, "0")}`;
 };
 
+export const generateVerificationCode = (): string => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
+export const generateDeliveryCode = (): string => {
+  return Math.floor(1000000 + Math.random() * 9000000).toString();
+};
+
+export const getRiderSmsMessage = (
+  riderName: string,
+  deliveryCode: string,
+  deliveryDate: string,
+  enrolleeName: string
+): string => {
+  return `Hi ${riderName}, you have a new delivery assignment for ${enrolleeName} on ${deliveryDate}. Your delivery code is ${deliveryCode}. Please present this code when making the delivery. - Health Partnerships`;
+};
+
+export const getEnrolleeSmsMessage = (
+  enrolleeName: string,
+  verificationCode: string,
+  deliveryDate: string,
+  riderName: string
+): string => {
+  return `Dear ${enrolleeName}, your medication delivery is scheduled for ${deliveryDate} with rider ${riderName}. Your verification code is ${verificationCode}. Only share this code with the authorized rider upon delivery. - Health Partnerships`;
+};
+
+
+
+
 
 // const columns = [
 //   { key: "provider", label: "PROVIDER" },
