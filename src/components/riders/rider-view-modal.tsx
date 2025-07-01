@@ -10,7 +10,6 @@ import { Chip } from "@heroui/chip";
 import { Card, CardBody } from "@heroui/card";
 import { useAsyncChunk } from "stunk/react";
 import { Spinner } from "@heroui/spinner";
-import { useEffect } from "react";
 import { fetchRiderById } from "@/lib/services/rider-service";
 
 interface RiderViewModalProps {
@@ -24,21 +23,12 @@ export default function RiderViewModal({
   onClose,
   riderId,
 }: RiderViewModalProps) {
-  const { data: rider, loading, error } = useAsyncChunk(fetchRiderById);
-
-  useEffect(() => {
-    if (isOpen && riderId) {
-      fetchRiderById.reset();
-      fetchRiderById.setParams(riderId);
-      fetchRiderById.refresh(riderId);
-    }
-  }, [isOpen, riderId]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      fetchRiderById.reset();
-    }
-  }, [isOpen]);
+  const {
+    data: rider,
+    loading,
+    error,
+    reload,
+  } = useAsyncChunk(fetchRiderById, [riderId!]);
 
   const shouldShowData = riderId && rider && !loading && !error;
 
@@ -92,7 +82,7 @@ export default function RiderViewModal({
                 className="mt-3"
                 onPress={() => {
                   if (riderId) {
-                    fetchRiderById.reload(riderId);
+                    reload(riderId);
                   }
                 }}
               >
