@@ -7,21 +7,14 @@ import { deliveryStore, deliveryActions } from "@/lib/store/delivery-store";
 import { authStore } from "@/lib/store/app-store";
 import {
   fetchDeliveries,
+  fetchUnpacked,
   packDeliveries,
 } from "@/lib/services/delivery-service";
 import PackTable from "@/components/pack-table";
 import PackDateModal from "@/components/pack-date-modal";
 
 export default function PackPage() {
-  const {
-    deliveries,
-    isLoading,
-    error,
-    isPackingLoading,
-    packingError,
-    packingSuccess,
-    lastSearchedEnrolleeId,
-  } = useChunkValue(deliveryStore);
+  const state = useChunkValue(deliveryStore);
 
   const { user } = useChunkValue(authStore);
   const [showDateModal, setShowDateModal] = useState(false);
@@ -31,7 +24,7 @@ export default function PackPage() {
 
   useEffect(() => {
     if (user?.UserName) {
-      fetchDeliveries(user.UserName, "");
+      fetchUnpacked(user.UserName, "", "2024-01-01", "2024-06-30");
     }
 
     return () => {
@@ -40,19 +33,19 @@ export default function PackPage() {
   }, [user?.UserName]);
 
   useEffect(() => {
-    if (packingSuccess) {
+    if (state.packingSuccess) {
       if (user?.UserName) {
-        fetchDeliveries(user.UserName, lastSearchedEnrolleeId || "");
+        fetchDeliveries(user.UserName, state.lastSearchedEnrolleeId || "");
       }
       deliveryActions.setPackingSuccess(false);
     }
-  }, [packingSuccess, user?.UserName, lastSearchedEnrolleeId]);
+  }, [state.packingSuccess, user?.UserName, state.lastSearchedEnrolleeId]);
 
   useEffect(() => {
-    if (packingError) {
-      toast.error(packingError);
+    if (state.packingError) {
+      toast.error(state.packingError);
     }
-  }, [packingError]);
+  }, [state.packingError]);
 
   const handleSearch = async (enrolleeId: string) => {
     if (!user?.UserName) {
@@ -112,9 +105,9 @@ export default function PackPage() {
       </div>
 
       <PackTable
-        deliveries={deliveries}
-        isLoading={isLoading || isPackingLoading}
-        error={error}
+        deliveries={state.deliveries}
+        isLoading={state.isLoading || state.isPackingLoading}
+        error={state.error}
         onSearch={handleSearch}
         onPackDelivery={handlePackDelivery}
       />
