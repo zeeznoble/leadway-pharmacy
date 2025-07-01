@@ -470,6 +470,9 @@ export const deliverPackDeliveries = async (deliveryLines: any[]): Promise<Deliv
       body: JSON.stringify(deliveryLines),
     });
 
+    console.log("Delivering pack deliveries to:", apiUrl);
+    console.log("Payload:", JSON.stringify(deliveryLines, null, 2));
+
     if (!response.ok) {
       throw new Error(`API error: ${response.status}`);
     }
