@@ -8,8 +8,11 @@ export const fetchAllRiders = asyncChunk(async () => {
     throw new Error('Failed to fetch riders');
   }
   const data = await response.json();
-  console.log(data);
   return data.result as Rider[];
+}, {
+  refresh: {
+    staleTime: 0,
+  }
 });
 
 export const fetchRiderById = asyncChunk(async (riderId: number) => {
@@ -18,8 +21,6 @@ export const fetchRiderById = asyncChunk(async (riderId: number) => {
     throw new Error('Failed to fetch rider');
   }
   const data = await response.json();
-  console.log(`${API_URL}/Riders/GetRiderByID?riderid=${riderId}`)
-  console.log(data);
 
   return data.result[0] as Rider;
 });
