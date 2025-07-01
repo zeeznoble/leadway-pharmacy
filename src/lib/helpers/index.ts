@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction } from "react";
 import { To } from "react-router-dom";
-import { parseDate } from "@internationalized/date";
+import { CalendarDate, parseDate } from "@internationalized/date";
 
 
 import * as XLSX from "xlsx";
@@ -285,6 +285,11 @@ export const getUsername = async (): Promise<string> => {
       resolve(currentUsername);
     }
   });
+};
+
+export const formatDateForAPI = (date: CalendarDate | null): string => {
+  if (!date) return "";
+  return `${date.year}-${String(date.month).padStart(2, "0")}-${String(date.day).padStart(2, "0")}`;
 };
 
 
