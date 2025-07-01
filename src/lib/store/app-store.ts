@@ -6,6 +6,7 @@ export const appChunk = chunk({
   enrolleeId: '',
   stateId: '',
   disciplineId: '',
+  cityId: '',
   enrolleeData: null as EnrolleeData | null
 })
 
