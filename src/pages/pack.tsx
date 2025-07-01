@@ -6,11 +6,7 @@ import { DatePicker } from "@heroui/date-picker";
 
 import { deliveryStore, deliveryActions } from "@/lib/store/delivery-store";
 import { authStore } from "@/lib/store/app-store";
-import {
-  fetchDeliveries,
-  fetchUnpacked,
-  packDeliveries,
-} from "@/lib/services/delivery-service";
+import { fetchUnpacked, packDeliveries } from "@/lib/services/delivery-service";
 import PackTable from "@/components/pack-table";
 import PackDateModal from "@/components/pack-date-modal";
 import { Button } from "@heroui/button";
