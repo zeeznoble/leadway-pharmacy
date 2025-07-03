@@ -162,7 +162,6 @@ export const fetchPacked = async (username: string, enrolleeId: string, fromDate
 
     const apiUrl = `${API_URL}/PharmacyDelivery/GetPackedDrugs?username=${encodeURIComponent(username || "")}&enrolleeId=${encodeURIComponent(enrolleeId || "")}&FromDate=${fromDate}&Todate=${toDate}&ACTIONTYPE=2`;
 
-    console.log("Fetching packs from:", apiUrl);
 
     const response = await fetch(apiUrl);
 
