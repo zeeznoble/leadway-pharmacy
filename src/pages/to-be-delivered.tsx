@@ -10,7 +10,6 @@ import { deliveryStore, deliveryActions } from "@/lib/store/delivery-store";
 import { authStore } from "@/lib/store/app-store";
 import {
   deliverPackDeliveries,
-  fetchDeliveries,
   fetchPacked,
 } from "@/lib/services/delivery-service";
 import PackDateModal from "@/components/pack-date-modal";
@@ -25,22 +24,45 @@ import { Button } from "@heroui/button";
 import { fetchAllRiders } from "@/lib/services/rider-service";
 import RiderSelectionModal from "@/components/rider-selection-modal";
 import { sendSms, SmsPayload } from "@/lib/services/send-sms";
+import { Rider } from "@/types";
+
+interface Enrollee {
+  name: string;
+}
+
+interface Delivery {
+  DeliveryEntryNo: number;
+  enrollee?: Enrollee;
+  phonenumber?: string;
+  Notes?: string;
+  [key: string]: any;
+}
+
+interface DeliveryForAPI {
+  DeliveryEntryNo: number;
+  Marked_as_delivered_by: string;
+  Notes: string;
+  nextdeliverydate: string;
+  rider_id: number;
+  receipientcode: string;
+  ridercode: string;
+}
 
 export default function ToBeDeliveredPage() {
   const state = useChunkValue(deliveryStore);
   const { user } = useChunkValue(authStore);
 
-  const [showDateModal, setShowDateModal] = useState(false);
-  const [selectedDeliveriesToPack, setSelectedDeliveriesToPack] = useState<any>(
-    []
-  );
+  const [showDateModal, setShowDateModal] = useState<boolean>(false);
+  const [selectedDeliveriesToPack, setSelectedDeliveriesToPack] = useState<
+    Delivery[]
+  >([]);
 
   // Date picker states
   const [fromDate, setFromDate] = useState<CalendarDate | null>(null);
   const [toDate, setToDate] = useState<CalendarDate | null>(null);
 
-  const [showRiderModal, setShowRiderModal] = useState(false);
-  const [_, setSelectedRider] = useState<any>(null);
+  const [showRiderModal, setShowRiderModal] = useState<boolean>(false);
+  const [_, setSelectedRider] = useState<Rider | null>(null);
   const [nextDeliveryDate, setNextDeliveryDate] = useState<CalendarDate | null>(
     null
   );
@@ -50,10 +72,11 @@ export default function ToBeDeliveredPage() {
     loading: ridersLoading,
     error: ridersError,
   } = useAsyncChunk(fetchAllRiders);
-  const riders = ridersData || []; // This ensures riders is always Rider[]
+
+  const riders: Rider[] = ridersData || [];
 
   // Load packed deliveries with date filters
-  const loadPackedDeliveries = (enrolleeId: string = "") => {
+  const loadPackedDeliveries = (enrolleeId: string = ""): void => {
     if (!user?.UserName) return;
 
     const fromDateStr = formatDateForAPI(fromDate);
@@ -75,7 +98,7 @@ export default function ToBeDeliveredPage() {
   useEffect(() => {
     if (state.packingSuccess) {
       if (user?.UserName) {
-        fetchDeliveries(user.UserName, state.lastSearchedEnrolleeId || "");
+        fetchPacked(user.UserName, state.lastSearchedEnrolleeId || "");
       }
       deliveryActions.setPackingSuccess(false);
     }
@@ -87,7 +110,7 @@ export default function ToBeDeliveredPage() {
     }
   }, [state.packingError]);
 
-  const handleSearch = async (enrolleeId: string) => {
+  const handleSearch = async (enrolleeId: string): Promise<void> => {
     if (!user?.UserName) {
       toast.error("User information not available");
       return;
@@ -100,33 +123,32 @@ export default function ToBeDeliveredPage() {
       const fromDateStr = formatDateForAPI(fromDate);
       const toDateStr = formatDateForAPI(toDate);
 
-      if (enrolleeId) {
-        await fetchPacked(user.UserName, enrolleeId, fromDateStr, toDateStr);
-      } else {
-        await fetchPacked(user.UserName, enrolleeId, fromDateStr, toDateStr);
-      }
+      await fetchPacked(user.UserName, enrolleeId, fromDateStr, toDateStr);
     } catch (error) {
       const err = error as Error;
       toast.error(err.message);
     }
   };
 
-  const handlePackDelivery = async (selectedDeliveries: any[]) => {
+  const handlePackDelivery = async (
+    selectedDeliveries: Delivery[]
+  ): Promise<void> => {
     if (selectedDeliveries.length === 0) {
       toast.error("Please select at least one delivery to mark as delivered");
       return;
     }
 
     setSelectedDeliveriesToPack(selectedDeliveries);
+    console.log("Selected Deliveries to Pack", selectedDeliveries);
     setShowDateModal(true);
   };
 
   const sendDeliverySms = async (
-    rider: any,
+    rider: Rider,
     enrolleeCode: string,
     riderCode: string,
     deliveryDate: string
-  ) => {
+  ): Promise<void> => {
     try {
       // Format the delivery date for display
       const formattedDisplayDate = new Date(deliveryDate).toLocaleDateString(
@@ -138,8 +160,20 @@ export default function ToBeDeliveredPage() {
         }
       );
 
-      // Assuming you have enrollee information in your selected deliveries
-      const enrolleeInfo = selectedDeliveriesToPack[0]; // or however you access enrollee data
+      // Get enrollee information from selected deliveries
+      const selectedDeliveryEntryNo =
+        selectedDeliveriesToPack[0].DeliveryEntryNo;
+
+      // Find the full delivery data from state using the DeliveryEntryNo
+      const fullDeliveryData = state.deliveries.find(
+        (delivery: any) => delivery.entryno === selectedDeliveryEntryNo
+      );
+
+      console.log("Full Delivery Data:", fullDeliveryData);
+
+      if (!fullDeliveryData) {
+        throw new Error("Could not find full delivery data");
+      }
 
       // Send SMS to rider
       const riderSmsPayload: SmsPayload = {
@@ -148,7 +182,7 @@ export default function ToBeDeliveredPage() {
           `${rider.first_name} ${rider.last_name}`,
           riderCode,
           formattedDisplayDate,
-          enrolleeInfo.enrollee?.name || "Patient"
+          fullDeliveryData.EnrolleeName || "Patient"
         ),
         Source: "Drug Delivery",
         SourceId: 1,
@@ -158,11 +192,11 @@ export default function ToBeDeliveredPage() {
         UserId: user?.User_id || 0,
       };
 
-      // Send SMS to enrollee (you'll need to get enrollee phone from your data)
+      // Send SMS to enrollee - using phonenumber field from API response
       const enrolleeSmsPayload: SmsPayload = {
-        To: enrolleeInfo.enrolleePhone || "", // You'll need to get this from your data
+        To: fullDeliveryData.phonenumber || "",
         Message: getEnrolleeSmsMessage(
-          enrolleeInfo.enrollee?.name || "Patient",
+          fullDeliveryData.EnrolleeName || "Patient",
           enrolleeCode,
           formattedDisplayDate,
           `${rider.first_name} ${rider.last_name}`
@@ -198,7 +232,9 @@ export default function ToBeDeliveredPage() {
     }
   };
 
-  const handleConfirmPack = async (nextPackDate: CalendarDate) => {
+  const handleConfirmPack = async (
+    nextPackDate: CalendarDate
+  ): Promise<void> => {
     try {
       // Store the selected date and deliveries
       setNextDeliveryDate(nextPackDate);
@@ -210,7 +246,7 @@ export default function ToBeDeliveredPage() {
     }
   };
 
-  const handleRiderConfirm = async (rider: any) => {
+  const handleRiderConfirm = async (rider: Rider): Promise<void> => {
     try {
       if (!nextDeliveryDate) {
         toast.error("Delivery date not selected");
@@ -221,24 +257,33 @@ export default function ToBeDeliveredPage() {
       const enrolleeVerificationCode = generateVerificationCode();
       const riderDeliveryCode = generateDeliveryCode();
 
+      console.log("Selected Delivery to Pack", selectedDeliveriesToPack);
+
       // Format the date as needed for your API
       const formattedDate = nextDeliveryDate.toString();
 
-      // Add the delivery information to each delivery
-      const deliveriesWithDate = selectedDeliveriesToPack.map(
-        (delivery: any) => ({
-          ...delivery,
+      // Create the rider's full name for the API
+      const riderFullName = `${rider.first_name} ${rider.last_name}`;
+
+      // Transform deliveries to match API structure
+      const deliveriesForAPI: DeliveryForAPI[] = selectedDeliveriesToPack.map(
+        (delivery: Delivery) => ({
+          DeliveryEntryNo: delivery.DeliveryEntryNo,
+          Marked_as_delivered_by: riderFullName, // Use rider's name, not logged-in user
+          Notes:
+            delivery.Notes ||
+            `Package for ${delivery.enrollee?.name || "Patient"}`,
           nextdeliverydate: formattedDate,
-          rider_id: rider.rider_id,
-          enrollee_verification_code: enrolleeVerificationCode,
-          rider_delivery_code: riderDeliveryCode,
+          rider_id: rider.rider_id!,
+          receipientcode: enrolleeVerificationCode, // Map to correct field name
+          ridercode: riderDeliveryCode, // Map to correct field name
         })
       );
 
-      console.log("Deliveries with date:", deliveriesWithDate);
+      console.log("Deliveries for API:", deliveriesForAPI);
 
       // Send for delivery
-      const result = await deliverPackDeliveries(deliveriesWithDate);
+      const result = await deliverPackDeliveries(deliveriesForAPI);
 
       if (result.IndividualResults[0].Status === "Success") {
         // Send SMS notifications after successful delivery marking
@@ -268,7 +313,7 @@ export default function ToBeDeliveredPage() {
     }
   };
 
-  const handleClearDates = () => {
+  const handleClearDates = (): void => {
     setFromDate(null);
     setToDate(null);
   };
