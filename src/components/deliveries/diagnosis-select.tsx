@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { Autocomplete, AutocompleteItem } from "@heroui/autocomplete";
-import { useInfiniteScroll } from "@heroui/use-infinite-scroll";
 
-import { fetchDiagnoses } from "@/lib/services/fetch-diagnosis";
+import {
+  getAllDiagnoses,
+  isDiagnosesDataLoaded,
+} from "@/lib/services/fetch-diagnosis";
 
 import { Diagnosis } from "@/types";
 
@@ -11,54 +13,42 @@ interface DiagnosisAutocompleteProps {
   isDisabled?: boolean;
 }
 
-export function useDiagnosisList({ fetchDelay = 0 } = {}) {
-  const [displayedItems, setDisplayedItems] = useState<Diagnosis[]>([]);
-  const [hasMore, setHasMore] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
-  const [page, setPage] = useState(0);
-  const limit = 20;
+export function useDiagnosisList() {
+  const [allItems, setAllItems] = useState<Diagnosis[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const loadDiagnoses = async (pageNum = 0) => {
+  const loadAllDiagnoses = async () => {
     try {
       setIsLoading(true);
-      if (fetchDelay > 0) {
-        await new Promise((resolve) => setTimeout(resolve, fetchDelay));
+
+      // Wait for data to be loaded if it's not ready yet
+      let attempts = 0;
+      while (!isDiagnosesDataLoaded() && attempts < 50) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        attempts++;
       }
 
-      const { diagnoses, hasMore: moreAvailable } = await fetchDiagnoses(
-        pageNum,
-        limit
-      );
-
-      if (pageNum === 0) {
-        setDisplayedItems(diagnoses);
+      if (isDiagnosesDataLoaded()) {
+        const diagnoses = getAllDiagnoses();
+        setAllItems(diagnoses);
+        console.log("Loaded all diagnoses for autocomplete:", diagnoses.length);
       } else {
-        setDisplayedItems((prev) => [...prev, ...diagnoses]);
+        console.warn("Diagnoses data not loaded after waiting");
       }
-
-      setHasMore(moreAvailable);
     } catch (error) {
-      console.error("Load diagnoses error:", error);
+      console.error("Load all diagnoses error:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    loadDiagnoses(0);
+    loadAllDiagnoses();
   }, []);
 
-  const onLoadMore = () => {
-    const nextPage = page + 1;
-    setPage(nextPage);
-    loadDiagnoses(nextPage);
-  };
-
   return {
-    items: displayedItems,
-    hasMore,
+    items: allItems,
     isLoading,
-    onLoadMore,
   };
 }
 
@@ -66,29 +56,18 @@ export default function DiagnosisAutocomplete({
   onSelect,
   isDisabled,
 }: DiagnosisAutocompleteProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const { items, hasMore, isLoading, onLoadMore } = useDiagnosisList({
-    fetchDelay: 500,
-  });
-
-  const [, scrollerRef] = useInfiniteScroll({
-    hasMore,
-    isEnabled: isOpen,
-    shouldUseLoader: false,
-    onLoadMore,
-  });
+  const { items, isLoading } = useDiagnosisList();
 
   return (
     <Autocomplete
       className="w-full"
       defaultItems={items}
+      isVirtualized
       isLoading={isLoading}
       label="Select Diagnosis"
       placeholder="Search for a diagnosis"
-      scrollRef={scrollerRef}
       variant="bordered"
       isDisabled={isDisabled}
-      onOpenChange={setIsOpen}
       onSelectionChange={(key) => {
         const selected = items.find(
           (item) => `${item.DiagnosisId}-${item.DiagnosisName}` === key
