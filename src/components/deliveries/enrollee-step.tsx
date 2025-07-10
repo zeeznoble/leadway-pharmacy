@@ -12,7 +12,7 @@ export default function EnrolleeSelectionStep() {
   const { enrolleeId, enrolleeData } = useChunkValue(appChunk);
 
   useEffect(() => {
-    if (user) {
+    if (user && !formState.isEditing) {
       deliveryActions.updateFormField("enrolleeId", enrolleeId);
       deliveryActions.updateFormField(
         "enrolleeName",
@@ -36,8 +36,12 @@ export default function EnrolleeSelectionStep() {
           enrolleeData?.Member_Phone_One
         );
       }
+    } else if (user && formState.isEditing) {
+      if (!formState.schemeId) {
+        deliveryActions.updateFormField("schemeId", user.insco_id.toString());
+      }
     }
-  }, [user]);
+  }, [user, formState.isEditing]);
 
   const handleInputChange = (field: string, value: string) => {
     deliveryActions.updateFormField(field, value);
@@ -45,25 +49,40 @@ export default function EnrolleeSelectionStep() {
 
   return (
     <div>
-      <h3 className="text-lg font-medium mb-4">Enrollee Information</h3>
+      <h3 className="text-lg font-medium mb-4">
+        {formState.isEditing
+          ? "Edit Delivery - Enrollee Information"
+          : "Enrollee Information"}
+      </h3>
 
       <div className="mt-4 p-5 bg-gray-50 rounded-md">
         <div className="grid grid-cols-2 gap-6">
           <div>
             <p className="text-sm text-gray-500">Enrollee ID</p>
-            <p className="font-medium">{formState.enrolleeId}</p>
+            <p className="font-medium">
+              {formState.enrolleeId || "Not Available"}
+            </p>
           </div>
           <div>
             <p className="text-sm text-gray-500">Name</p>
-            <p className="font-medium">{formState.enrolleeName}</p>
+            <p className="font-medium">
+              {formState.enrolleeName &&
+              formState.enrolleeName !== "undefined undefined undefined"
+                ? formState.enrolleeName
+                : "Name not available"}
+            </p>
           </div>
           <div>
             <p className="text-sm text-gray-500">Age</p>
-            <p className="font-medium">{formState.enrolleeAge}</p>
+            <p className="font-medium">
+              {formState.enrolleeAge || "Not Available"}
+            </p>
           </div>
           <div>
             <p className="text-sm text-gray-500">Scheme</p>
-            <p className="font-medium">{formState.schemeName}</p>
+            <p className="font-medium">
+              {formState.schemeName || "Not Available"}
+            </p>
           </div>
         </div>
 
@@ -90,7 +109,11 @@ export default function EnrolleeSelectionStep() {
         </div>
 
         <div className="mt-4 text-sm text-gray-500">
-          <p>This delivery will be created for the displayed enrollee</p>
+          <p>
+            {formState.isEditing
+              ? "Editing delivery information for the above enrollee"
+              : "This delivery will be created for the displayed enrollee"}
+          </p>
         </div>
       </div>
     </div>
