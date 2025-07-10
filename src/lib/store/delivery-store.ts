@@ -1,8 +1,12 @@
 import { chunk } from "stunk";
-import { Delivery, Diagnosis, Procedure, Provider } from "@/types";
-import { appChunk, authStore } from "./app-store";
 import toast from "react-hot-toast";
+
+import { appChunk, authStore } from "./app-store";
 import { fetchDeliveries } from "../services/delivery-service";
+
+import { safeGet } from "../helpers";
+
+import { Delivery, Diagnosis, Procedure, Provider } from "@/types";
 
 export const initialFormState = {
   enrolleeId: "",
@@ -175,30 +179,63 @@ export const deliveryActions = {
   },
 
   setFormData: (data: any) => {
+
+    // Handle diagnosis lines - check for both array and flattened structure
+    let diagnosisLines: Diagnosis[] = [];
+    if (data.DiagnosisLines && Array.isArray(data.DiagnosisLines)) {
+      diagnosisLines = data.DiagnosisLines;
+    } else if (data.DiagnosisName && data.DiagnosisId) {
+      // Handle flattened structure
+      diagnosisLines = [{
+        DiagnosisName: data.DiagnosisName,
+        DiagnosisId: data.DiagnosisId
+      }];
+    }
+
+    // Handle procedure lines - check for both array and flattened structure
+    let procedureLines: Procedure[] = [];
+    if (data.ProcedureLines && Array.isArray(data.ProcedureLines)) {
+      procedureLines = data.ProcedureLines;
+    } else if (data.ProcedureName && data.ProcedureId) {
+      // Handle flattened structure
+      procedureLines = [{
+        ProcedureName: data.ProcedureName,
+        ProcedureId: data.ProcedureId,
+        ProcedureQuantity: safeGet(data.ProcedureQuantity, 1),
+        cost: safeGet(data.cost, "0")
+      }];
+    }
+
     // Transform the API response to match your form state structure
     const formData = {
-      enrolleeId: data.EnrolleeId || "",
-      enrolleeName: data.EnrolleeName || "",
-      enrolleeAge: data.EnrolleeAge || 0,
-      schemeId: data.SchemeId || "",
-      schemeName: data.SchemeName || "",
-      deliveryaddress: data.deliveryaddress || "",
-      phonenumber: data.phonenumber || "",
-      cost: data.cost || "",
-      pharmacyName: data.PharmacyName || "",
-      pharmacyId: data.PharmacyId || 0,
-      deliveryFrequency: data.DeliveryFrequency || "",
-      delStartDate: data.DelStartDate || "",
-      nextDeliveryDate: data.NextDeliveryDate || "",
-      frequencyDuration: data.FrequencyDuration || "",
-      endDate: data.EndDate || "",
-      diagnosisLines: data.DiagnosisLines || [],
-      procedureLines: data.ProcedureLines || [],
-      additionalInformation: data.AdditionalInformation || "",
+      enrolleeId: safeGet(data.EnrolleeId, ""),
+      enrolleeName: safeGet(data.EnrolleeName, ""),
+      enrolleeAge: safeGet(data.EnrolleeAge, 0),
+      schemeId: safeGet(data.SchemeId, ""),
+      schemeName: safeGet(data.SchemeName, ""),
+      deliveryaddress: safeGet(data.deliveryaddress, ""),
+      phonenumber: safeGet(data.phonenumber, ""),
+      cost: safeGet(data.cost, ""),
+
+      // Handle pharmacy data with multiple possible field names
+      pharmacyName: safeGet(data.PharmacyName, ""),
+      pharmacyId: safeGet(data.PharmacyId || data.Pharmacyid, 0),
+
+      deliveryFrequency: safeGet(data.DeliveryFrequency, ""),
+      delStartDate: safeGet(data.DelStartDate, ""),
+      nextDeliveryDate: safeGet(data.NextDeliveryDate, ""),
+      frequencyDuration: safeGet(data.FrequencyDuration, ""),
+      endDate: safeGet(data.EndDate, ""),
+
+      diagnosisLines: diagnosisLines,
+      procedureLines: procedureLines,
+
+      additionalInformation: safeGet(data.AdditionalInformation, ""),
+
       currentStep: 1,
       totalSteps: 5,
       isEditing: true,
-      entryno: data.EntryNo
+      entryno: safeGet(data.EntryNo, 0)
     };
 
     deliveryFormState.set(formData);
@@ -250,15 +287,15 @@ export const deliveryActions = {
         NextDeliveryDate: formData.nextDeliveryDate,
         FrequencyDuration: formData.frequencyDuration,
         EndDate: formData.endDate,
-        // Flatten DiagnosisLines
-        DiagnosisName: formData.diagnosisLines[0]?.DiagnosisName || "",
-        DiagnosisId: formData.diagnosisLines[0]?.DiagnosisId || "",
-        // Flatten ProcedureLines
-        ProcedureName: formData.procedureLines[0]?.ProcedureName || "",
-        ProcedureId: formData.procedureLines[0]?.ProcedureId || "",
-        ProcedureQuantity: formData.procedureLines[0]?.ProcedureQuantity || 1,
-        // Use cost from ProcedureLines
-        cost: formData.procedureLines[0]?.cost || formData.cost || "0",
+        // Handle diagnosis lines - use first item if array exists
+        DiagnosisName: formData.diagnosisLines.length > 0 ? formData.diagnosisLines[0].DiagnosisName : "",
+        DiagnosisId: formData.diagnosisLines.length > 0 ? formData.diagnosisLines[0].DiagnosisId : "",
+        // Handle procedure lines - use first item if array exists
+        ProcedureName: formData.procedureLines.length > 0 ? formData.procedureLines[0].ProcedureName : "",
+        ProcedureId: formData.procedureLines.length > 0 ? formData.procedureLines[0].ProcedureId : "",
+        ProcedureQuantity: formData.procedureLines.length > 0 ? formData.procedureLines[0].ProcedureQuantity : 1,
+        // Use cost from ProcedureLines if available, otherwise use form cost
+        cost: formData.procedureLines.length > 0 ? (formData.procedureLines[0].cost || formData.cost || "0") : (formData.cost || "0"),
         AdditionalInformation: formData.additionalInformation,
         IsDelivered: false,
         Username: user ? user.UserName : "Unknown",
@@ -274,7 +311,7 @@ export const deliveryActions = {
 
       let response;
       if (formData.isEditing) {
-        console.log(deliveryEdit)
+        console.log("Submitting edit data:", deliveryEdit); // Debug log
         response = await editDelivery(deliveryEdit);
       } else {
         const formattedData = { Deliveries: [delivery] };
