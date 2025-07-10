@@ -4,6 +4,7 @@ import { Button } from "@heroui/button";
 import { Card, CardBody } from "@heroui/card";
 import { useState, useEffect } from "react";
 import { useChunkValue } from "stunk/react";
+
 import ProviderAutocomplete from "./provider-select";
 
 export default function ProviderSetup() {
@@ -12,9 +13,7 @@ export default function ProviderSetup() {
     null
   );
 
-  // Synchronize selectedProvider with formState
   useEffect(() => {
-    console.log("ProviderSetup formState:", formState); // Debug log
     if (formState.pharmacyId && formState.pharmacyName) {
       setSelectedProvider({
         Pharmacyid: formState.pharmacyId,
@@ -27,7 +26,6 @@ export default function ProviderSetup() {
 
   const handleAddProvider = () => {
     if (selectedProvider) {
-      console.log("Adding provider:", selectedProvider); // Debug log
       deliveryActions.setProvider(selectedProvider);
       // Keep the selected provider in the autocomplete for editing
       // setSelectedProvider(null);
@@ -35,7 +33,6 @@ export default function ProviderSetup() {
   };
 
   const handleRemoveProvider = () => {
-    console.log("Removing provider"); // Debug log
     deliveryActions.removeProvider();
     setSelectedProvider(null);
   };
@@ -50,7 +47,6 @@ export default function ProviderSetup() {
             <div className="flex-1">
               <ProviderAutocomplete
                 onSelect={(provider) => {
-                  console.log("ProviderAutocomplete selected:", provider); // Debug log
                   setSelectedProvider(provider);
                 }}
                 enrolleeId={formState.enrolleeId}
