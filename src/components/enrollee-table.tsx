@@ -125,13 +125,6 @@ export default function EnrolleeDataTable() {
     }
   };
 
-  // const handlePageChange = (page: number) => {
-  //   if (!allData) return;
-
-  //   setCurrentPage(page);
-  //   updateDisplayData(allData, page, searchQuery);
-  // };
-
   const isStillLoading = loading || pageLoading;
 
   const serialOffset = (currentPage - 1) * pageSize;
@@ -173,7 +166,12 @@ export default function EnrolleeDataTable() {
               shadow="none"
               topContent={
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-4">
-                  <h3 className="text-lg font-semibold">Enrollees</h3>
+                  <div className="flex flex-col gap-1">
+                    <h3 className="text-lg font-semibold">Enrollees</h3>
+                    <p className="text-sm text-gray-600">
+                      Click on any row to create deliveries
+                    </p>
+                  </div>
                   <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center w-full sm:w-auto">
                     <Input
                       className="w-full sm:w-64"
@@ -200,10 +198,16 @@ export default function EnrolleeDataTable() {
                 emptyContent={"No Enrollee Results Found"}
               >
                 {(item) => (
-                  <TableRow key={`${item.Member_MemberUniqueID}`}>
+                  <TableRow
+                    key={`${item.Member_MemberUniqueID}`}
+                    className="cursor-pointer hover:bg-gray-50 transition-colors duration-200"
+                  >
                     {(columnKey) => (
                       <TableCell>
-                        <Link to="/create-deliveries">
+                        <Link
+                          to="/create-deliveries"
+                          className="block w-full h-full text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200"
+                        >
                           {getKeyValue(item, columnKey)}
                         </Link>
                       </TableCell>
