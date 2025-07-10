@@ -10,57 +10,80 @@ type DiagnosisApiItem = {
   Value: string;
 };
 
-let diagnosesCache: Diagnosis[] = [];
-let isInitialFetchDone = false;
-let isFetching = false;
+// Global state to store all diagnoses data
+let allDiagnoses: Diagnosis[] = [];
+let isDataLoaded = false;
+let isLoading = false;
 
-export async function fetchDiagnoses(page = 0, limit = 20) {
-  if (isFetching) return { diagnoses: diagnosesCache.slice(0, limit), hasMore: true };
+// Function to fetch all diagnoses from API
+async function fetchAllDiagnosesFromAPI(): Promise<Diagnosis[]> {
+  const apiUrl = `${API_URL}/ListValues/GetAllDiagnosis`;
+  const response = await fetch(apiUrl);
 
-  if (isInitialFetchDone && diagnosesCache.length > page * limit) {
-    const startIndex = page * limit;
-    const endIndex = startIndex + limit;
-    return {
-      diagnoses: diagnosesCache.slice(0, endIndex),
-      hasMore: diagnosesCache.length > endIndex
-    };
+  if (!response.ok) {
+    throw new Error("Failed to fetch diagnoses");
   }
 
-  isFetching = true;
+  const data = await response.json();
+  console.log("Fetched diagnoses data:", data);
+
+  return data.map((item: DiagnosisApiItem) => ({
+    DiagnosisId: item.Value,
+    DiagnosisName: item.Text,
+  }));
+}
+
+// Function to get paginated diagnoses from the preloaded data
+export async function fetchDiagnoses(page = 0, limit = 20) {
+  // If data is not loaded yet, wait for it or fetch it
+  if (!isDataLoaded && !isLoading) {
+    await initializeDiagnosesData();
+  }
+
+  // Wait for loading to complete if in progress
+  while (isLoading) {
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+
+  // Apply pagination on the preloaded dataset
+  const startIndex = page * limit;
+  const endIndex = startIndex + limit;
+  const paginatedDiagnoses = allDiagnoses.slice(startIndex, endIndex);
+
+  return {
+    diagnoses: paginatedDiagnoses,
+    hasMore: allDiagnoses.length > endIndex,
+    total: allDiagnoses.length
+  };
+}
+
+// Function to initialize/preload all diagnoses data
+export async function initializeDiagnosesData() {
+  if (isDataLoaded || isLoading) {
+    return;
+  }
+
+  isLoading = true;
   try {
-
-    const apiUrl = `${API_URL}/ListValues/GetAllDiagnosis`;
-    const response = await fetch(apiUrl);
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch diagnoses");
-    }
-
-    const data = await response.json();
-
-    console.log(data)
-
-    const diagnoses: Diagnosis[] = data.map((item: DiagnosisApiItem) => ({
-      DiagnosisId: item.Value,
-      DiagnosisName: item.Text,
-    }));
-
-    diagnosesCache = diagnoses;
-    isInitialFetchDone = true;
-
-    return {
-      diagnoses: diagnoses.slice(0, limit),
-      hasMore: diagnoses.length > limit
-    };
+    console.log("Initializing diagnoses data...");
+    allDiagnoses = await fetchAllDiagnosesFromAPI();
+    isDataLoaded = true;
+    console.log(`Loaded ${allDiagnoses.length} diagnoses`);
   } catch (error) {
-    console.error("Error fetching diagnoses:", error);
-    toast.error("Failed to load diagnoses");
-    return { diagnoses: [], hasMore: false };
+    console.error("Error initializing diagnoses data:", error);
+    toast.error("Failed to load diagnoses data");
+    allDiagnoses = [];
   } finally {
-    isFetching = false;
+    isLoading = false;
   }
 }
 
-export function initializeDiagnosesData() {
-  fetchDiagnoses();
+// Function to get all diagnoses (useful for searching/filtering)
+export function getAllDiagnoses(): Diagnosis[] {
+  return allDiagnoses;
+}
+
+// Function to check if data is loaded
+export function isDiagnosesDataLoaded(): boolean {
+  return isDataLoaded;
 }
