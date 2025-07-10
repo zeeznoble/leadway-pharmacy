@@ -318,6 +318,11 @@ export const getEnrolleeSmsMessage = (
   return `Dear ${enrolleeName}, your medication delivery is scheduled for ${deliveryDate} with rider ${riderName}. Your verification code is ${verificationCode}. Only share this code with the authorized rider upon delivery. - Health Partnerships`;
 };
 
+export const safeGet = (value: any, fallback: any) => {
+  return value !== undefined && value !== null ? value : fallback;
+};
+
+
 
 
 
