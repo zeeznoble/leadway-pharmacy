@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import { deliveryStore } from "../store/delivery-store";
 import { authStore } from "../store/app-store";
 
-import { API_URL } from "../helpers";
+import { API_URL, programmaticNavigate } from "../helpers";
 import { DeliveredPackResponse, Delivery, Diagnosis, PackResponse } from "@/types";
 
 export const createDelivery = async (deliveryData: { Deliveries: Delivery[] }): Promise<any> => {
@@ -44,6 +44,9 @@ export const createDelivery = async (deliveryData: { Deliveries: Delivery[] }): 
     if (user?.UserName) {
       fetchDeliveries(user.UserName, deliveryData.Deliveries[0].EnrolleeId);
     }
+
+    programmaticNavigate('/enrollees');
+
 
     return {
       status: response.status,
@@ -222,83 +225,6 @@ export const fetchDiagnoses = async (): Promise<Diagnosis[]> => {
   }
 };
 
-// export const editDelivery = async (deliveryData: any): Promise<any> => {
-//   try {
-//     deliveryStore.set((state) => ({
-//       ...state,
-//       isSubmitting: true,
-//     }));
-
-//     const apiUrl = `${API_URL}/PharmacyDelivery/UpdateDeliveryLine`;
-
-//     const payload = {
-//       Entryno: deliveryData.EntryNo,
-//       DeliveryFrequency: deliveryData.DeliveryFrequency,
-//       DelStartDate: deliveryData.DelStartDate,
-//       NextDeliveryDate: deliveryData.NextDeliveryDate,
-//       DiagnosisName: deliveryData.DiagnosisLines[0]?.DiagnosisName,
-//       DiagnosisId: deliveryData.DiagnosisLines[0]?.DiagnosisId,
-//       ProcedureName: deliveryData.ProcedureLines[0]?.ProcedureName,
-//       ProcedureId: deliveryData.ProcedureLines[0]?.ProcedureId,
-//       ProcedureQuantity: deliveryData.ProcedureLines[0]?.Quantity,
-//       Username: deliveryData.Username,
-//       AdditionalInformation: deliveryData.AdditionalInformation,
-//       IsDelivered: deliveryData.IsDelivered,
-//       FrequencyDuration: deliveryData.FrequencyDuration,
-//       PharmacyName: deliveryData.PharmacyName,
-//       Pharmacyid: deliveryData.PharmacyId,
-//       EndDate: deliveryData.EndDate,
-//       deliveryaddress: deliveryData.deliveryaddress,
-//       phonenumber: deliveryData.phonenumber
-//     };
-
-//     const response = await fetch(apiUrl, {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/json",
-//       },
-//       body: JSON.stringify(payload),
-//     });
-
-//     const data = await response.json();
-
-//     deliveryStore.set((state) => ({
-//       ...state,
-//       isSubmitting: false,
-//     }));
-
-//     if (!response.ok) {
-//       return {
-//         status: response.status,
-//         result: null,
-//         ReturnMessage: data.ReturnMessage || `Failed to update delivery: ${response.status} ${response.statusText}`,
-//       };
-//     }
-
-//     const { user } = authStore.get();
-//     if (user?.UserName) {
-//       fetchDeliveries(user.UserName, deliveryData.EnrolleeId);
-//     }
-
-//     return {
-//       status: response.status,
-//       result: data,
-//       ReturnMessage: data.ReturnMessage || "Delivery updated successfully",
-//     };
-//   } catch (error) {
-//     deliveryStore.set((state) => ({
-//       ...state,
-//       isSubmitting: false,
-//     }));
-
-//     console.error("Update delivery error:", error);
-//     return {
-//       status: 0,
-//       result: null,
-//       ReturnMessage: "Failed to connect to the server",
-//     };
-//   }
-// };
 
 export const editDelivery = async (formData: any): Promise<any> => {
   try {
@@ -336,6 +262,9 @@ export const editDelivery = async (formData: any): Promise<any> => {
     if (user?.UserName) {
       fetchDeliveries(user.UserName, formData?.EnrolleeId);
     }
+
+    programmaticNavigate('/enrollees');
+
 
     return data;
   } catch (error) {
