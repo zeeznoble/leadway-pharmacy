@@ -329,7 +329,7 @@ export const editDelivery = async (formData: any): Promise<any> => {
       return;
     }
 
-    toast.success(data.ReturnMessage || "Delivery updated successfully");
+    // toast.success(data.ReturnMessage || "Delivery updated successfully");
 
     // Refresh the deliveries list
     const { user } = authStore.get();
