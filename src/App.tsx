@@ -1,4 +1,5 @@
-import { Route, Routes } from "react-router-dom";
+import { useEffect } from "react";
+import { Route, Routes, useNavigate } from "react-router-dom";
 
 import ProtectedRoute from "@/components/protected";
 
@@ -14,7 +15,15 @@ import RiderPage from "@/pages/rider";
 
 import DeliveryDetailsPage from "@/pages/delivery-details";
 
+import { setNavigateFunction } from "./lib/helpers";
+
 function App() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    setNavigateFunction(navigate);
+  }, [navigate]);
+
   return (
     <Routes>
       <Route path="/auth/login" element={<LoginPage />} />
