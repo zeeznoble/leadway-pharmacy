@@ -51,9 +51,12 @@ export const deliveryStore = chunk({
   lastSearchedEnrolleeId: null as string | null,
   showModal: false,
   showPackModal: false,
+  showDuplicateModal: false,
   nextPackDate: null as string | null,
   nextDeliveryDate: null as string | null,
-  cost: "" as string
+  cost: "" as string,
+  pendingSubmission: false,
+  duplicateDeliveries: [] as Delivery[]
 })
 
 export const deliveryActions = {
@@ -72,6 +75,24 @@ export const deliveryActions = {
 
   closePackModal: () => {
     deliveryStore.set(state => ({ ...state, showPackModal: false, nextPackDate: null, nextDeliveryDate: null }));
+  },
+
+  openDuplicateModal: (duplicates: Delivery[]) => {
+    deliveryStore.set(state => ({
+      ...state,
+      showDuplicateModal: true,
+      duplicateDeliveries: duplicates,
+      pendingSubmission: true
+    }));
+  },
+
+  closeDuplicateModal: () => {
+    deliveryStore.set(state => ({
+      ...state,
+      showDuplicateModal: false,
+      duplicateDeliveries: [],
+      pendingSubmission: false
+    }));
   },
 
   setNextPackDate: (date: string | null) => {
@@ -245,7 +266,7 @@ export const deliveryActions = {
     deliveryFormState.reset();
   },
 
-  submitForm: async () => {
+  submitForm: async (confirmDuplicates: boolean = false) => {
     try {
       deliveryStore.set(state => ({ ...state, isSubmitting: true }));
       const formData = deliveryFormState.get();
@@ -272,7 +293,6 @@ export const deliveryActions = {
         Pharmacyid: formData.pharmacyId,
         PharmacyName: formData.pharmacyName,
         cost: formData.cost,
-        // Include EntryNo for edit operations
         EntryNo: formData.isEditing ? formData.entryno : undefined,
       };
 
@@ -287,14 +307,11 @@ export const deliveryActions = {
         NextDeliveryDate: formData.nextDeliveryDate,
         FrequencyDuration: formData.frequencyDuration,
         EndDate: formData.endDate,
-        // Handle diagnosis lines - use first item if array exists
         DiagnosisName: formData.diagnosisLines.length > 0 ? formData.diagnosisLines[0].DiagnosisName : "",
         DiagnosisId: formData.diagnosisLines.length > 0 ? formData.diagnosisLines[0].DiagnosisId : "",
-        // Handle procedure lines - use first item if array exists
         ProcedureName: formData.procedureLines.length > 0 ? formData.procedureLines[0].ProcedureName : "",
         ProcedureId: formData.procedureLines.length > 0 ? formData.procedureLines[0].ProcedureId : "",
         ProcedureQuantity: formData.procedureLines.length > 0 ? formData.procedureLines[0].ProcedureQuantity : 1,
-        // Use cost from ProcedureLines if available, otherwise use form cost
         cost: formData.procedureLines.length > 0 ? (formData.procedureLines[0].cost || formData.cost || "0") : (formData.cost || "0"),
         AdditionalInformation: formData.additionalInformation,
         IsDelivered: false,
@@ -303,7 +320,6 @@ export const deliveryActions = {
         phonenumber: formData.phonenumber,
         Pharmacyid: formData.pharmacyId,
         PharmacyName: formData.pharmacyName,
-        // Include EntryNo for edit operations
         EntryNo: formData.isEditing ? formData.entryno : undefined,
       };
 
@@ -311,27 +327,98 @@ export const deliveryActions = {
 
       let response;
       if (formData.isEditing) {
-        console.log("Submitting edit data:", deliveryEdit); // Debug log
+        console.log("Submitting edit data:", deliveryEdit);
         response = await editDelivery(deliveryEdit);
       } else {
-        const formattedData = { Deliveries: [delivery] };
+        const formattedData = {
+          Deliveries: [delivery],
+          ConfirmDuplicates: confirmDuplicates
+        };
         response = await createDelivery(formattedData);
       }
 
-      // Handle response
-      if (response.status !== 200 || response.Errors?.length > 0 ||
-        (response.ReturnMessage &&
-          (response.ReturnMessage.toLowerCase().includes("error") ||
-            response.ReturnMessage.toLowerCase().includes("invalid")))) {
-        toast.error(response.ReturnMessage ||
-          (formData.isEditing ? "Failed to update delivery" : "Failed to create delivery"));
+
+      // Check for duplicate procedures using the correct response structure
+      if (!confirmDuplicates && !formData.isEditing) {
+        // Check if we have the nested result structure with duplicate detection
+        const result = response.result || response;
+        const isDuplicateResponse = result.RequiresConfirmation === true ||
+          (result.status === 409 && result.ReturnMessage &&
+            result.ReturnMessage.toLowerCase().includes("duplicate"));
+
+        if (isDuplicateResponse) {
+          // Parse the warnings to extract duplicate delivery information
+          const warnings = result.Warnings || [];
+          const duplicateDeliveries = warnings.map((warning: string, index: number) => {
+            // Extract information from warning message
+            // Warning format: "Warning: Procedure 'IRON SUCROSE 200MG INJ' (ID: B0320011) already exists for Enrollee 'Mrs Favour Mbaekwe' (ID: 21000645/0) with overlapping dates. Existing end date: 2025-10-12, New start date: 2025-07-12"
+
+            const procedureNameMatch = warning.match(/Procedure '([^']+)'/);
+            const procedureIdMatch = warning.match(/\(ID: ([^)]+)\)/);
+            const enrolleeNameMatch = warning.match(/Enrollee '([^']+)'/);
+            const enrolleeIdMatch = warning.match(/Enrollee '[^']+' \(ID: ([^)]+)\)/);
+            const endDateMatch = warning.match(/Existing end date: ([^,]+)/);
+            const startDateMatch = warning.match(/New start date: ([^"]+)/);
+
+            return {
+              DeliveryId: `DUPLICATE-${index + 1}`,
+              EnrolleeName: enrolleeNameMatch ? enrolleeNameMatch[1] : formData.enrolleeName,
+              EnrolleeId: enrolleeIdMatch ? enrolleeIdMatch[1] : formData.enrolleeId,
+              DeliveryFrequency: "Existing Delivery", // We don't have this info in warning
+              EndDate: endDateMatch ? endDateMatch[1].trim() : "Unknown",
+              StartDate: startDateMatch ? startDateMatch[1].trim() : "Unknown",
+              ProcedureLines: [{
+                ProcedureName: procedureNameMatch ? procedureNameMatch[1] : "Unknown Procedure",
+                ProcedureId: procedureIdMatch ? procedureIdMatch[1] : "Unknown",
+                ProcedureQuantity: 1
+              }]
+            };
+          });
+
+          deliveryActions.openDuplicateModal(duplicateDeliveries);
+          return response;
+        }
+
+        // Fallback: Check original response structure
+        if (response.Deliveries && response.Deliveries.length > 0) {
+          const existingDeliveries = response.Deliveries.filter((d: any) => d.DeliveryId !== null);
+          if (existingDeliveries.length > 0) {
+            deliveryActions.openDuplicateModal(existingDeliveries);
+            return response;
+          }
+        }
+      }
+
+      // Handle actual errors (not duplicate warnings)
+      const result = response.result || response;
+      const isSuccess = response.status === 200 && (!result.status || result.status === 200 || result.status === 409);
+      const hasErrors = result.Errors?.length > 0;
+
+      if (!isSuccess || hasErrors) {
+        const isDuplicateMessage = result.ReturnMessage &&
+          result.ReturnMessage.toLowerCase().includes("duplicate");
+
+        // Only show error toast if it's not a duplicate message
+        if (!isDuplicateMessage) {
+          toast.error(result.ReturnMessage ||
+            (formData.isEditing ? "Failed to update delivery" : "Failed to create delivery"));
+        }
         return response;
       }
 
-      toast.success(response.ReturnMessage ||
-        (formData.isEditing ? "Delivery updated successfully!" : "Delivery created successfully!"));
+      // Success handling
+      if (confirmDuplicates) {
+        toast.success("Delivery created successfully with duplicate confirmation!", {
+          icon: "⚠️",
+          duration: 4000,
+        });
+      } else {
+        toast.success(response.ReturnMessage ||
+          (formData.isEditing ? "Delivery updated successfully!" : "Delivery created successfully!"));
+      }
 
       deliveryActions.closeModal();
+      deliveryActions.closeDuplicateModal();
       deliveryFormState.reset();
 
       // Refresh deliveries
@@ -345,6 +432,16 @@ export const deliveryActions = {
       return { status: 500, ReturnMessage: "An unexpected error occurred", Errors: [] };
     } finally {
       deliveryStore.set(state => ({ ...state, isSubmitting: false }));
+    }
+  },
+
+  handleDuplicateConfirmation: (confirm: boolean) => {
+    if (confirm) {
+      // User confirmed they want to create duplicate
+      deliveryActions.submitForm(true);
+    } else {
+      // User cancelled, close the duplicate modal
+      deliveryActions.closeDuplicateModal();
     }
   },
 
