@@ -35,6 +35,28 @@ export default function DiagnosisProcedureStep() {
     }
   };
 
+  const handleQuantityChange = (
+    procedureId: string,
+    newQuantity: number,
+    currentCost: string
+  ) => {
+    const numericCost = parseFloat(currentCost) || 0;
+    const currentQuantity =
+      formState.procedureLines.find((p) => p.ProcedureId === procedureId)
+        ?.ProcedureQuantity || 1;
+
+    // Calculate unit cost from current total cost
+    const unitCost =
+      currentQuantity > 0 ? numericCost / currentQuantity : numericCost;
+
+    // Calculate new total cost
+    const newTotalCost = Math.round(unitCost * newQuantity).toString();
+
+    // Update both quantity and cost
+    deliveryActions.updateProcedureQuantity(procedureId, newQuantity);
+    deliveryActions.updateProcedureCost(procedureId, newTotalCost);
+  };
+
   return (
     <div className="space-y-6">
       {/* Diagnosis Section */}
@@ -132,58 +154,68 @@ export default function DiagnosisProcedureStep() {
               <p className="text-gray-500 text-sm">No procedures added yet</p>
             ) : (
               <ul className="space-y-2 mt-4">
-                {formState.procedureLines.map((procedure) => (
-                  <li
-                    key={procedure.ProcedureId}
-                    className="flex justify-between items-center p-3 bg-gray-50 rounded-md"
-                  >
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-800">
-                        {procedure.ProcedureName}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        ID: {procedure.ProcedureId}
-                      </p>
-                      <div className="mt-2 w-24 space-y-3">
-                        <Input
-                          type="number"
-                          min="1"
-                          size="sm"
-                          value={procedure.ProcedureQuantity.toString()}
-                          onChange={(e) =>
-                            deliveryActions.updateProcedureQuantity(
-                              procedure.ProcedureId,
-                              parseInt(e.target.value) || 1
-                            )
-                          }
-                          placeholder="Quantity"
-                        />
-                        <Input
-                          type="text"
-                          size="sm"
-                          value={procedure.cost || ""}
-                          onChange={(e) =>
-                            deliveryActions.updateProcedureCost(
-                              procedure.ProcedureId,
-                              e.target.value
-                            )
-                          }
-                          placeholder="Cost"
-                        />
-                      </div>
-                    </div>
-                    <Button
-                      size="sm"
-                      color="danger"
-                      variant="light"
-                      onPress={() =>
-                        deliveryActions.removeProcedure(procedure.ProcedureId)
-                      }
+                {formState.procedureLines.map((procedure) => {
+                  return (
+                    <li
+                      key={procedure.ProcedureId}
+                      className="flex justify-between items-center p-3 bg-gray-50 rounded-md"
                     >
-                      Remove
-                    </Button>
-                  </li>
-                ))}
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-800">
+                          {procedure.ProcedureName}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          ID: {procedure.ProcedureId}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          Total: ₦
+                          {Math.round(
+                            parseFloat(procedure.cost || "0") *
+                              procedure.ProcedureQuantity
+                          )}
+                        </p>
+                        <div className="mt-2 w-24 space-y-3">
+                          <Input
+                            type="text"
+                            size="sm"
+                            value={procedure.cost || ""}
+                            onChange={(e) =>
+                              deliveryActions.updateProcedureCost(
+                                procedure.ProcedureId,
+                                e.target.value
+                              )
+                            }
+                            placeholder="Unit Cost"
+                          />
+                          <Input
+                            type="number"
+                            min="1"
+                            size="sm"
+                            value={procedure.ProcedureQuantity.toString()}
+                            onChange={(e) =>
+                              handleQuantityChange(
+                                procedure.ProcedureId,
+                                parseInt(e.target.value) || 1,
+                                procedure.cost || "0"
+                              )
+                            }
+                            placeholder="Quantity"
+                          />
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        color="danger"
+                        variant="light"
+                        onPress={() =>
+                          deliveryActions.removeProcedure(procedure.ProcedureId)
+                        }
+                      >
+                        Remove
+                      </Button>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>
