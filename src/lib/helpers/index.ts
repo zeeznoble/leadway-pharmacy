@@ -322,19 +322,14 @@ export const safeGet = (value: any, fallback: any) => {
   return value !== undefined && value !== null ? value : fallback;
 };
 
+let navigateFunction: any = null;
 
+export const setNavigateFunction = (navigate: any) => {
+  navigateFunction = navigate;
+};
 
-
-
-
-
-// const columns = [
-//   { key: "provider", label: "PROVIDER" },
-//   { key: "email", label: "EMAIL" },
-//   { key: "phone1", label: "PHONE" },
-//   { key: "region", label: "REGION" },
-//   { key: "medicaldirector", label: "MEDICAL DIRECTOR" },
-//   { key: "ProviderAddress", label: "ADDRESS" },
-// ];
-
-// Export functions remain the same
+export const programmaticNavigate = (path: string) => {
+  if (navigateFunction) {
+    navigateFunction(path);
+  }
+};
