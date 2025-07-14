@@ -1,11 +1,14 @@
-import { deliveryFormState, deliveryActions } from "@/lib/store/delivery-store";
-import { Provider } from "@/types";
+import { useState, useEffect } from "react";
+
 import { Button } from "@heroui/button";
 import { Card, CardBody } from "@heroui/card";
-import { useState, useEffect } from "react";
 import { useChunkValue } from "stunk/react";
 
+import { deliveryFormState, deliveryActions } from "@/lib/store/delivery-store";
+
 import ProviderAutocomplete from "./provider-select";
+
+import { Provider } from "@/types";
 
 export default function ProviderSetup() {
   const formState = useChunkValue(deliveryFormState);
