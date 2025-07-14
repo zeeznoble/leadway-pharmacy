@@ -3,6 +3,7 @@ import { Autocomplete, AutocompleteItem } from "@heroui/autocomplete";
 import { useInfiniteScroll } from "@heroui/use-infinite-scroll";
 import { useProviderList } from "@/lib/hooks/use-provider-list";
 import { Provider } from "@/types";
+import { Button } from "@heroui/button";
 
 interface ProviderAutocompleteProps {
   onSelect: (provider: Provider | null) => void;
@@ -19,10 +20,11 @@ export default function ProviderAutocomplete({
 }: ProviderAutocompleteProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const { items, hasMore, isLoading, onLoadMore } = useProviderList({
-    enrolleeId,
-    fetchDelay: 300,
-  });
+  const { items, hasMore, isLoading, onLoadMore, retry, error } =
+    useProviderList({
+      enrolleeId,
+      fetchDelay: 300,
+    });
 
   const [, scrollerRef] = useInfiniteScroll({
     hasMore,
@@ -43,6 +45,14 @@ export default function ProviderAutocomplete({
 
   return (
     <div className="w-full">
+      {error && (
+        <div className="flex justify-between mt-2">
+          <p className="text-sm text-red-600">{error}</p>
+          <Button size="sm" onPress={retry}>
+            Retry
+          </Button>
+        </div>
+      )}
       <Autocomplete
         className="w-full"
         defaultItems={items}
