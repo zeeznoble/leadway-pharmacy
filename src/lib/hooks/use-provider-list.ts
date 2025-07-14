@@ -9,6 +9,7 @@ export function useProviderList({
   const [displayedItems, setDisplayedItems] = useState<Provider[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [offset, setOffset] = useState(0);
   const limit = 20;
 
@@ -16,11 +17,13 @@ export function useProviderList({
     if (!enrolleeId) {
       setDisplayedItems([]);
       setHasMore(false);
+      setError(null);
       return;
     }
 
     try {
       setIsLoading(true);
+      setError(null);
 
       if (fetchDelay > 0) {
         await new Promise((resolve) => setTimeout(resolve, fetchDelay));
@@ -48,15 +51,21 @@ export function useProviderList({
         setDisplayedItems((prev) => [...prev, ...newItems]);
       }
 
-      // Log all displayed provider IDs
-      console.log("Current displayed provider IDs:", displayedItems.map((item) => item.Pharmacyid));
-      console.log("Current displayed provider IDs:", displayedItems.map((item) => item.PharmacyName));
-
       setHasMore(moreAvailable);
-    } catch (error) {
-      console.error("Load providers error:", error);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to load providers";
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const retry = () => {
+    if (displayedItems.length === 0) {
+      setOffset(0);
+      loadProviders(true);
+    } else {
+      loadProviders(false);
     }
   };
 
@@ -67,7 +76,6 @@ export function useProviderList({
 
   const onLoadMore = () => {
     if (!isLoading && hasMore) {
-      console.log("onLoadMore triggered, new offset:", offset + limit);
       setOffset((prev) => prev + limit);
       loadProviders(false);
     }
@@ -77,7 +85,9 @@ export function useProviderList({
     items: displayedItems,
     hasMore,
     isLoading,
+    error,
     onLoadMore,
+    retry,
     setDisplayedItems,
   };
 }
