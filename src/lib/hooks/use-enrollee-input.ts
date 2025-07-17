@@ -14,7 +14,7 @@ export function useEnrolleeIdInput() {
         setIsValidId(false);
         return;
       }
-      const pattern = /^\d+\/0$/;
+      const pattern = /^\d+\/\d+$/;
       const isValid = pattern.test(enrolleeId.trim());
       setIsValidId(isValid);
 
@@ -46,7 +46,7 @@ export function useEnrolleeIdInput() {
     errorMessage:
       fetchError ||
       (enrolleeId.trim() !== "" && !isValidId
-        ? "ID must be a number followed by /0 (e.g. 2400135/0)"
+        ? "ID must be a number followed by / and another number (e.g. 21000645/1)"
         : ""),
   };
 }
