@@ -23,6 +23,7 @@ import {
   riderActions,
   viewRiderActions,
   viewRiderStore,
+  RiderFormData,
 } from "@/lib/store/rider-store";
 import RiderViewModal from "@/components/riders/rider-view-modal";
 
@@ -59,6 +60,7 @@ export default function RidersPage() {
       "phone_number",
       "address_line1",
       "city",
+      "state_province",
       "emergency_contact_name",
       "emergency_contact_phone",
       "status",
@@ -74,6 +76,20 @@ export default function RidersPage() {
     setIsFormCurrentlyValid(isValid);
   };
 
+  const transformFormDataToApiData = (
+    formData: RiderFormData,
+    riderId?: number
+  ) => {
+    const { state_province, ...restData } = formData;
+
+    const apiData = {
+      ...restData,
+      state_province,
+    };
+
+    return riderId ? { ...apiData, rider_id: riderId } : apiData;
+  };
+
   const handleSubmit = async () => {
     if (!isFormValid()) {
       riderActions.setError("Please fill in all required fields");
@@ -84,9 +100,10 @@ export default function RidersPage() {
     riderActions.setError(null);
 
     try {
-      const riderData = editingRider
-        ? { ...formData, rider_id: editingRider.rider_id }
-        : formData;
+      const riderData = transformFormDataToApiData(
+        formData,
+        editingRider?.rider_id
+      );
 
       const result = await createOrUpdateRider(riderData);
 
