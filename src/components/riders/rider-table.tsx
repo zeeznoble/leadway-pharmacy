@@ -99,7 +99,6 @@ export default function RiderTable({ riders }: RiderTableProps) {
     }
   }, []);
 
-  // Better validation - check if riders is an array and has content
   if (!Array.isArray(riders)) {
     return (
       <div className="text-center py-10 text-red-500">
@@ -113,6 +112,8 @@ export default function RiderTable({ riders }: RiderTableProps) {
       <div className="text-center py-10 text-gray-500">No riders found</div>
     );
   }
+
+  console.log(riders);
 
   return (
     <Table aria-label="Riders table">
