@@ -1,4 +1,3 @@
-// src/components/ProcedureAutocomplete.tsx
 import { useState, useEffect, useMemo } from "react";
 import { Autocomplete, AutocompleteItem } from "@heroui/autocomplete";
 import { useInfiniteScroll } from "@heroui/use-infinite-scroll";
