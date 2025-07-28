@@ -1,9 +1,9 @@
 import { useState } from "react";
+import { Button } from "@heroui/button";
 import { Autocomplete, AutocompleteItem } from "@heroui/autocomplete";
 import { useInfiniteScroll } from "@heroui/use-infinite-scroll";
 import { useProviderList } from "@/lib/hooks/use-provider-list";
 import { Provider } from "@/types";
-import { Button } from "@heroui/button";
 
 interface ProviderAutocompleteProps {
   onSelect: (provider: Provider | null) => void;
