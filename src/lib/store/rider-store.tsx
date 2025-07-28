@@ -1,5 +1,6 @@
 import { Rider } from "@/types";
 import { chunk } from "stunk";
+import { appChunk } from "./app-store";
 
 interface RiderState {
   showModal: boolean;
@@ -8,7 +9,7 @@ interface RiderState {
   editingRider: Rider | null;
 }
 
-interface RiderFormData {
+export interface RiderFormData {
   first_name: string;
   last_name: string;
   email: string;
@@ -49,7 +50,7 @@ export const riderFormData = chunk<RiderFormData>({
   city: "",
   state_province: "",
   postal_code: "",
-  country: "United States",
+  country: "Nigeria",
   emergency_contact_name: "",
   emergency_contact_phone: "",
   license_number: "",
@@ -71,6 +72,14 @@ export const riderActions = {
       editingRider: null,
     }));
     riderFormData.reset();
+
+    if (window.location.pathname.includes("/rider")) {
+      appChunk.set((prev) => ({
+        ...prev,
+        stateId: "",
+        cityId: "",
+      }));
+    }
   },
 
   openEditModal: (rider: Rider) => {
@@ -80,6 +89,8 @@ export const riderActions = {
       editingRider: rider,
       error: null,
     }));
+
+    // Set form data with proper field mapping
     riderFormData.set({
       first_name: rider.first_name,
       last_name: rider.last_name,
@@ -90,9 +101,9 @@ export const riderActions = {
       address_line1: rider.address_line1,
       address_line2: rider.address_line2 || "",
       city: rider.city,
-      state_province: rider.state_province,
+      state_province: rider.state_province, // This is correct
       postal_code: rider.postal_code,
-      country: rider.country,
+      country: rider.country || "Nigeria",
       emergency_contact_name: rider.emergency_contact_name,
       emergency_contact_phone: rider.emergency_contact_phone,
       license_number: rider.license_number,
