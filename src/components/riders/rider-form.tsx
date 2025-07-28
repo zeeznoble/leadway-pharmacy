@@ -3,10 +3,11 @@ import { Input, Textarea } from "@heroui/input";
 import { Select, SelectItem } from "@heroui/select";
 import { DatePicker } from "@heroui/date-picker";
 import { parseDate } from "@internationalized/date";
-import { useChunk } from "stunk/react";
+import { useChunk, useAsyncChunk } from "stunk/react";
 
-import { riderFormData } from "@/lib/store/rider-store";
+import { riderFormData, riderStore } from "@/lib/store/rider-store";
 import { appChunk } from "@/lib/store/app-store";
+import { statesChunk } from "@/lib/store/states-store";
 import { parseDateString } from "@/lib/helpers";
 import SelectStates from "../select-state";
 import SelectCities from "../select-cities";
@@ -30,14 +31,49 @@ interface RiderFormProps {
 
 export default function RiderForm({ onFormChange }: RiderFormProps) {
   const [globalFormData, setGlobalFormData] = useChunk(riderFormData);
-  const [appState] = useChunk(appChunk);
+  const [_, setAppState] = useChunk(appChunk);
   const [localFormData, setLocalFormData] = useState(globalFormData);
+  const { editingRider } = useChunk(riderStore)[0];
 
-  // Sync local state when global state changes (for edit mode)
+  // Local state for managing state/city selection during edit
+  const [localStateId, setLocalStateId] = useState<string>("");
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  const { data: statesData, loading: statesLoading } =
+    useAsyncChunk(statesChunk);
+
+  useEffect(() => {
+    if (editingRider && statesData && !isInitialized && !statesLoading) {
+      const states = Array.isArray(statesData) ? statesData : [];
+
+      // Add null/undefined check for state_province
+      if (editingRider.state_province) {
+        const foundState = states.find(
+          (state) =>
+            state.Text.toLowerCase().trim() ===
+            editingRider.state_province.toLowerCase().trim()
+        );
+
+        if (foundState) {
+          setLocalStateId(foundState.Value);
+          // Set app state for city loading, but don't interfere with other routes
+          setAppState((prev) => ({
+            ...prev,
+            stateId: foundState.Value,
+            cityId: "", // Will be set when cities load
+          }));
+        }
+      }
+      setIsInitialized(true);
+    }
+  }, [editingRider, statesData, statesLoading, isInitialized, setAppState]);
+
+  // Sync local state when global state changes
   useEffect(() => {
     setLocalFormData(globalFormData);
   }, [globalFormData]);
 
+  // Form validation
   const isFormValid = (data = localFormData) => {
     const requiredFields = [
       "first_name",
@@ -46,6 +82,7 @@ export default function RiderForm({ onFormChange }: RiderFormProps) {
       "phone_number",
       "address_line1",
       "city",
+      "state_province",
       "emergency_contact_name",
       "emergency_contact_phone",
       "status",
@@ -62,8 +99,6 @@ export default function RiderForm({ onFormChange }: RiderFormProps) {
     if (onFormChange) {
       onFormChange(isFormValid(localFormData), localFormData);
     }
-
-    console.log(localFormData);
   }, [localFormData, onFormChange]);
 
   const updateLocalField = (
@@ -100,6 +135,24 @@ export default function RiderForm({ onFormChange }: RiderFormProps) {
     updateGlobalField(field, value);
   };
 
+  // Handle state change from SelectStates component
+  const handleStateChange = (stateId: string, stateName: string) => {
+    setLocalStateId(stateId);
+    updateLocalField("state_province", stateName);
+    updateGlobalField("state_province", stateName);
+
+    // Clear city when state changes
+    updateLocalField("city", "");
+    updateGlobalField("city", "");
+
+    // Update app state for city component
+    setAppState((prev) => ({
+      ...prev,
+      stateId: stateId,
+      cityId: "",
+    }));
+  };
+
   const handleCityChange = (cityName: string) => {
     updateLocalField("city", cityName);
     updateGlobalField("city", cityName);
@@ -111,7 +164,15 @@ export default function RiderForm({ onFormChange }: RiderFormProps) {
       updateLocalField("country", "Nigeria");
       updateGlobalField("country", "Nigeria");
     }
-  }, []);
+  }, [localFormData.country]);
+
+  // Reset initialization when modal closes (editingRider becomes null)
+  useEffect(() => {
+    if (!editingRider) {
+      setIsInitialized(false);
+      setLocalStateId("");
+    }
+  }, [editingRider]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -186,7 +247,6 @@ export default function RiderForm({ onFormChange }: RiderFormProps) {
         onBlur={() => handleBlur("address_line2")}
       />
 
-      {/* Country - hardcoded to Nigeria */}
       <Input
         label="Country"
         value="Nigeria"
@@ -195,13 +255,18 @@ export default function RiderForm({ onFormChange }: RiderFormProps) {
         className="bg-gray-50"
       />
 
-      {/* State selector using existing SelectStates component */}
-      <SelectStates />
+      {/* State selector with form integration */}
+      <SelectStates
+        value={localStateId}
+        onChange={handleStateChange}
+        isRequired
+      />
 
       {/* City selector - depends on selected state */}
       <SelectCities
-        stateId={appState.stateId}
+        stateId={localStateId}
         onCityChange={handleCityChange}
+        selectedCityName={localFormData.city} // Pass current city name
       />
 
       <Input
@@ -237,7 +302,7 @@ export default function RiderForm({ onFormChange }: RiderFormProps) {
       <Input
         label="License Number"
         placeholder="Enter license number"
-        value={localFormData.license_number}
+        value={localFormData.license_number || ""}
         onChange={(e) => updateLocalField("license_number", e.target.value)}
         onBlur={() => handleBlur("license_number")}
       />
@@ -247,7 +312,7 @@ export default function RiderForm({ onFormChange }: RiderFormProps) {
         value={parseDateString(localFormData.license_expiry_date)}
         onChange={(date) => handleDateChange("license_expiry_date", date)}
         showMonthAndYearPickers
-        minValue={parseDate(new Date().toISOString().split("T")[0])} // Must be future date
+        minValue={parseDate(new Date().toISOString().split("T")[0])}
       />
 
       <Select
@@ -264,7 +329,6 @@ export default function RiderForm({ onFormChange }: RiderFormProps) {
         ))}
       </Select>
 
-      {/* Notes - Optional, spans full width */}
       <div className="md:col-span-3">
         <Textarea
           label="Notes"
