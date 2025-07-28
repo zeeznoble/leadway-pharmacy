@@ -6,7 +6,17 @@ import { useInfiniteScroll } from "@heroui/use-infinite-scroll";
 import { State, statesChunk } from "@/lib/store/states-store";
 import { appChunk } from "@/lib/store/app-store";
 
-export default function SelectStates() {
+interface SelectStatesProps {
+  value?: string;
+  onChange?: (stateId: string, stateName: string) => void; // Callback when state changes
+  isRequired?: boolean;
+}
+
+export default function SelectStates({
+  value,
+  onChange,
+  isRequired = false,
+}: SelectStatesProps = {}) {
   const [appState, setAppState] = useChunk(appChunk);
   const { data, loading: initLoading, error } = useAsyncChunk(statesChunk);
 
@@ -25,15 +35,20 @@ export default function SelectStates() {
   const LIMIT = 10;
   const currentOffset = useRef(0);
 
-  // Use a regular Set state with proper React state management
-  const [selectedState, setSelectedState] = useState<Set<string>>(new Set());
+  const currentValue = value !== undefined ? value : appState.stateId;
+  const [selectedState, setSelectedState] = useState<Set<string>>(
+    currentValue ? new Set([currentValue]) : new Set()
+  );
 
-  // Initialize selected state from global state
   useEffect(() => {
-    if (appState.stateId && !selectedState.has(appState.stateId)) {
-      setSelectedState(new Set([appState.stateId]));
+    if (value !== undefined) {
+      setSelectedState(value ? new Set([value]) : new Set());
+    } else {
+      setSelectedState(
+        appState.stateId ? new Set([appState.stateId]) : new Set()
+      );
     }
-  }, [appState.stateId]);
+  }, [value, appState.stateId]);
 
   useEffect(() => {
     if (states.length > 0 && !dataLoaded.current) {
@@ -42,8 +57,7 @@ export default function SelectStates() {
       setHasMore(states.length > LIMIT);
       currentOffset.current = LIMIT;
 
-      // Only set default state if no state is currently selected
-      if (!appState.stateId && states.length > 0) {
+      if (!currentValue && states.length > 0 && value === undefined) {
         const defaultStateId = states[0].Value;
         setSelectedState(new Set([defaultStateId]));
         setAppState((prev) => ({
@@ -54,7 +68,7 @@ export default function SelectStates() {
 
       dataLoaded.current = true;
     }
-  }, [states, appState.stateId, setAppState]);
+  }, [states, currentValue, setAppState, value]);
 
   const loadMore = useCallback(async () => {
     if (!states || isLoading || !hasMore) return;
@@ -80,19 +94,30 @@ export default function SelectStates() {
       const selectedArray = Array.from(keys as Iterable<string>);
       const newStateId = selectedArray[0] || "";
 
+      // Find the state name for the callback
+      const selectedStateObj = states.find(
+        (state) => state.Value === newStateId
+      );
+      const stateName = selectedStateObj ? selectedStateObj.Text : "";
+
       // Only update if the state actually changed
-      if (newStateId !== appState.stateId) {
-        // Create a new Set to trigger React re-render
+      if (newStateId !== currentValue) {
         setSelectedState(new Set([newStateId]));
 
-        setAppState((prev) => ({
-          ...prev,
-          stateId: newStateId,
-          cityId: "", // Reset city when state changes
-        }));
+        // If onChange prop is provided (form integration), use it
+        if (onChange) {
+          onChange(newStateId, stateName);
+        } else {
+          // Otherwise, update global state for backward compatibility
+          setAppState((prev) => ({
+            ...prev,
+            stateId: newStateId,
+            cityId: "", // Reset city when state changes
+          }));
+        }
       }
     },
-    [appState.stateId, setAppState]
+    [currentValue, states, onChange, setAppState]
   );
 
   const handleOpenChange = useCallback(
@@ -138,6 +163,7 @@ export default function SelectStates() {
         scrollRef={scrollerRef}
         onSelectionChange={handleSelectionChange}
         onOpenChange={handleOpenChange}
+        isRequired={isRequired}
       >
         {(state: State) => (
           <SelectItem key={state.Value}>{state.Text}</SelectItem>
