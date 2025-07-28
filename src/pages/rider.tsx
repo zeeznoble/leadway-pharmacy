@@ -76,20 +76,6 @@ export default function RidersPage() {
     setIsFormCurrentlyValid(isValid);
   };
 
-  const transformFormDataToApiData = (
-    formData: RiderFormData,
-    riderId?: number
-  ) => {
-    const { state_province, ...restData } = formData;
-
-    const apiData = {
-      ...restData,
-      state_province,
-    };
-
-    return riderId ? { ...apiData, rider_id: riderId } : apiData;
-  };
-
   const handleSubmit = async () => {
     if (!isFormValid()) {
       riderActions.setError("Please fill in all required fields");
@@ -100,10 +86,9 @@ export default function RidersPage() {
     riderActions.setError(null);
 
     try {
-      const riderData = transformFormDataToApiData(
-        formData,
-        editingRider?.rider_id
-      );
+      const riderData = editingRider
+        ? { ...formData, rider_id: editingRider.rider_id }
+        : formData;
 
       const result = await createOrUpdateRider(riderData);
 
