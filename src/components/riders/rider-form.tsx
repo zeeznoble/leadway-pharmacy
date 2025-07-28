@@ -46,9 +46,6 @@ export default function RiderForm({ onFormChange }: RiderFormProps) {
       "phone_number",
       "address_line1",
       "city",
-      "state_province",
-      "postal_code",
-      "country",
       "emergency_contact_name",
       "emergency_contact_phone",
       "status",
@@ -65,6 +62,8 @@ export default function RiderForm({ onFormChange }: RiderFormProps) {
     if (onFormChange) {
       onFormChange(isFormValid(localFormData), localFormData);
     }
+
+    console.log(localFormData);
   }, [localFormData, onFormChange]);
 
   const updateLocalField = (
