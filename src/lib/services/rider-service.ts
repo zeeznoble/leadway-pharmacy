@@ -2,7 +2,7 @@ import { asyncChunk } from "stunk";
 
 import { API_URL } from "../helpers";
 
-import { CreateRiderRequest, Rider, RiderResponse } from "@/types";
+import { CreateRiderRequest, Rider, RiderResponse, UpdateRiderRequest } from "@/types";
 
 export const fetchAllRiders = asyncChunk(async () => {
   const response = await fetch(`${API_URL}/Riders/GetAllRiders`);
@@ -23,7 +23,9 @@ export const fetchRiderById = asyncChunk(async (riderId: number) => {
   return data.result[0] as Rider;
 });
 
-export const createOrUpdateRider = async (riderData: CreateRiderRequest | Rider): Promise<RiderResponse> => {
+export const createOrUpdateRider = async (
+  riderData: CreateRiderRequest | UpdateRiderRequest
+): Promise<RiderResponse> => {
   try {
     const response = await fetch(`${API_URL}/Riders/UpsertRider`, {
       method: 'POST',
@@ -48,6 +50,7 @@ export const createOrUpdateRider = async (riderData: CreateRiderRequest | Rider)
     return {
       success: false,
       message: error instanceof Error ? error.message : 'An error occurred',
+      response: [] as Rider[]
     };
   }
 };
