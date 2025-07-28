@@ -1,21 +1,22 @@
-import { useEffect, useRef, useState, useCallback } from "react";
-import { useAsyncChunk, useChunk } from "stunk/react";
-import { Select, SelectItem } from "@heroui/select";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { SharedSelection } from "@heroui/system";
 import { useInfiniteScroll } from "@heroui/use-infinite-scroll";
+import { Select, SelectItem } from "@heroui/select";
+import { useAsyncChunk } from "stunk/react";
+
 import { City, citiesChunk } from "@/lib/store/states-store";
-import { appChunk } from "@/lib/store/app-store";
 
 interface SelectCitiesProps {
   stateId: string;
-  onCityChange?: (cityId: string) => void;
+  onCityChange?: (cityName: string) => void;
+  selectedCityName?: string; // Add this prop to set initial city
 }
 
 export default function SelectCities({
   stateId,
   onCityChange,
+  selectedCityName,
 }: SelectCitiesProps) {
-  const [appState, setAppState] = useChunk(appChunk);
   const { data, loading: initLoading, error } = useAsyncChunk(citiesChunk);
 
   const [displayedCities, setDisplayedCities] = useState<City[]>([]);
@@ -23,6 +24,7 @@ export default function SelectCities({
   const [hasMore, setHasMore] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedCity, setSelectedCity] = useState<Set<string>>(new Set());
+  const [isStateChanging, setIsStateChanging] = useState(false);
 
   const cities = Array.isArray(data)
     ? data.sort((a, b) => a.Text.localeCompare(b.Text))
@@ -33,35 +35,52 @@ export default function SelectCities({
   const LIMIT = 10;
   const currentOffset = useRef(0);
 
-  // Initialize selected city from global state
+  // Set initial city selection when cities data loads and we have a selectedCityName
   useEffect(() => {
-    if (appState.cityId && !selectedCity.has(appState.cityId)) {
-      setSelectedCity(new Set([appState.cityId]));
+    if (cities.length > 0 && selectedCityName && selectedCity.size === 0) {
+      const foundCity = cities.find(
+        (city) =>
+          city.Text.toLowerCase().trim() ===
+          selectedCityName.toLowerCase().trim()
+      );
+
+      if (foundCity) {
+        setSelectedCity(new Set([foundCity.Value]));
+      }
     }
-  }, [appState.cityId]);
+  }, [cities, selectedCityName, selectedCity.size]);
 
   // Update params and fetch cities when stateId changes
   useEffect(() => {
-    if (stateId && stateId !== prevStateId.current) {
+    if (stateId && stateId !== prevStateId.current && stateId.trim() !== "") {
+      setIsStateChanging(true);
+
+      // Clear everything immediately
       setSelectedCity(new Set());
       setDisplayedCities([]);
       setHasMore(true);
       currentOffset.current = 0;
       dataLoaded.current = false;
+
+      // Update the previous state reference
       prevStateId.current = stateId;
 
-      setAppState((prev) => ({
-        ...prev,
-        cityId: "",
-      }));
-
+      // Fetch cities for the new state
       citiesChunk.setParams(stateId);
       citiesChunk.reload(stateId);
     }
-  }, [stateId, setAppState]);
+  }, [stateId]);
 
+  // Reset state changing flag when new data arrives
   useEffect(() => {
-    if (!stateId) {
+    if (!initLoading && stateId === prevStateId.current) {
+      setIsStateChanging(false);
+    }
+  }, [initLoading, stateId]);
+
+  // Clear cities when no state is selected
+  useEffect(() => {
+    if (!stateId || stateId.trim() === "") {
       setDisplayedCities([]);
       setSelectedCity(new Set());
       setHasMore(false);
@@ -71,19 +90,35 @@ export default function SelectCities({
     }
   }, [stateId]);
 
+  // Load initial batch of cities
   useEffect(() => {
     if (
       cities.length > 0 &&
       !dataLoaded.current &&
-      stateId === prevStateId.current
+      stateId === prevStateId.current &&
+      stateId &&
+      data
     ) {
       const initialBatch = cities.slice(0, LIMIT);
       setDisplayedCities(initialBatch);
       setHasMore(cities.length > LIMIT);
       currentOffset.current = LIMIT;
       dataLoaded.current = true;
+
+      // Set selected city if we have selectedCityName
+      if (selectedCityName && selectedCity.size === 0) {
+        const foundCity = cities.find(
+          (city) =>
+            city.Text.toLowerCase().trim() ===
+            selectedCityName.toLowerCase().trim()
+        );
+
+        if (foundCity) {
+          setSelectedCity(new Set([foundCity.Value]));
+        }
+      }
     }
-  }, [cities, stateId]);
+  }, [cities, stateId, data, selectedCityName, selectedCity.size]);
 
   const loadMore = useCallback(async () => {
     if (!cities || isLoading || !hasMore) return;
@@ -109,34 +144,30 @@ export default function SelectCities({
       const selectedArray = Array.from(keys as Iterable<string>);
       const newCityId = selectedArray[0] || "";
 
-      // Create new Set to trigger React re-render
       setSelectedCity(new Set(newCityId ? [newCityId] : []));
-
-      setAppState((prev) => ({
-        ...prev,
-        cityId: newCityId,
-      }));
 
       // Find the city name for the callback
       const selectedCityData = cities.find((city) => city.Value === newCityId);
       if (selectedCityData && onCityChange) {
         onCityChange(selectedCityData.Text);
+      } else if (!newCityId && onCityChange) {
+        onCityChange("");
       }
     },
-    [setAppState, cities, onCityChange]
+    [cities, onCityChange]
   );
 
   const handleOpenChange = useCallback(
     (isOpen: boolean) => {
       setIsOpen(isOpen);
-      if (isOpen && cities && displayedCities.length === 0) {
+      if (isOpen && cities && displayedCities.length === 0 && stateId) {
         const initialBatch = cities.slice(0, LIMIT);
         setDisplayedCities(initialBatch);
         currentOffset.current = LIMIT;
         setHasMore(cities.length > LIMIT);
       }
     },
-    [cities, displayedCities.length]
+    [cities, displayedCities.length, stateId]
   );
 
   const [, scrollerRef] = useInfiniteScroll({
@@ -146,7 +177,8 @@ export default function SelectCities({
     onLoadMore: loadMore,
   });
 
-  if (!stateId) {
+  // Check if state is selected and not empty
+  if (!stateId || stateId.trim() === "") {
     return (
       <Select
         label="Select City"
@@ -162,7 +194,15 @@ export default function SelectCities({
   if (error) {
     return (
       <div>
-        <p className="text-red-500 text-sm">
+        <Select
+          label="Select City"
+          radius="sm"
+          isDisabled={true}
+          placeholder="Failed to load cities"
+        >
+          <SelectItem key="error">Failed to load cities</SelectItem>
+        </Select>
+        <p className="text-red-500 text-sm mt-1">
           Failed to load cities. Please try again.
         </p>
       </div>
@@ -173,11 +213,15 @@ export default function SelectCities({
     <div>
       <Select
         label="Select City"
-        placeholder={initLoading ? "Loading cities..." : "Select a city"}
+        placeholder={
+          isStateChanging || initLoading ? "Loading cities..." : "Select a city"
+        }
         radius="sm"
-        isLoading={initLoading || isLoading}
+        isLoading={initLoading || isLoading || isStateChanging}
         items={displayedCities ?? []}
-        isDisabled={cities.length === 0 || initLoading}
+        isDisabled={
+          !stateId || cities.length === 0 || initLoading || isStateChanging
+        }
         selectedKeys={selectedCity}
         scrollRef={scrollerRef}
         onSelectionChange={handleSelectionChange}
