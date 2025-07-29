@@ -1,5 +1,8 @@
-import { useState, useEffect, useMemo } from "react";
-import { Autocomplete, AutocompleteItem } from "@heroui/autocomplete";
+import { useState, useMemo } from "react";
+import { Input } from "@heroui/input";
+import { Button } from "@heroui/button";
+import { Select, SelectItem } from "@heroui/select";
+import { SharedSelection } from "@heroui/system";
 import { useInfiniteScroll } from "@heroui/use-infinite-scroll";
 import { toast } from "react-hot-toast";
 
@@ -10,28 +13,36 @@ import {
 } from "@/lib/services/fetch-procedure";
 
 import { Procedure } from "@/types";
+import { SearchIcon } from "../icons/icons";
 
-interface ProcedureAutocompleteProps {
+interface ProcedureSearchProps {
   onSelect: (procedure: Procedure | null) => void;
   isDisabled?: boolean;
 }
 
-export function useProcedureList({ fetchDelay = 0 } = {}) {
+export function useProcedureSearch({ fetchDelay = 0 } = {}) {
   const [displayedItems, setDisplayedItems] = useState<Procedure[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [page, setPage] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [hasSearched, setHasSearched] = useState(false);
   const limit = 20;
 
   const pharmacyId = deliveryFormState.get().pharmacyId;
-  const cacheKey = useMemo(() => pharmacyId, [pharmacyId]);
+  useMemo(() => `${pharmacyId}-${searchTerm}`, [pharmacyId, searchTerm]);
 
-  const loadProcedures = async (pageNum = 0) => {
+  const searchProcedures = async (pageNum = 0, term = searchTerm) => {
     if (!hasMore && pageNum !== 0) return;
     if (!pharmacyId) {
       setDisplayedItems([]);
       setHasMore(false);
       toast.error("Please select a pharmacy first");
+      return;
+    }
+
+    if (!term.trim()) {
+      toast.error("Please enter a search term");
       return;
     }
 
@@ -41,41 +52,56 @@ export function useProcedureList({ fetchDelay = 0 } = {}) {
         await new Promise((resolve) => setTimeout(resolve, fetchDelay));
       }
 
+      // Pass search term to the API
       const { procedures, hasMore: moreAvailable } = await fetchProcedures(
         pageNum,
-        limit
+        limit,
+        term // Add search parameter to your API call
       );
 
       if (pageNum === 0) {
         setDisplayedItems(procedures);
+        setHasSearched(true);
       } else {
         setDisplayedItems((prev) => [...prev, ...procedures]);
       }
 
       setHasMore(moreAvailable);
-      console.log("HasMore:", moreAvailable, "Items:", displayedItems.length);
+      console.log("HasMore:", moreAvailable, "Items:", procedures.length);
+
+      if (procedures.length === 0 && pageNum === 0) {
+        toast.success(`No procedures found for "${term}"`);
+      }
     } catch (error) {
-      console.error("Load procedures error:", error);
-      toast.error("Failed to load procedures");
+      console.error("Search procedures error:", error);
+      toast.error("Failed to search procedures");
+      setDisplayedItems([]);
+      setHasMore(false);
     } finally {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    clearProceduresCache();
-    setDisplayedItems([]);
-    setHasMore(true);
-    setPage(0);
-    loadProcedures(0);
-  }, [cacheKey]);
-
   const onLoadMore = () => {
-    if (isLoading || !hasMore) return;
+    if (isLoading || !hasMore || !searchTerm.trim()) return;
     console.log("Loading more procedures, page:", page + 1);
     const nextPage = page + 1;
     setPage(nextPage);
-    loadProcedures(nextPage);
+    searchProcedures(nextPage);
+  };
+
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+    setDisplayedItems([]);
+    setHasMore(true);
+    setPage(0);
+    setHasSearched(false);
+    // Clear cache when searching with different terms
+    clearProceduresCache();
+
+    if (term.trim()) {
+      searchProcedures(0, term);
+    }
   };
 
   return {
@@ -83,53 +109,139 @@ export function useProcedureList({ fetchDelay = 0 } = {}) {
     hasMore,
     isLoading,
     onLoadMore,
+    searchTerm,
+    setSearchTerm,
+    handleSearch,
+    hasSearched,
     reload: () => {
-      clearProceduresCache();
-      setPage(0);
-      loadProcedures(0);
+      if (searchTerm.trim()) {
+        clearProceduresCache();
+        setPage(0);
+        searchProcedures(0);
+      }
     },
   };
 }
 
-export default function ProcedureAutocomplete({
+export default function ProcedureSearch({
   onSelect,
   isDisabled,
-}: ProcedureAutocompleteProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const { items, hasMore, isLoading, onLoadMore } = useProcedureList({
-    fetchDelay: 500,
-  });
+}: ProcedureSearchProps) {
+  const [inputValue, setInputValue] = useState("");
+  const [selectedProcedure, setSelectedProcedure] = useState<Set<string>>(
+    new Set()
+  );
+
+  const { items, hasMore, isLoading, onLoadMore, handleSearch, hasSearched } =
+    useProcedureSearch({
+      fetchDelay: 300,
+    });
 
   const [, scrollerRef] = useInfiniteScroll({
     hasMore,
-    isEnabled: isOpen,
+    isEnabled: items.length > 0,
     shouldUseLoader: false,
     onLoadMore,
   });
 
+  const handleSearchClick = () => {
+    if (!inputValue.trim()) {
+      toast.error("Please enter a search term");
+      return;
+    }
+    handleSearch(inputValue);
+    setSelectedProcedure(new Set()); // Clear selection when searching
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleSearchClick();
+    }
+  };
+
+  const handleSelectionChange = (selection: SharedSelection) => {
+    setSelectedProcedure(selection as Set<string>);
+
+    // Immediately notify parent of the selection
+    const selectedKey = Array.from(selection as Set<string>)[0];
+    if (selectedKey) {
+      const selected = items.find(
+        (item) => `${item.ProcedureId}-${item.ProcedureName}` === selectedKey
+      );
+      onSelect(selected || null);
+    } else {
+      onSelect(null);
+    }
+  };
+
   return (
-    <Autocomplete
-      className="w-full"
-      defaultItems={items}
-      isLoading={isLoading}
-      label="Select Procedure"
-      placeholder="Search for a procedure"
-      scrollRef={scrollerRef}
-      variant="bordered"
-      isDisabled={isDisabled}
-      onOpenChange={setIsOpen}
-      onSelectionChange={(key) => {
-        const selected = items.find(
-          (item) => `${item.ProcedureId}-${item.ProcedureName}` === key
-        );
-        onSelect(selected || null);
-      }}
-    >
-      {(item: Procedure) => (
-        <AutocompleteItem key={`${item.ProcedureId}-${item.ProcedureName}`}>
-          {item.ProcedureName}
-        </AutocompleteItem>
+    <div className="w-full space-y-4">
+      {/* Search Input */}
+      <div className="flex gap-2">
+        <Input
+          className="flex-1"
+          label="Search Procedures"
+          placeholder="Enter procedure name to search..."
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyPress={handleKeyPress}
+          isDisabled={isDisabled}
+          startContent={<SearchIcon className="w-4 h-4 text-gray-400" />}
+        />
+        <Button
+          color="primary"
+          onPress={handleSearchClick}
+          isLoading={isLoading}
+          isDisabled={isDisabled || !inputValue.trim()}
+          className="px-6"
+        >
+          Search
+        </Button>
+      </div>
+
+      {/* Results Select */}
+      {hasSearched && (
+        <div className="space-y-3">
+          {items.length > 0 ? (
+            <>
+              <Select
+                label="Select Procedure"
+                placeholder="Choose from search results..."
+                selectedKeys={selectedProcedure}
+                onSelectionChange={handleSelectionChange}
+                isDisabled={isDisabled}
+                scrollRef={scrollerRef}
+              >
+                {items.map((item: Procedure) => (
+                  <SelectItem key={`${item.ProcedureId}-${item.ProcedureName}`}>
+                    {item.ProcedureName}
+                  </SelectItem>
+                ))}
+              </Select>
+
+              {/* Loading more indicator */}
+              {isLoading && items.length > 0 && (
+                <div className="text-center py-2 text-sm text-gray-500">
+                  Loading more results...
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <p>No procedures found for "{inputValue}"</p>
+              <p className="text-sm mt-1">Try a different search term</p>
+            </div>
+          )}
+        </div>
       )}
-    </Autocomplete>
+
+      {/* Initial state message */}
+      {!hasSearched && !isLoading && (
+        <div className="text-center py-8 text-gray-500">
+          <SearchIcon className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+          <p>Enter a search term and click "Search" to find procedures</p>
+        </div>
+      )}
+    </div>
   );
 }
