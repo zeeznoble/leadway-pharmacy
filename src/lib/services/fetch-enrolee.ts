@@ -19,6 +19,7 @@ export type EnrolleeData = {
   Member_EmailAddress_One: string,
   Client_PostalAddress: string,
   client_schemename: string;
+  Member_ExpiryDate: string;
 }
 
 export type EnrolleeResponse = {
