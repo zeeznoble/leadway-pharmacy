@@ -19,7 +19,11 @@ let isFetching = false;
 export async function fetchProcedures(
   page = 0,
   limit = 20,
+  searchTerm?: string
 ): Promise<{ procedures: Procedure[]; hasMore: boolean }> {
+  // Create cache key that includes search term for proper caching
+  // const cacheKey = searchTerm || 'all';
+
   if (isFetching) {
     const startIndex = page * limit;
     return {
@@ -43,7 +47,10 @@ export async function fetchProcedures(
       throw new Error("No pharmacy selected");
     }
 
-    const apiUrl = `${API_URL}/ProviderNetwork/GetProceduresByFilter?filtertype=3&providerid=${pharmacyId}&searchbyname=`;
+    // Use the search term in the API URL, empty string if no search term
+    const searchParam = searchTerm ? encodeURIComponent(searchTerm) : '';
+    const apiUrl = `${API_URL}/ProviderNetwork/GetProceduresByFilter?filtertype=3&providerid=${pharmacyId}&searchbyname=${searchParam}`;
+
     const response = await fetch(apiUrl);
 
     if (!response.ok) {
@@ -54,6 +61,7 @@ export async function fetchProcedures(
 
     console.log("Procedure API Response:", {
       page,
+      searchTerm: searchTerm || 'all',
       resultCount: data.result.length,
     });
 
