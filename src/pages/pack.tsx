@@ -10,7 +10,7 @@ import { fetchUnpacked, packDeliveries } from "@/lib/services/delivery-service";
 import PackTable from "@/components/pack-table";
 import PackDateModal from "@/components/pack-date-modal";
 import { Button } from "@heroui/button";
-import { formatDateForAPI } from "@/lib/helpers";
+import { formatDateForAPI, generateDeliveryNotePDF } from "@/lib/helpers";
 
 export default function PackPage() {
   const state = useChunkValue(deliveryStore);
@@ -108,6 +108,50 @@ export default function PackPage() {
       const result = await packDeliveries(deliveriesWithDate);
       if (result && result.Results[0].status === 200) {
         toast.success(result.Results[0].ReturnMessage);
+
+        try {
+          // Process ALL selected deliveries, not just the first one
+          for (const delivery of selectedDeliveriesToPack) {
+            // Generate a unique delivery note number for each delivery
+            const deliveryNoteNo = Math.floor(Math.random() * 9000) + 1000;
+
+            // Format current date
+            const currentDate = new Date();
+            const issueDate = `${(currentDate.getMonth() + 1).toString().padStart(2, "0")}/${currentDate.getDate().toString().padStart(2, "0")}/${currentDate.getFullYear()}`;
+
+            // Prepare delivery note data for this specific delivery
+            const deliveryNoteData = {
+              deliveryNoteNo: deliveryNoteNo.toString(),
+              issueDate: issueDate,
+              patientName: delivery.enrolleename || "N/A",
+              patientId: delivery.enrolleeid || "N/A",
+              address: delivery.enrolleeaddress || "Address not available",
+              phone: delivery.enrolleephone || "Phone not available",
+              items:
+                delivery.procedureLines?.map((procedure: any) => ({
+                  ProcedureName: procedure.ProcedureName || "Unknown Procedure",
+                  ProcedureQuantity: procedure.ProcedureQuantity || 1,
+                  cost: procedure.cost || "0",
+                  duration: procedure.duration || "",
+                })) || [],
+            };
+
+            // Add example duration for the first item (similar to your example)
+            if (deliveryNoteData.items.length > 0) {
+              deliveryNoteData.items[0].duration = "500 mg bd x 1 months";
+            }
+
+            await generateDeliveryNotePDF(deliveryNoteData);
+          }
+
+          toast.success(
+            `${selectedDeliveriesToPack.length} delivery note PDF(s) downloaded successfully!`
+          );
+        } catch (pdfError) {
+          console.error("PDF generation error:", pdfError);
+          toast.error("Failed to generate delivery note PDF");
+        }
+
         // Refresh the data after successful packing
         loadUnpackedDeliveries();
       }
