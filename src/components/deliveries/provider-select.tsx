@@ -10,6 +10,7 @@ interface ProviderAutocompleteProps {
   enrolleeId: string;
   isDisabled?: boolean;
   selectedProvider?: Provider | null;
+  pharmacyType?: string;
 }
 
 export default function ProviderAutocomplete({
@@ -17,6 +18,7 @@ export default function ProviderAutocomplete({
   enrolleeId,
   isDisabled,
   selectedProvider,
+  pharmacyType,
 }: ProviderAutocompleteProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -33,15 +35,50 @@ export default function ProviderAutocomplete({
     onLoadMore,
   });
 
+  // Filter items based on pharmacy type
+  const getFilteredItemsByType = (items: Provider[]) => {
+    if (!pharmacyType) return items;
+
+    if (pharmacyType === "Internal") {
+      // Show only items that include "Pharmacy benefits"
+      return items.filter((item) =>
+        item.PharmacyName.toLowerCase().includes("pharmacy benefit")
+      );
+    } else if (pharmacyType === "External") {
+      // Exclude items that include "Pharmacy benefits"
+      return items.filter(
+        (item) => !item.PharmacyName.toLowerCase().includes("pharmacy benefit")
+      );
+    }
+
+    return items;
+  };
+
+  const typeFilteredItems = getFilteredItemsByType(items);
+
   const filteredItems = searchQuery
-    ? items.filter((item) =>
+    ? typeFilteredItems.filter((item) =>
         item.PharmacyName.toLowerCase().includes(searchQuery.toLowerCase())
       )
-    : items;
+    : typeFilteredItems;
 
   const defaultKey = selectedProvider
     ? `${selectedProvider.Pharmacyid}-${selectedProvider.PharmacyName}`
     : undefined;
+
+  const getPlaceholderText = () => {
+    if (!pharmacyType) return "Select pharmacy type first";
+    return pharmacyType === "Internal"
+      ? "Search for internal pharmacy"
+      : "Search for external pharmacy";
+  };
+
+  const getLabelText = () => {
+    if (!pharmacyType) return "Select Pharmacy";
+    return pharmacyType === "Internal"
+      ? "Select Internal Pharmacy"
+      : "Select External Pharmacy";
+  };
 
   return (
     <div className="w-full">
@@ -55,14 +92,14 @@ export default function ProviderAutocomplete({
       )}
       <Autocomplete
         className="w-full"
-        defaultItems={items}
+        defaultItems={typeFilteredItems}
         items={filteredItems}
         isLoading={isLoading}
-        label="Select Pharmacy"
-        placeholder="Search for a pharmacy"
+        label={getLabelText()}
+        placeholder={getPlaceholderText()}
         scrollRef={scrollerRef}
         variant="bordered"
-        isDisabled={isDisabled}
+        isDisabled={isDisabled || !pharmacyType}
         onOpenChange={(open) => {
           console.log("Autocomplete open state:", open);
           setIsOpen(open);
@@ -73,7 +110,7 @@ export default function ProviderAutocomplete({
         }}
         defaultSelectedKey={defaultKey}
         onSelectionChange={(key) => {
-          const selected = items.find(
+          const selected = typeFilteredItems.find(
             (item) => `${item.Pharmacyid}-${item.PharmacyName}` === key
           );
           onSelect(selected || null);
@@ -85,7 +122,7 @@ export default function ProviderAutocomplete({
           </AutocompleteItem>
         )}
       </Autocomplete>
-      {isLoading && isOpen && items.length > 0 && (
+      {isLoading && isOpen && typeFilteredItems.length > 0 && (
         <div className="text-center py-2 text-sm text-gray-500">
           Loading more options...
         </div>
@@ -95,6 +132,14 @@ export default function ProviderAutocomplete({
           No providers found for "{searchQuery}"
         </div>
       )}
+      {filteredItems.length === 0 &&
+        !searchQuery &&
+        !isLoading &&
+        pharmacyType && (
+          <div className="text-center py-2 text-sm text-gray-500">
+            No {pharmacyType.toLowerCase()} pharmacies available
+          </div>
+        )}
     </div>
   );
 }
