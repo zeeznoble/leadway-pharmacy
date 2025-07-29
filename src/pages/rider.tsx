@@ -23,7 +23,6 @@ import {
   riderActions,
   viewRiderActions,
   viewRiderStore,
-  RiderFormData,
 } from "@/lib/store/rider-store";
 import RiderViewModal from "@/components/riders/rider-view-modal";
 
