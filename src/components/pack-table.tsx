@@ -16,6 +16,7 @@ import { Badge } from "@heroui/badge";
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 import { Spinner } from "@heroui/spinner";
+import { Select, SelectItem } from "@heroui/select";
 
 import { Key } from "@react-types/shared";
 import { useLocation } from "react-router-dom";
@@ -30,7 +31,7 @@ interface PackTableProps {
   deliveries: Delivery[];
   isLoading: boolean;
   error: string | null;
-  onSearch: (enrolleeId: string) => void;
+  onSearch: (searchTerm: string, searchType?: "enrollee" | "pharmacy") => void;
   onPackDelivery: (selectedDeliveries: any[]) => void;
 }
 
@@ -65,7 +66,10 @@ export default function PackTable({
 }: PackTableProps) {
   const router = useLocation();
 
-  const [searchEnrolleeId, setSearchEnrolleeId] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchType, setSearchType] = useState<"enrollee" | "pharmacy">(
+    "enrollee"
+  );
   const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set([]));
   const { user } = useChunkValue(authStore);
 
@@ -106,11 +110,15 @@ export default function PackTable({
   const columnsWithActions = useMemo(() => [...DELIVERY_COLUMNS], []);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchEnrolleeId(e.target.value);
+    setSearchTerm(e.target.value);
+  };
+
+  const handleSearchTypeChange = (value: string) => {
+    setSearchType(value as "enrollee" | "pharmacy");
   };
 
   const handleSearch = () => {
-    onSearch(searchEnrolleeId);
+    onSearch(searchTerm, searchType);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -119,13 +127,28 @@ export default function PackTable({
     }
   };
 
+  const handleClearSearch = () => {
+    setSearchTerm("");
+    onSearch(""); // Load all data
+  };
+
   const handleSelectionChange = (keys: Selection) => {
     setSelectedKeys(keys);
   };
 
+  // Filter rows based on search term and type (client-side filtering for pharmacy search)
   const filteredRows = useMemo(() => {
-    return rows.filter((row) => !row.status);
-  }, [rows]);
+    let filtered = rows.filter((row) => !row.status);
+
+    // If searching by pharmacy and we have a search term, filter client-side
+    if (searchType === "pharmacy" && searchTerm.trim()) {
+      filtered = filtered.filter((row) =>
+        row.pharmacyname.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    return filtered;
+  }, [rows, searchType, searchTerm]);
 
   const getSelectedCount = (selection: Selection): number => {
     if (selection === "all") {
@@ -227,45 +250,86 @@ export default function PackTable({
 
   const selectedCount = getSelectedCount(selectedKeys);
 
-  if (deliveries.length === 0 && !isLoading && !error) {
-    return (
-      <div className="text-center p-8 text-gray-500">
-        No deliveries found. Search by Enrollee ID to get started.
-      </div>
-    );
-  }
+  const showNoResults =
+    !isLoading &&
+    filteredRows.length === 0 &&
+    (searchTerm || deliveries.length > 0);
+  const showInitialMessage =
+    !isLoading && deliveries.length === 0 && !searchTerm;
 
   return (
     <>
-      <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-        <div className="flex w-full sm:w-auto items-center flex-1 gap-2">
-          <Input
-            className="w-full"
-            size="lg"
-            placeholder="Search by Enrollee ID..."
-            value={searchEnrolleeId}
-            onChange={handleSearchChange}
-            onKeyUp={handleKeyPress}
-            radius="sm"
-          />
+      <div className="mb-6 flex flex-col gap-4">
+        {/* Search Controls */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="flex w-full sm:w-auto items-center flex-1 gap-2">
+            <Select
+              aria-label="search-stuffs"
+              className="w-40"
+              size="lg"
+              placeholder="Search by"
+              selectedKeys={[searchType]}
+              onSelectionChange={(keys) => {
+                const key = Array.from(keys)[0] as string;
+                handleSearchTypeChange(key);
+              }}
+              radius="sm"
+            >
+              <SelectItem key="enrollee">Enrollee ID</SelectItem>
+              <SelectItem key="pharmacy">Pharmacy</SelectItem>
+            </Select>
+            <Input
+              className="flex-1"
+              size="lg"
+              placeholder={`Search by ${searchType === "enrollee" ? "Enrollee ID" : "Pharmacy Name"}...`}
+              value={searchTerm}
+              onChange={handleSearchChange}
+              onKeyUp={handleKeyPress}
+              radius="sm"
+            />
+            <Button
+              color="primary"
+              radius="sm"
+              onPress={handleSearch}
+              isDisabled={isLoading}
+            >
+              {isLoading ? <Spinner size="sm" color="white" /> : "Search"}
+            </Button>
+            {searchTerm && (
+              <Button
+                color="default"
+                radius="sm"
+                onPress={handleClearSearch}
+                isDisabled={isLoading}
+              >
+                Clear
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex justify-between items-center">
+          <div className="text-sm text-gray-600">
+            {searchTerm && (
+              <span>
+                Searching for "{searchTerm}" in{" "}
+                {searchType === "enrollee" ? "Enrollee ID" : "Pharmacy Name"}
+              </span>
+            )}
+          </div>
           <Button
-            color="primary"
+            color="success"
             radius="sm"
-            onPress={handleSearch}
-            isDisabled={isLoading}
+            isDisabled={selectedCount === 0 || isLoading}
+            onPress={handlePackDelivery}
           >
-            {isLoading ? <Spinner size="sm" color="white" /> : "Search"}
+            {router.pathname === "/pack"
+              ? "Pack Selected"
+              : "Send for Delivery"}
+            ({selectedCount})
           </Button>
         </div>
-        <Button
-          color="success"
-          radius="sm"
-          isDisabled={selectedCount === 0 || isLoading}
-          onPress={handlePackDelivery}
-        >
-          {router.pathname === "/pack" ? "Pack Selected" : "Send for Delivery"}(
-          {selectedCount})
-        </Button>
       </div>
 
       {error && (
@@ -274,45 +338,64 @@ export default function PackTable({
         </div>
       )}
 
+      {showInitialMessage && (
+        <div className="text-center p-8 text-gray-500">
+          No deliveries found. Search by Enrollee ID or Pharmacy Name to get
+          started.
+        </div>
+      )}
+
+      {showNoResults && (
+        <div className="text-center p-8 text-gray-500">
+          <p>No deliveries found matching your search criteria.</p>
+          <p className="text-sm mt-2">
+            Try adjusting your search term or search by a different field.
+          </p>
+        </div>
+      )}
+
       {isLoading ? (
         <div className="text-center p-8">
           <Spinner color="primary" />
           <p className="mt-2 text-gray-600">Loading deliveries...</p>
         </div>
-      ) : (
-        <Table
-          aria-label="Deliveries Table"
-          className="min-w-full"
-          selectionMode="multiple"
-          selectedKeys={selectedKeys}
-          onSelectionChange={handleSelectionChange}
-          disabledKeys={disabledKeys}
-          color="primary"
-        >
-          <TableHeader columns={columnsWithActions}>
-            {(column) => (
-              <TableColumn key={column.key}>{column.label}</TableColumn>
-            )}
-          </TableHeader>
-          <TableBody items={rows}>
-            {(item) => (
-              <TableRow key={item.key}>
-                {(columnKey) => (
-                  <TableCell>{renderCell(item, columnKey)}</TableCell>
-                )}
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      )}
+      ) : filteredRows.length > 0 ? (
+        <>
+          <Table
+            aria-label="Deliveries Table"
+            className="min-w-full"
+            selectionMode="multiple"
+            selectedKeys={selectedKeys}
+            onSelectionChange={handleSelectionChange}
+            disabledKeys={disabledKeys}
+            color="primary"
+          >
+            <TableHeader columns={columnsWithActions}>
+              {(column) => (
+                <TableColumn key={column.key}>{column.label}</TableColumn>
+              )}
+            </TableHeader>
+            <TableBody items={filteredRows}>
+              {(item) => (
+                <TableRow key={item.key}>
+                  {(columnKey) => (
+                    <TableCell>{renderCell(item, columnKey)}</TableCell>
+                  )}
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
 
-      {!isLoading && rows.length > 0 && (
-        <div className="mt-4 text-sm text-gray-500">
-          <p>Total deliveries: {rows.length}</p>
-          <p>Pending deliveries: {filteredRows.length}</p>
-          <p>Selected for packing: {selectedCount}</p>
-        </div>
-      )}
+          <div className="mt-4 text-sm text-gray-500">
+            <p>Total deliveries: {rows.length}</p>
+            <p>
+              Pending deliveries: {rows.filter((row) => !row.status).length}
+            </p>
+            {searchTerm && <p>Filtered results: {filteredRows.length}</p>}
+            <p>Selected for packing: {selectedCount}</p>
+          </div>
+        </>
+      ) : null}
     </>
   );
 }
