@@ -71,6 +71,7 @@ export default function ToBeDeliveredPage() {
     data: ridersData,
     loading: ridersLoading,
     error: ridersError,
+    reload: riderReload
   } = useAsyncChunk(fetchAllRiders);
 
   const riders: Rider[] = ridersData || [];
@@ -317,6 +318,10 @@ export default function ToBeDeliveredPage() {
     setFromDate(null);
     setToDate(null);
   };
+
+  useEffect(() => {
+   riderReload();
+  },[])
 
   return (
     <section className="py-3">
