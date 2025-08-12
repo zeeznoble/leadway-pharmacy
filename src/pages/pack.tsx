@@ -116,30 +116,131 @@ export default function PackPage() {
   };
 
   // Updated to receive both date and months
+  // const handleConfirmPack = async (
+  //   nextPackDate: CalendarDate,
+  //   selectedMonths: number
+  // ) => {
+  //   try {
+  //     const formattedDate = nextPackDate.toString();
+
+  //     // Prepare deliveries for API call (minimal data only)
+  //     const deliveriesForAPI = selectedDeliveriesToPack.map((delivery: any) => {
+  //       console.log(delivery);
+  //       // Extract the API payload and update the Notes with months
+  //       const apiPayload = {
+  //         DeliveryEntryNo: delivery.EntryNo,
+  //         PackedBy: user?.UserName || "",
+  //         Notes: `${selectedMonths}`,
+  //         nextpackdate: formattedDate,
+  //       };
+
+  //       return apiPayload;
+  //     });
+
+  //     console.log("API Payload (minimal data):", deliveriesForAPI);
+
+  //     // Make API call with minimal data only
+  //     const result = await packDeliveries(deliveriesForAPI);
+
+  //     if (result && result.Results[0].status === 200) {
+  //       toast.success(result.Results[0].ReturnMessage);
+
+  //       try {
+  //         // Generate single PDF with all selected deliveries grouped by enrollee
+  //         console.log(
+  //           "Selected Deliveries for PDF (full data):",
+  //           selectedDeliveriesToPack
+  //         );
+
+  //         // Call the modified PDF generation function
+  //         await generateDeliveryNotePDF(
+  //           selectedDeliveriesToPack,
+  //           selectedMonths
+  //         );
+
+  //         toast.success(
+  //           `Delivery note PDF with ${selectedDeliveriesToPack.length} deliveries downloaded successfully!`
+  //         );
+  //       } catch (pdfError) {
+  //         console.error("PDF generation error:", pdfError);
+  //         toast.error("Failed to generate delivery note PDF");
+  //       }
+
+  //       // Refresh the data after successful packing
+  //       loadUnpackedDeliveries();
+  //     }
+  //   } catch (error) {
+  //     console.error("Pack error:", error);
+  //     toast.error("Failed to pack deliveries");
+  //   } finally {
+  //     setSelectedDeliveriesToPack([]);
+  //   }
+  // };
+
   const handleConfirmPack = async (
     nextPackDate: CalendarDate,
-    selectedMonths: number
+    originalMonths: number,
+    actualMonths: number
   ) => {
     try {
       const formattedDate = nextPackDate.toString();
 
-      // Prepare deliveries for API call (minimal data only)
+      // Prepare deliveries for API call with adjusted logic
       const deliveriesForAPI = selectedDeliveriesToPack.map((delivery: any) => {
-        console.log(delivery);
-        // Extract the API payload and update the Notes with months
+        console.log("Processing delivery:", delivery);
+
+        // Extract EndDate from delivery
+        const endDate = delivery.EndDate || delivery.enddate;
+        let finalDate = formattedDate;
+        let finalMonths = originalMonths;
+
+        if (endDate) {
+          const endDateObj = new Date(endDate);
+          const nextPackDateObj = nextPackDate.toDate(getLocalTimeZone());
+
+          if (nextPackDateObj > endDateObj) {
+            // Use EndDate as the final date
+            finalDate = endDateObj.toISOString().split("T")[0];
+
+            // Calculate months difference between today and EndDate
+            const today = new Date();
+            const yearsDiff = endDateObj.getFullYear() - today.getFullYear();
+            const monthsDiff = endDateObj.getMonth() - today.getMonth();
+            const daysDiff = endDateObj.getDate() - today.getDate();
+
+            let calculatedMonths = yearsDiff * 12 + monthsDiff;
+
+            // If the day difference is negative, reduce by one month
+            if (daysDiff < 0) {
+              calculatedMonths -= 1;
+            }
+
+            // Ensure calculated months is at least 1
+            finalMonths = Math.max(1, calculatedMonths);
+
+            console.log(`Date adjusted for delivery ${delivery.EntryNo}:`);
+            console.log(`- Original months: ${originalMonths}`);
+            console.log(`- Calculated months: ${finalMonths}`);
+            console.log(`- Original next pack date: ${formattedDate}`);
+            console.log(`- Final next pack date: ${finalDate}`);
+            console.log(`- End date: ${endDate}`);
+          }
+        }
+
+        // Create API payload with adjusted values
         const apiPayload = {
           DeliveryEntryNo: delivery.EntryNo,
           PackedBy: user?.UserName || "",
-          Notes: `${selectedMonths}`,
-          nextpackdate: formattedDate,
+          Notes: `${finalMonths}`, // Use calculated months
+          nextpackdate: finalDate, // Use adjusted date if necessary
         };
 
         return apiPayload;
       });
 
-      console.log("API Payload (minimal data):", deliveriesForAPI);
+      console.log("API Payload with date adjustments:", deliveriesForAPI);
 
-      // Make API call with minimal data only
+      // Make API call with adjusted data
       const result = await packDeliveries(deliveriesForAPI);
 
       if (result && result.Results[0].status === 200) {
@@ -147,19 +248,23 @@ export default function PackPage() {
 
         try {
           // Generate single PDF with all selected deliveries grouped by enrollee
+          // Use actualMonths for PDF generation (the months that were actually confirmed)
           console.log(
             "Selected Deliveries for PDF (full data):",
             selectedDeliveriesToPack
           );
 
-          // Call the modified PDF generation function
-          await generateDeliveryNotePDF(
-            selectedDeliveriesToPack,
-            selectedMonths
-          );
+          // Call the modified PDF generation function with actualMonths
+          await generateDeliveryNotePDF(selectedDeliveriesToPack, actualMonths);
+
+          // Show success message with adjustment info if applicable
+          const adjustmentInfo =
+            actualMonths !== originalMonths
+              ? ` (adjusted from ${originalMonths} to ${actualMonths} months due to treatment end dates)`
+              : "";
 
           toast.success(
-            `Delivery note PDF with ${selectedDeliveriesToPack.length} deliveries downloaded successfully!`
+            `Delivery note PDF with ${selectedDeliveriesToPack.length} deliveries downloaded successfully!${adjustmentInfo}`
           );
         } catch (pdfError) {
           console.error("PDF generation error:", pdfError);
@@ -247,6 +352,7 @@ export default function PackPage() {
         isOpen={showDateModal}
         onClose={() => setShowDateModal(false)}
         onConfirm={handleConfirmPack}
+        selectedDeliveries={selectedDeliveriesToPack} // Pass selected deliveries
       />
     </section>
   );
