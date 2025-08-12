@@ -25,6 +25,9 @@ export default function PackPage() {
   const [fromDate, setFromDate] = useState<CalendarDate | null>(null);
   const [toDate, setToDate] = useState<CalendarDate | null>(null);
 
+  // Add state to track if initial load has been done
+  const [hasInitialLoad, setHasInitialLoad] = useState(false);
+
   // Load unpacked deliveries with date filters
   const loadUnpackedDeliveries = (enrolleeId: string = "") => {
     if (!user?.UserName) return;
@@ -36,14 +39,22 @@ export default function PackPage() {
   };
 
   useEffect(() => {
-    if (user?.UserName) {
+    if (user?.UserName && !hasInitialLoad) {
       loadUnpackedDeliveries();
+      setHasInitialLoad(true);
     }
 
     return () => {
       deliveryActions.resetDeliveryErrors();
     };
-  }, [user?.UserName, fromDate, toDate]);
+  }, [user?.UserName, hasInitialLoad]);
+
+  // Separate effect for date changes (only after initial load)
+  useEffect(() => {
+    if (user?.UserName && hasInitialLoad) {
+      loadUnpackedDeliveries();
+    }
+  }, [fromDate, toDate]);
 
   useEffect(() => {
     if (state.packingSuccess) {
@@ -60,23 +71,33 @@ export default function PackPage() {
     }
   }, [state.packingError]);
 
-  const handleSearch = async (enrolleeId: string) => {
+  const handleSearch = async (
+    searchTerm: string,
+    searchType: "enrollee" | "pharmacy" = "enrollee"
+  ) => {
     if (!user?.UserName) {
       toast.error("User information not available");
       return;
     }
 
     try {
-      deliveryActions.updateLastSearchedEnrolleeId(enrolleeId);
+      // Store the search term for later use
+      deliveryActions.updateLastSearchedEnrolleeId(searchTerm);
 
       // Use the date filters when searching
       const fromDateStr = formatDateForAPI(fromDate);
       const toDateStr = formatDateForAPI(toDate);
 
-      if (enrolleeId) {
-        await fetchUnpacked(user.UserName, enrolleeId);
+      if (searchTerm) {
+        // For now, we'll use the existing API. You might need to modify the API to support pharmacy search
+        await fetchUnpacked(
+          user.UserName,
+          searchType === "enrollee" ? searchTerm : "",
+          fromDateStr,
+          toDateStr
+        );
       } else {
-        await fetchUnpacked(user.UserName, enrolleeId, fromDateStr, toDateStr);
+        await fetchUnpacked(user.UserName, "", fromDateStr, toDateStr);
       }
     } catch (error) {
       const err = error as Error;
