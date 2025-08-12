@@ -313,7 +313,6 @@ export default function PackPage() {
               value={toDate}
               onChange={setToDate}
               minValue={fromDate || undefined}
-              maxValue={today(getLocalTimeZone())}
               className="w-full sm:max-w-md"
               size="sm"
               radius="sm"
