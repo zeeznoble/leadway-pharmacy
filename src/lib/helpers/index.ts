@@ -334,116 +334,179 @@ export const programmaticNavigate = (path: string) => {
   }
 };
 
-
-
-interface DeliveryItem {
+type DeliveryItem = {
   ProcedureName: string;
+  ProcedureId: string;
   ProcedureQuantity: number;
+  OriginalQuantity: number;
   cost: string;
-  duration?: string;
+  duration: string;
 }
-
-interface DeliveryNoteData {
+type DeliveryNoteData = {
   deliveryNoteNo: string;
   issueDate: string;
   patientName: string;
   patientId: string;
+  schemeName: string;
   address: string;
   phone: string;
+  selectedMonths: number;
   items: DeliveryItem[];
 }
 
-export const generateDeliveryNotePDF = async (data: DeliveryNoteData) => {
+// Modified generateDeliveryNotePDF function to handle multiple enrollees in one PDF
+export const generateDeliveryNotePDF = async (deliveryData: DeliveryNoteData[], selectedMonths: number) => {
   const doc = new jsPDF();
 
-  // Add logo from local file
-  try {
-    doc.addImage('/logo-leadway.png', 'PNG', 20, 15, 60, 25);
-  } catch (error) {
-    console.warn('Could not load logo:', error);
-    // Continue without logo if it fails
-  }
+  // Group deliveries by EnrolleeID
+  const groupedByEnrollee = deliveryData.reduce((groups: any, delivery: any) => {
+    const enrolleeId = delivery.enrolleeid || delivery.EnrolleeId || 'Unknown';
+    if (!groups[enrolleeId]) {
+      groups[enrolleeId] = [];
+    }
+    groups[enrolleeId].push(delivery);
+    return groups;
+  }, {});
 
-  // Company header
-  doc.setFontSize(16);
-  doc.setFont('helvetica', 'bold');
-  doc.text('DELIVERY NOTE', doc.internal.pageSize.width - 20, 25, { align: 'right' });
+  const enrolleeIds = Object.keys(groupedByEnrollee);
+  let isFirstPage = true;
 
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.text('LEADWAY HEALTH LTD', doc.internal.pageSize.width - 20, 35, { align: 'right' });
-  doc.text('121-123, Funso Williams Avenue, Iponri, Surulere,', doc.internal.pageSize.width - 20, 42, { align: 'right' });
-  doc.text('Lagos', doc.internal.pageSize.width - 20, 49, { align: 'right' });
-  doc.text('101241 Surulere', doc.internal.pageSize.width - 20, 56, { align: 'right' });
-  doc.text('Nigeria', doc.internal.pageSize.width - 20, 63, { align: 'right' });
-  doc.text('healthcare@leadway.com', doc.internal.pageSize.width - 20, 77, { align: 'right' });
+  // Generate a single delivery note number for the entire PDF
+  const deliveryNoteNo = Math.floor(Math.random() * 9000) + 1000;
 
-  // Delivery note details
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`Delivery note No.:`, doc.internal.pageSize.width - 60, 90, { align: 'left' });
-  doc.setFont('helvetica', 'bold');
-  doc.text(data.deliveryNoteNo, doc.internal.pageSize.width - 20, 90, { align: 'right' });
+  // Format current date
+  const currentDate = new Date();
+  const issueDate = `${(currentDate.getMonth() + 1).toString().padStart(2, "0")}/${currentDate.getDate().toString().padStart(2, "0")}/${currentDate.getFullYear()}`;
 
-  doc.setFont('helvetica', 'normal');
-  doc.text(`Issue date:`, doc.internal.pageSize.width - 60, 97, { align: 'left' });
-  doc.setFont('helvetica', 'bold');
-  doc.text(data.issueDate, doc.internal.pageSize.width - 20, 97, { align: 'right' });
+  // Loop through each enrollee and create a page
+  for (let i = 0; i < enrolleeIds.length; i++) {
+    const enrolleeId = enrolleeIds[i];
+    const enrolleeDeliveries = groupedByEnrollee[enrolleeId];
 
-  // Patient details
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.text('FOR', 20, 90);
+    // Get the first delivery to extract enrollee information
+    const primaryDelivery = enrolleeDeliveries[0];
 
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.text(data.patientName.toUpperCase(), 20, 100);
-  doc.text(data.patientId, 20, 107);
-  doc.text(data.address, 20, 114);
-  doc.text(data.phone, 20, 121);
-  doc.text('Nigeria', 20, 128);
+    // Add new page for each enrollee (except the first one)
+    if (!isFirstPage) {
+      doc.addPage();
+    }
+    isFirstPage = false;
 
-  // Items table
-  const tableData = data.items.map(item => [
-    item.ProcedureName,
-    `${item.ProcedureQuantity} ${getQuantityUnit(item.ProcedureName)}`
-  ]);
+    // Add logo from local file
+    try {
+      doc.addImage('/logo-leadway.png', 'PNG', 20, 15, 60, 25);
+    } catch (error) {
+      console.warn('Could not load logo:', error);
+    }
 
-  // Add description for first item if available
-  if (data.items.length > 0 && data.items[0].duration) {
-    tableData.push([data.items[0].duration, '']);
-  }
+    // Company header
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('DELIVERY NOTE', doc.internal.pageSize.width - 20, 25, { align: 'right' });
 
-  // Fixed autoTable call
-  autoTable(doc, {
-    startY: 140,
-    head: [['DESCRIPTION', 'QUANTITY']],
-    body: tableData,
-    theme: 'grid',
-    headStyles: {
-      fillColor: [173, 216, 230], // Light blue
-      textColor: [0, 0, 0],
-      fontStyle: 'bold',
-      fontSize: 10,
-    },
-    bodyStyles: {
-      fontSize: 9,
-      textColor: [0, 0, 0],
-    },
-    columnStyles: {
-      0: { cellWidth: 120 },
-      1: { cellWidth: 50, halign: 'right' }
-    },
-    margin: { left: 20, right: 20 },
-  });
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text('LEADWAY HEALTH LTD', doc.internal.pageSize.width - 20, 35, { align: 'right' });
+    doc.text('121-123, Funso Williams Avenue, Iponri, Surulere,', doc.internal.pageSize.width - 20, 42, { align: 'right' });
+    doc.text('Lagos', doc.internal.pageSize.width - 20, 49, { align: 'right' });
+    doc.text('101241 Surulere', doc.internal.pageSize.width - 20, 56, { align: 'right' });
+    doc.text('Nigeria', doc.internal.pageSize.width - 20, 63, { align: 'right' });
+    doc.text('healthcare@leadway.com', doc.internal.pageSize.width - 20, 77, { align: 'right' });
 
-  // Health advice section
-  const finalY = (doc as any).lastAutoTable.finalY + 20;
+    // Delivery note details
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Delivery note No.:`, doc.internal.pageSize.width - 60, 90, { align: 'left' });
+    doc.setFont('helvetica', 'bold');
+    doc.text(`${deliveryNoteNo}-${i + 1}`, doc.internal.pageSize.width - 20, 90, { align: 'right' });
 
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'italic');
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Issue date:`, doc.internal.pageSize.width - 60, 97, { align: 'left' });
+    doc.setFont('helvetica', 'bold');
+    doc.text(issueDate, doc.internal.pageSize.width - 20, 97, { align: 'right' });
 
-  const healthAdvice = `Maintaining consistent medication adherence and adopting healthy lifestyle changes are essential for effectively managing your health. Remember your healthcare team is available to provide support and guidance throughout your journey. Make your health a priority by staying dedicated to your treatment plan.
+    // Patient details
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('FOR', 20, 90);
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    const patientName = primaryDelivery.enrolleename || primaryDelivery.EnrolleeName || 'N/A';
+    const patientId = primaryDelivery.enrolleeid || primaryDelivery.EnrolleeId || 'N/A';
+    const schemeName = primaryDelivery.schemename || primaryDelivery.SchemeName || 'N/A';
+    const address = primaryDelivery.deliveryaddress || primaryDelivery.enrolleeaddress ||
+      primaryDelivery.DeliveryAddress || primaryDelivery.EnrolleeAddress || 'Address not available';
+    const phone = primaryDelivery.phonenumber || primaryDelivery.enrolleephone ||
+      primaryDelivery.PhoneNumber || primaryDelivery.EnrolleePhone || 'Phone not available';
+
+    doc.text(patientName.toUpperCase(), 20, 100);
+    doc.text(`ID: ${patientId}`, 20, 107);
+    doc.text(`Scheme: ${schemeName}`, 20, 114);
+    doc.text(address, 20, 121);
+    doc.text(phone, 20, 128);
+    doc.text('Nigeria', 20, 135);
+
+    // Collect all procedures for this enrollee
+    const allProcedures: any[] = [];
+    enrolleeDeliveries.forEach((delivery: any) => {
+      const procedures = delivery.procedureLines || delivery.ProcedureLines || [];
+      procedures.forEach((procedure: any) => {
+        allProcedures.push({
+          ProcedureName: procedure.procedurename || procedure.ProcedureName || 'Unknown Procedure',
+          ProcedureId: procedure.procedureid || procedure.ProcedureId || '',
+          ProcedureQuantity: (procedure.procedurequantity || procedure.ProcedureQuantity || 1) * selectedMonths,
+          OriginalQuantity: procedure.procedurequantity || procedure.ProcedureQuantity || 1,
+          cost: procedure.cost || '0',
+          duration: procedure.duration || '',
+        });
+      });
+    });
+
+    // Items table
+    const tableData = allProcedures.map(item => [
+      item.ProcedureName,
+      `${item.ProcedureQuantity} ${getQuantityUnit(item.ProcedureName)}`
+    ]);
+
+    // Add duration information
+    if (allProcedures.length > 0 && allProcedures[0].duration) {
+      const durationText = `${allProcedures[0].duration.replace(/\d+\s*months?/i, `${selectedMonths} month${selectedMonths !== 1 ? 's' : ''}`)}`;
+      tableData.push([durationText, '']);
+    } else if (selectedMonths > 0) {
+      tableData.push([`Supply for ${selectedMonths} month${selectedMonths !== 1 ? 's' : ''}`, '']);
+    }
+
+    // Generate table using autoTable
+    autoTable(doc, {
+      startY: 145,
+      head: [['DESCRIPTION', 'QUANTITY']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [173, 216, 230], // Light blue
+        textColor: [0, 0, 0],
+        fontStyle: 'bold',
+        fontSize: 10,
+      },
+      bodyStyles: {
+        fontSize: 9,
+        textColor: [0, 0, 0],
+      },
+      columnStyles: {
+        0: { cellWidth: 120 },
+        1: { cellWidth: 50, halign: 'right' }
+      },
+      margin: { left: 20, right: 20 },
+    });
+
+    // Health advice section
+    const finalY = (doc as any).lastAutoTable.finalY + 20;
+
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'italic');
+
+    const healthAdvice = `Maintaining consistent medication adherence and adopting healthy lifestyle changes are essential for effectively managing your health. Remember your healthcare team is available to provide support and guidance throughout your journey. Make your health a priority by staying dedicated to your treatment plan.
 
 Reach out to your health care team today, to get the support you need.
 Contact Centre Number: 07080627051, 02-012801051
@@ -453,14 +516,34 @@ Contact Centre Number: 07080627051, 02-012801051
 
 At your convenience, we have a team of expert Doctors ready to be of support to you, connect with them through our telemedicine platform on our Mobile app.`;
 
-  const splitText = doc.splitTextToSize(healthAdvice, 170);
-  doc.text(splitText, 20, finalY);
+    const splitText = doc.splitTextToSize(healthAdvice, 170);
+    doc.text(splitText, 20, finalY);
 
-  // Download the PDF
-  const fileName = `Delivery_Note_${data.deliveryNoteNo}_${data.issueDate.replace(/\//g, '-')}.pdf`;
+    // Add page number at the bottom
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Page ${i + 1} of ${enrolleeIds.length}`, doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 10, { align: 'center' });
+  }
+
+  // Download the PDF with updated filename
+  const enrolleeCount = enrolleeIds.length;
+  const fileName = `Delivery_Notes_${deliveryNoteNo}_${enrolleeCount}_Enrollees_${selectedMonths}M_${issueDate.replace(/\//g, '-')}.pdf`;
   doc.save(fileName);
 };
 
+// Helper function to determine quantity unit (you may need to adjust this)
+const getQuantityUnit = (procedureName: string): string => {
+  // Add your logic to determine the appropriate unit based on procedure name
+  // This is a simplified example
+  if (procedureName.toLowerCase().includes('tablet') || procedureName.toLowerCase().includes('capsule')) {
+    return 'tablets';
+  } else if (procedureName.toLowerCase().includes('syrup') || procedureName.toLowerCase().includes('liquid')) {
+    return 'ml';
+  } else if (procedureName.toLowerCase().includes('injection')) {
+    return 'vials';
+  }
+  return 'units';
+};
 
 // // Helper function to load image
 // const loadImage = (url: string): Promise<HTMLImageElement> => {
@@ -474,11 +557,11 @@ At your convenience, we have a team of expert Doctors ready to be of support to 
 // };
 
 // Helper function to determine quantity unit
-const getQuantityUnit = (procedureName: string): string => {
-  const name = procedureName.toLowerCase();
-  if (name.includes('tablet') || name.includes('tab')) return 'tabs';
-  if (name.includes('capsule') || name.includes('cap')) return 'caps';
-  if (name.includes('syrup') || name.includes('liquid')) return 'ml';
-  if (name.includes('injection') || name.includes('inj')) return 'vials';
-  return 'units';
-};
+// const getQuantityUnit = (procedureName: string): string => {
+//   const name = procedureName.toLowerCase();
+//   if (name.includes('tablet') || name.includes('tab')) return 'tabs';
+//   if (name.includes('capsule') || name.includes('cap')) return 'caps';
+//   if (name.includes('syrup') || name.includes('liquid')) return 'ml';
+//   if (name.includes('injection') || name.includes('inj')) return 'vials';
+//   return 'units';
+// };
