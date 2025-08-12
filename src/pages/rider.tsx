@@ -105,7 +105,7 @@ export default function RidersPage() {
   };
   
   useEffect(() => {
-   fetchAllRiders();
+   reload();
   }, []);
 
   return (
