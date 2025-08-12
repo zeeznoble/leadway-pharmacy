@@ -4,8 +4,8 @@ import { CalendarDate, parseDate } from "@internationalized/date";
 
 
 import * as XLSX from "xlsx";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import jsPDF from 'jspdf';
+import { autoTable } from 'jspdf-autotable';
 
 import { ProviderData } from "../services/fetch-providers";
 import { fetchEnrolleeById } from "../services/fetch-enrolee";
@@ -356,13 +356,12 @@ interface DeliveryNoteData {
 export const generateDeliveryNotePDF = async (data: DeliveryNoteData) => {
   const doc = new jsPDF();
 
-  // Load and add logo
+  // Add logo from local file
   try {
-    const logoUrl = 'https://leadwayhealth.com/wp-content/uploads/2022/01/logo-x2.png';
-    const logoImg = await loadImage(logoUrl);
-    doc.addImage(logoImg, 'PNG', 20, 15, 60, 25);
+    doc.addImage('/logo-leadway.png', 'PNG', 20, 15, 60, 25);
   } catch (error) {
     console.warn('Could not load logo:', error);
+    // Continue without logo if it fails
   }
 
   // Company header
@@ -415,7 +414,8 @@ export const generateDeliveryNotePDF = async (data: DeliveryNoteData) => {
     tableData.push([data.items[0].duration, '']);
   }
 
-  (doc as any).autoTable({
+  // Fixed autoTable call
+  autoTable(doc, {
     startY: 140,
     head: [['DESCRIPTION', 'QUANTITY']],
     body: tableData,
@@ -461,16 +461,17 @@ At your convenience, we have a team of expert Doctors ready to be of support to 
   doc.save(fileName);
 };
 
-// Helper function to load image
-const loadImage = (url: string): Promise<HTMLImageElement> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = url;
-  });
-};
+
+// // Helper function to load image
+// const loadImage = (url: string): Promise<HTMLImageElement> => {
+//   return new Promise((resolve, reject) => {
+//     const img = new Image();
+//     img.crossOrigin = 'anonymous';
+//     img.onload = () => resolve(img);
+//     img.onerror = reject;
+//     img.src = url;
+//   });
+// };
 
 // Helper function to determine quantity unit
 const getQuantityUnit = (procedureName: string): string => {
