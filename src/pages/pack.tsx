@@ -35,7 +35,7 @@ export default function PackPage() {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
-    fetchUnpacked(user.UserName, enrolleeId, fromDateStr, toDateStr);
+    fetchUnpacked(enrolleeId, fromDateStr, toDateStr);
   };
 
   useEffect(() => {
@@ -59,7 +59,7 @@ export default function PackPage() {
   useEffect(() => {
     if (state.packingSuccess) {
       if (user?.UserName) {
-        fetchUnpacked(user.UserName, state.lastSearchedEnrolleeId || "");
+        fetchUnpacked(state.lastSearchedEnrolleeId || "");
       }
       deliveryActions.setPackingSuccess(false);
     }
@@ -91,13 +91,12 @@ export default function PackPage() {
       if (searchTerm) {
         // For now, we'll use the existing API. You might need to modify the API to support pharmacy search
         await fetchUnpacked(
-          user.UserName,
           searchType === "enrollee" ? searchTerm : "",
           fromDateStr,
           toDateStr
         );
       } else {
-        await fetchUnpacked(user.UserName, "", fromDateStr, toDateStr);
+        await fetchUnpacked(fromDateStr, toDateStr);
       }
     } catch (error) {
       const err = error as Error;
