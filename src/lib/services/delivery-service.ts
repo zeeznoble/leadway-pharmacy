@@ -70,14 +70,14 @@ export const createDelivery = async (deliveryData: { Deliveries: Delivery[] }): 
 };
 
 
-export const fetchDeliveries = async (username: string, enrolleeId: string): Promise<any> => {
+export const fetchDeliveries = async (enrolleeId: string): Promise<any> => {
   try {
     deliveryStore.set((state) => ({
       ...state,
       isLoading: true,
     }));
 
-    const apiUrl = `${API_URL}/PharmacyDelivery/GetTracking?username=${encodeURIComponent(username || "")}&enrolleeId=${encodeURIComponent(enrolleeId || "")}`;
+    const apiUrl = `${API_URL}/PharmacyDelivery/GetTracking?username=&enrolleeId=${encodeURIComponent(enrolleeId || "")}`;
 
     console.log("Fetching deliveries from:", apiUrl);
 
