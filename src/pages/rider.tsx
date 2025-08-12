@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@heroui/button";
 import {
   Modal,
@@ -103,6 +103,10 @@ export default function RidersPage() {
       riderActions.setSubmitting(false);
     }
   };
+  
+  useEffect(() => {
+   fetchAllRiders();
+  }, []);
 
   return (
     <section className="py-3 px-2">
