@@ -8,7 +8,7 @@ import { useLocation } from "react-router-dom";
 interface PackDateModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (date: CalendarDate) => void;
+  onConfirm: (date: CalendarDate, months: number) => void;
 }
 
 export default function PackDateModal({
@@ -58,7 +58,7 @@ export default function PackDateModal({
     if (isMonthsInvalid) {
       return; // Prevent confirming if invalid months
     }
-    onConfirm(calculatedDate);
+    onConfirm(calculatedDate, selectedMonths); // Pass both date and months
     onClose();
     setSelectedMonths(1); // Reset to default
   };
