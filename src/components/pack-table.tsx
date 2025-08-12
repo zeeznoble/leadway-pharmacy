@@ -168,49 +168,78 @@ export default function PackTable({
     let selectedDeliveries: any[] = [];
 
     if (selectedKeys === "all") {
-      if (router.pathname === "/pack") {
-        selectedDeliveries = filteredRows.map((row) => ({
+      selectedDeliveries = filteredRows.map((row) => {
+        // Create the complete delivery object for PDF generation
+        const deliveryData: any = {
+          // Base required fields
           DeliveryEntryNo: row.original.EntryNo,
-          PackedBy: user?.UserName || "",
-          Notes: `Package for ${row.enrollee.name}`,
-        }));
-      }
+          Notes: "", // Will be updated with months in the modal
 
-      if (router.pathname === "/to-be-delivered") {
-        selectedDeliveries = filteredRows.map((row) => ({
-          DeliveryEntryNo: row.original.EntryNo,
-          Marked_as_delivered_by: user?.UserName || "",
-          Notes: `Package for ${row.enrollee.name}`,
-        }));
-      }
+          // Include all original delivery data for PDF generation
+          ...row.original,
+
+          // Add additional processed data that might be useful
+          enrolleename: row.enrollee.name,
+          schemename: row.enrollee.scheme,
+          deliveryaddress: row.original.deliveryaddress,
+          phonenumber: row.original.phonenumber,
+        };
+
+        // Add role-specific fields
+        if (router.pathname === "/pack") {
+          deliveryData.PackedBy = user?.UserName || "";
+        } else if (router.pathname === "/to-be-delivered") {
+          deliveryData.Marked_as_delivered_by = user?.UserName || "";
+        }
+
+        return deliveryData;
+      });
     } else {
       selectedDeliveries = Array.from(selectedKeys as Set<Key>)
         .map((key) => {
           const selectedRow = rows.find((row) => row.key === key);
           if (selectedRow) {
+            // Create the complete delivery object for PDF generation
+            const deliveryData: any = {
+              // Base required fields
+              DeliveryEntryNo: selectedRow.original.EntryNo,
+              Notes: "", // Will be updated with months in the modal
+
+              // Include all original delivery data for PDF generation
+              ...selectedRow.original,
+
+              // Add additional processed data that might be useful
+              enrolleename: selectedRow.enrollee.name,
+              schemename: selectedRow.enrollee.scheme,
+              deliveryaddress: selectedRow.original.deliveryaddress,
+              phonenumber: selectedRow.original.phonenumber,
+            };
+
+            // Add role-specific fields
             if (router.pathname === "/pack") {
-              return {
-                DeliveryEntryNo: selectedRow.original.EntryNo,
-                PackedBy: user?.UserName || "",
-                Notes: `Package for ${selectedRow.enrollee.name}`,
-              };
+              deliveryData.PackedBy = user?.UserName || "";
+            } else if (router.pathname === "/to-be-delivered") {
+              deliveryData.Marked_as_delivered_by = user?.UserName || "";
             }
-            if (router.pathname === "/to-be-delivered") {
-              return {
-                DeliveryEntryNo: selectedRow.original.EntryNo,
-                Marked_as_delivered_by: user?.UserName || "",
-                Notes: `Package for ${selectedRow.enrollee.name}`,
-              };
-            }
+
+            return deliveryData;
           }
           return null;
         })
         .filter(Boolean);
     }
 
+    console.log("Selected deliveries for packing:", selectedDeliveries);
     onPackDelivery(selectedDeliveries);
     setSelectedKeys(new Set([]));
-  }, [selectedKeys, rows, filteredRows, onPackDelivery]);
+  }, [
+    selectedKeys,
+    rows,
+    filteredRows,
+    onPackDelivery,
+    router.pathname,
+    user?.UserName,
+  ]);
 
   const renderCell = (item: RowItem, columnKey: Key): React.ReactNode => {
     switch (columnKey) {
