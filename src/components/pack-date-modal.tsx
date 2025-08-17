@@ -5,11 +5,23 @@ import { useDateFormatter } from "@react-aria/i18n";
 import { Button } from "@heroui/button";
 import { useLocation } from "react-router-dom";
 
+interface DeliveryAdjustment {
+  enrolleeId: string;
+  enrolleeName: string;
+  memberExpiryDate: string;
+  adjustedDate: CalendarDate;
+  adjustedMonths: number;
+  isAdjusted: boolean;
+}
+
 interface PackDateModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (date: CalendarDate, months: number, actualMonths: number) => void;
-  selectedDeliveries?: any[]; // Add selected deliveries to get EndDate
+  onConfirm: (
+    originalMonths: number,
+    deliveryAdjustments: DeliveryAdjustment[]
+  ) => void;
+  selectedDeliveries?: any[];
 }
 
 export default function PackDateModal({
@@ -39,83 +51,103 @@ export default function PackDateModal({
     );
   };
 
-  // Find the earliest EndDate from selected deliveries
-  const getEarliestEndDate = (): CalendarDate | null => {
-    if (!selectedDeliveries.length) return null;
+  // Calculate adjustments for each delivery based on member expiry dates
+  const calculateDeliveryAdjustments = (
+    requestedMonths: number
+  ): DeliveryAdjustment[] => {
+    return selectedDeliveries.map((delivery) => {
+      // Try multiple possible field names for member expiry date
+      const memberExpiryDate =
+        delivery.Member_ExpiryDate ||
+        delivery.memberExpiryDate ||
+        delivery.member_expiry_date ||
+        delivery.MemberExpiryDate;
+      const enrolleeId =
+        delivery.EnrolleeId || delivery.enrolleeid || "Unknown";
+      const enrolleeName =
+        delivery.EnrolleeName || delivery.enrolleename || "Unknown";
 
-    let earliestDate: Date | any = null;
+      const calculatedDate = calculateFutureDate(requestedMonths);
 
-    selectedDeliveries.forEach((delivery) => {
-      const endDate = delivery.EndDate || delivery.enddate;
-      if (endDate) {
-        const date = new Date(endDate);
-        if (!earliestDate || date < earliestDate) {
-          earliestDate = date;
+      if (!memberExpiryDate) {
+        return {
+          enrolleeId,
+          enrolleeName,
+          memberExpiryDate: "N/A",
+          adjustedDate: calculatedDate,
+          adjustedMonths: requestedMonths,
+          isAdjusted: false,
+        };
+      }
+
+      try {
+        const expiryDate = new Date(memberExpiryDate);
+        const expiryCalendarDate = new CalendarDate(
+          expiryDate.getFullYear(),
+          expiryDate.getMonth() + 1,
+          expiryDate.getDate()
+        );
+
+        const calculatedDateObj = calculatedDate.toDate(getLocalTimeZone());
+        const expiryDateObj = expiryDate;
+
+        if (calculatedDateObj > expiryDateObj) {
+          // Calculate actual months difference between today and expiry date
+          const today = todayDate.toDate(getLocalTimeZone());
+          const yearsDiff = expiryDateObj.getFullYear() - today.getFullYear();
+          const monthsDiff = expiryDateObj.getMonth() - today.getMonth();
+          const daysDiff = expiryDateObj.getDate() - today.getDate();
+
+          let actualMonths = yearsDiff * 12 + monthsDiff;
+
+          // If the day difference is negative, reduce by one month
+          if (daysDiff < 0) {
+            actualMonths -= 1;
+          }
+
+          // Ensure actualMonths is at least 1 and not greater than requested
+          actualMonths = Math.max(1, Math.min(actualMonths, requestedMonths));
+
+          return {
+            enrolleeId,
+            enrolleeName,
+            memberExpiryDate,
+            adjustedDate: expiryCalendarDate,
+            adjustedMonths: actualMonths,
+            isAdjusted: true,
+          };
         }
+
+        return {
+          enrolleeId,
+          enrolleeName,
+          memberExpiryDate,
+          adjustedDate: calculatedDate,
+          adjustedMonths: requestedMonths,
+          isAdjusted: false,
+        };
+      } catch (error) {
+        console.error("Error parsing member expiry date:", error);
+        return {
+          enrolleeId,
+          enrolleeName,
+          memberExpiryDate,
+          adjustedDate: calculatedDate,
+          adjustedMonths: requestedMonths,
+          isAdjusted: false,
+        };
       }
     });
-
-    if (earliestDate) {
-      return new CalendarDate(
-        earliestDate.getFullYear(),
-        earliestDate.getMonth() + 1,
-        earliestDate.getDate()
-      );
-    }
-
-    return null;
   };
 
-  const calculateAdjustedDateAndMonths = (requestedMonths: number) => {
-    const calculatedDate = calculateFutureDate(requestedMonths);
-    const earliestEndDate = getEarliestEndDate();
-
-    if (!earliestEndDate) {
-      return {
-        finalDate: calculatedDate,
-        actualMonths: requestedMonths,
-        isAdjusted: false,
-      };
+  const deliveryAdjustments = calculateDeliveryAdjustments(selectedMonths);
+  const hasAdjustments = deliveryAdjustments.some((adj) => adj.isAdjusted);
+  const uniqueMembers = deliveryAdjustments.reduce((acc, adj) => {
+    if (!acc.find((item) => item.enrolleeId === adj.enrolleeId)) {
+      acc.push(adj);
     }
-
-    // Compare calculated date with earliest end date
-    const calculatedDateObj = calculatedDate.toDate(getLocalTimeZone());
-    const endDateObj = earliestEndDate.toDate(getLocalTimeZone());
-
-    if (calculatedDateObj > endDateObj) {
-      // Calculate actual months difference between today and end date
-      const today = todayDate.toDate(getLocalTimeZone());
-      const yearsDiff = endDateObj.getFullYear() - today.getFullYear();
-      const monthsDiff = endDateObj.getMonth() - today.getMonth();
-      const daysDiff = endDateObj.getDate() - today.getDate();
-
-      let actualMonths = yearsDiff * 12 + monthsDiff;
-
-      // If the day difference is negative, reduce by one month
-      if (daysDiff < 0) {
-        actualMonths -= 1;
-      }
-
-      // Ensure actualMonths is at least 1 and not greater than requested
-      actualMonths = Math.max(1, Math.min(actualMonths, requestedMonths));
-
-      return {
-        finalDate: earliestEndDate,
-        actualMonths,
-        isAdjusted: true,
-      };
-    }
-
-    return {
-      finalDate: calculatedDate,
-      actualMonths: requestedMonths,
-      isAdjusted: false,
-    };
-  };
-
-  const { finalDate, actualMonths, isAdjusted } =
-    calculateAdjustedDateAndMonths(selectedMonths);
-  const earliestEndDate = getEarliestEndDate();
+    return acc;
+  }, [] as DeliveryAdjustment[]);
 
   // Validate months input (1-12)
   const isMonthsInvalid =
@@ -136,7 +168,7 @@ export default function PackDateModal({
     if (isMonthsInvalid) {
       return; // Prevent confirming if invalid months
     }
-    onConfirm(finalDate, selectedMonths, actualMonths); // Pass original months, actual months, and final date
+    onConfirm(selectedMonths, deliveryAdjustments);
     onClose();
     setSelectedMonths(1); // Reset to default
   };
@@ -150,7 +182,7 @@ export default function PackDateModal({
 
   return (
     <div className="fixed inset-0 bg-gray-950/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-96 max-w-md shadow-xl">
+      <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] shadow-xl overflow-y-auto">
         <h2 className="text-xl font-bold mb-4">Select {label}</h2>
 
         <div className="mb-4">
@@ -169,35 +201,68 @@ export default function PackDateModal({
             }
           />
 
-          {/* Show earliest end date if available */}
-          {earliestEndDate && (
-            <p className="text-orange-600 text-sm mt-2">
-              <strong>Earliest End Date:</strong>{" "}
-              {formatter.format(earliestEndDate.toDate(getLocalTimeZone()))}
-            </p>
+          {/* Show member adjustments */}
+          {uniqueMembers.length > 0 && (
+            <div className="mt-4">
+              <h3 className="font-medium text-sm mb-2">Member Details:</h3>
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {uniqueMembers.map((adjustment, index) => (
+                  <div
+                    key={`${adjustment.enrolleeId}-${index}`}
+                    className={`p-3 rounded-md border text-sm ${
+                      adjustment.isAdjusted
+                        ? "bg-yellow-50 border-yellow-200"
+                        : "bg-green-50 border-green-200"
+                    }`}
+                  >
+                    <div className="font-medium">
+                      {adjustment.enrolleeName} ({adjustment.enrolleeId})
+                    </div>
+                    <div className="text-xs text-gray-600 mt-1">
+                      Member Expiry:{" "}
+                      {adjustment.memberExpiryDate !== "N/A"
+                        ? formatter.format(
+                            new Date(adjustment.memberExpiryDate)
+                          )
+                        : "N/A"}
+                    </div>
+                    <div className="text-xs mt-1">
+                      {adjustment.isAdjusted ? (
+                        <span className="text-yellow-700">
+                          ⚠️ Adjusted to {adjustment.adjustedMonths} months
+                          (expires{" "}
+                          {formatter.format(
+                            adjustment.adjustedDate.toDate(getLocalTimeZone())
+                          )}
+                          )
+                        </span>
+                      ) : (
+                        <span className="text-green-700">
+                          ✓ {adjustment.adjustedMonths} months (
+                          {formatter.format(
+                            adjustment.adjustedDate.toDate(getLocalTimeZone())
+                          )}
+                          )
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
 
-          <p className="text-gray-500 text-sm mt-2">
-            Calculated {label.toLowerCase()}:{" "}
-            {!isMonthsInvalid
-              ? formatter.format(finalDate.toDate(getLocalTimeZone()))
-              : "Invalid input"}
-          </p>
-
-          {/* Show adjustment warning */}
-          {isAdjusted && !isMonthsInvalid && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 mt-2">
+          {/* Show overall adjustment warning */}
+          {hasAdjustments && !isMonthsInvalid && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 mt-4">
               <p className="text-yellow-800 text-sm">
-                <strong>⚠️ Date Adjusted:</strong> The requested date exceeds
-                the treatment end date.
+                <strong>⚠️ Some Dates Adjusted:</strong> Some members'{" "}
+                {label.toLowerCase()}
+                dates have been adjusted due to their membership expiry dates.
               </p>
               <p className="text-yellow-700 text-sm mt-1">
-                • Requested months: <strong>{selectedMonths}</strong>
-                <br />• Actual months possible: <strong>{actualMonths}</strong>
-                <br />• Final date:{" "}
-                <strong>
-                  {formatter.format(finalDate.toDate(getLocalTimeZone()))}
-                </strong>
+                Each delivery will be packed with the appropriate number of
+                months based on the individual member's expiry date.
               </p>
             </div>
           )}
@@ -213,7 +278,7 @@ export default function PackDateModal({
             radius="sm"
             isDisabled={isMonthsInvalid}
           >
-            Confirm {isAdjusted ? `(${actualMonths} months)` : ""}
+            Confirm {hasAdjustments ? `(with adjustments)` : ""}
           </Button>
         </div>
       </div>
