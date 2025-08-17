@@ -2,13 +2,12 @@ import { useEffect, useState } from "react";
 import { useChunkValue } from "stunk/react";
 
 import { DatePicker } from "@heroui/date-picker";
-import { Input } from "@heroui/input";
 import { Select, SelectItem } from "@heroui/select";
 import { SharedSelection } from "@heroui/system";
 import { DateValue, parseDate } from "@internationalized/date";
 
 import { deliveryActions, deliveryFormState } from "@/lib/store/delivery-store";
-import { appChunk } from "@/lib/store/app-store"; // Add this import
+import { appChunk } from "@/lib/store/app-store";
 
 export default function DeliveryDetailsStep() {
   const formState = useChunkValue(deliveryFormState);
@@ -31,7 +30,6 @@ export default function DeliveryDetailsStep() {
     { key: "Routine", label: "Routine" },
   ];
 
-  // const isOneOff = formState.deliveryFrequency === "One-off";
   const isRoutine = formState.deliveryFrequency === "Routine";
 
   console.log(formState);
@@ -60,72 +58,44 @@ export default function DeliveryDetailsStep() {
         deliveryActions.updateFormField("endDate", "");
       }
 
-      // Recalculate dates for routine if start date exists
-      if (frequency === "Routine" && formState.delStartDate) {
-        handleStartDateChange(parseDate(formState.delStartDate.split("T")[0]));
+      // Set automatic values for routine
+      if (frequency === "Routine") {
+        // Set frequency duration to 50
+        deliveryActions.updateFormField("frequencyDuration", "50");
+
+        // Set end date to 01/01/2050
+        const endDate = parseDate("2050-01-01");
+        deliveryActions.updateFormField("endDate", endDate.toString());
+
+        // Calculate next delivery date if start date exists
+        if (formState.delStartDate) {
+          const startDate = parseDate(formState.delStartDate.split("T")[0]);
+          const nextDate = startDate.add({ months: 1 });
+          deliveryActions.updateFormField(
+            "nextDeliveryDate",
+            nextDate.toString()
+          );
+        }
       }
     }
-  }, [frequencyValue]);
+  }, [frequencyValue, formState.delStartDate]);
 
   const handleStartDateChange = (date: DateValue | null) => {
     if (!date) return;
 
     deliveryActions.updateFormField("delStartDate", date.toString());
 
-    // Only calculate next delivery and end dates for routine deliveries
+    // Only calculate next delivery date for routine deliveries
     if (isRoutine) {
-      // For routine, next delivery is based on monthly frequency
+      // For routine, next delivery is start date + 1 month
       const nextDate = date.add({ months: 1 });
       deliveryActions.updateFormField("nextDeliveryDate", nextDate.toString());
-
-      if (formState.frequencyDuration) {
-        const endDate = calculateEndDate(date, formState.frequencyDuration);
-        deliveryActions.updateFormField("endDate", endDate.toString());
-      }
-    }
-  };
-
-  const calculateEndDate = (date: DateValue, duration: string): DateValue => {
-    const months = parseInt(duration);
-    const calculatedEndDate = date.add({ months });
-
-    // Ensure end date doesn't exceed member expiry date
-    if (memberExpiryDate && calculatedEndDate.compare(memberExpiryDate) > 0) {
-      return memberExpiryDate;
-    }
-
-    return calculatedEndDate;
-  };
-
-  const handleFrequencyDurationChange = (value: string) => {
-    deliveryActions.updateFormField("frequencyDuration", value);
-    if (formState.delStartDate && isRoutine) {
-      const date = parseDate(formState.delStartDate.split("T")[0]);
-      const endDate = calculateEndDate(date, value);
-      deliveryActions.updateFormField("endDate", endDate.toString());
     }
   };
 
   const handleSelectionChange = (selection: SharedSelection) => {
     setFrequencyValue(selection as Set<string>);
   };
-
-  // Calculate max duration in months based on member expiry date
-  const getMaxDuration = (): number | undefined => {
-    if (!memberExpiryDate || !startDateValue) return undefined;
-
-    // Calculate difference in months manually
-    const startYear = startDateValue.year;
-    const startMonth = startDateValue.month;
-    const expiryYear = memberExpiryDate.year;
-    const expiryMonth = memberExpiryDate.month;
-
-    const diffInMonths =
-      (expiryYear - startYear) * 12 + (expiryMonth - startMonth);
-    return Math.max(0, diffInMonths);
-  };
-
-  const maxDuration = getMaxDuration();
 
   return (
     <div>
@@ -151,43 +121,8 @@ export default function DeliveryDetailsStep() {
           maxValue={memberExpiryDate}
         />
 
-        {isRoutine && (
-          <>
-            <Input
-              label="Frequency Duration (months)"
-              type="number"
-              value={formState.frequencyDuration}
-              onChange={(e) => handleFrequencyDurationChange(e.target.value)}
-              min="1"
-              max={maxDuration?.toString()}
-              description={
-                maxDuration
-                  ? `Maximum ${maxDuration} months (based on member expiry date)`
-                  : "Enter duration in months"
-              }
-            />
-
-            <DatePicker
-              label="Next Delivery Date"
-              value={
-                formState.nextDeliveryDate
-                  ? parseDate(formState.nextDeliveryDate.split("T")[0])
-                  : undefined
-              }
-              isDisabled
-            />
-
-            <DatePicker
-              label="End Date"
-              value={
-                formState.endDate
-                  ? parseDate(formState.endDate.split("T")[0])
-                  : undefined
-              }
-              isDisabled
-            />
-          </>
-        )}
+        {/* Removed the routine-specific input fields */}
+        {/* They are now automatically set when Routine is selected */}
       </div>
     </div>
   );
