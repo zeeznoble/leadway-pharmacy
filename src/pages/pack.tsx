@@ -12,6 +12,15 @@ import PackDateModal from "@/components/pack-date-modal";
 import { Button } from "@heroui/button";
 import { formatDateForAPI, generateDeliveryNotePDF } from "@/lib/helpers";
 
+interface DeliveryAdjustment {
+  enrolleeId: string;
+  enrolleeName: string;
+  memberExpiryDate: string;
+  adjustedDate: CalendarDate;
+  adjustedMonths: number;
+  isAdjusted: boolean;
+}
+
 export default function PackPage() {
   const state = useChunkValue(deliveryStore);
   const { user } = useChunkValue(authStore);
@@ -21,6 +30,7 @@ export default function PackPage() {
     []
   );
 
+  console.log(selectedDeliveriesToPack);
   // Date picker states
   const [fromDate, setFromDate] = useState<CalendarDate | null>(null);
   const [toDate, setToDate] = useState<CalendarDate | null>(null);
@@ -115,130 +125,62 @@ export default function PackPage() {
     setShowDateModal(true);
   };
 
-  // Updated to receive both date and months
-  // const handleConfirmPack = async (
-  //   nextPackDate: CalendarDate,
-  //   selectedMonths: number
-  // ) => {
-  //   try {
-  //     const formattedDate = nextPackDate.toString();
-
-  //     // Prepare deliveries for API call (minimal data only)
-  //     const deliveriesForAPI = selectedDeliveriesToPack.map((delivery: any) => {
-  //       console.log(delivery);
-  //       // Extract the API payload and update the Notes with months
-  //       const apiPayload = {
-  //         DeliveryEntryNo: delivery.EntryNo,
-  //         PackedBy: user?.UserName || "",
-  //         Notes: `${selectedMonths}`,
-  //         nextpackdate: formattedDate,
-  //       };
-
-  //       return apiPayload;
-  //     });
-
-  //     console.log("API Payload (minimal data):", deliveriesForAPI);
-
-  //     // Make API call with minimal data only
-  //     const result = await packDeliveries(deliveriesForAPI);
-
-  //     if (result && result.Results[0].status === 200) {
-  //       toast.success(result.Results[0].ReturnMessage);
-
-  //       try {
-  //         // Generate single PDF with all selected deliveries grouped by enrollee
-  //         console.log(
-  //           "Selected Deliveries for PDF (full data):",
-  //           selectedDeliveriesToPack
-  //         );
-
-  //         // Call the modified PDF generation function
-  //         await generateDeliveryNotePDF(
-  //           selectedDeliveriesToPack,
-  //           selectedMonths
-  //         );
-
-  //         toast.success(
-  //           `Delivery note PDF with ${selectedDeliveriesToPack.length} deliveries downloaded successfully!`
-  //         );
-  //       } catch (pdfError) {
-  //         console.error("PDF generation error:", pdfError);
-  //         toast.error("Failed to generate delivery note PDF");
-  //       }
-
-  //       // Refresh the data after successful packing
-  //       loadUnpackedDeliveries();
-  //     }
-  //   } catch (error) {
-  //     console.error("Pack error:", error);
-  //     toast.error("Failed to pack deliveries");
-  //   } finally {
-  //     setSelectedDeliveriesToPack([]);
-  //   }
-  // };
-
   const handleConfirmPack = async (
-    nextPackDate: CalendarDate,
     originalMonths: number,
-    actualMonths: number
+    deliveryAdjustments: DeliveryAdjustment[]
   ) => {
     try {
-      const formattedDate = nextPackDate.toString();
+      // Create a map for quick lookup of adjustments by enrollee ID
+      const adjustmentMap = new Map<string, DeliveryAdjustment>();
+      deliveryAdjustments.forEach((adj) => {
+        adjustmentMap.set(adj.enrolleeId, adj);
+      });
 
-      // Prepare deliveries for API call with adjusted logic
+      // Prepare deliveries for API call with individual adjustments
       const deliveriesForAPI = selectedDeliveriesToPack.map((delivery: any) => {
-        console.log("Processing delivery:", delivery);
+        const enrolleeId = delivery.EnrolleeId || delivery.enrolleeid;
+        const adjustment = adjustmentMap.get(enrolleeId);
 
-        // Extract EndDate from delivery
-        const endDate = delivery.EndDate || delivery.enddate;
-        let finalDate = formattedDate;
+        console.log(`Processing delivery for ${enrolleeId}:`, {
+          originalMonths,
+          adjustment,
+          delivery: delivery.EntryNo,
+        });
+
         let finalMonths = originalMonths;
+        let finalDate = "";
 
-        if (endDate) {
-          const endDateObj = new Date(endDate);
-          const nextPackDateObj = nextPackDate.toDate(getLocalTimeZone());
+        if (adjustment) {
+          finalMonths = adjustment.adjustedMonths;
+          finalDate = adjustment.adjustedDate.toString();
 
-          if (nextPackDateObj > endDateObj) {
-            // Use EndDate as the final date
-            finalDate = endDateObj.toISOString().split("T")[0];
-
-            // Calculate months difference between today and EndDate
-            const today = new Date();
-            const yearsDiff = endDateObj.getFullYear() - today.getFullYear();
-            const monthsDiff = endDateObj.getMonth() - today.getMonth();
-            const daysDiff = endDateObj.getDate() - today.getDate();
-
-            let calculatedMonths = yearsDiff * 12 + monthsDiff;
-
-            // If the day difference is negative, reduce by one month
-            if (daysDiff < 0) {
-              calculatedMonths -= 1;
-            }
-
-            // Ensure calculated months is at least 1
-            finalMonths = Math.max(1, calculatedMonths);
-
-            console.log(`Date adjusted for delivery ${delivery.EntryNo}:`);
+          if (adjustment.isAdjusted) {
+            console.log(`Adjusted delivery ${delivery.EntryNo}:`);
             console.log(`- Original months: ${originalMonths}`);
-            console.log(`- Calculated months: ${finalMonths}`);
-            console.log(`- Original next pack date: ${formattedDate}`);
-            console.log(`- Final next pack date: ${finalDate}`);
-            console.log(`- End date: ${endDate}`);
+            console.log(`- Adjusted months: ${finalMonths}`);
+            console.log(`- Final date: ${finalDate}`);
+            console.log(`- Member expiry: ${adjustment.memberExpiryDate}`);
           }
+        } else {
+          // Fallback: calculate date manually if no adjustment found
+          const today = new Date();
+          const futureDate = new Date(today);
+          futureDate.setMonth(futureDate.getMonth() + originalMonths);
+          finalDate = futureDate.toISOString().split("T")[0];
         }
 
-        // Create API payload with adjusted values
+        // Create API payload with individual adjustments
         const apiPayload = {
           DeliveryEntryNo: delivery.EntryNo,
           PackedBy: user?.UserName || "",
-          Notes: `${finalMonths}`, // Use calculated months
-          nextpackdate: finalDate, // Use adjusted date if necessary
+          Notes: `${finalMonths}`, // Use individually calculated months
+          nextpackdate: finalDate, // Use individually calculated date
         };
 
         return apiPayload;
       });
 
-      console.log("API Payload with date adjustments:", deliveriesForAPI);
+      console.log("API Payload with individual adjustments:", deliveriesForAPI);
 
       // Make API call with adjusted data
       const result = await packDeliveries(deliveriesForAPI);
@@ -247,20 +189,41 @@ export default function PackPage() {
         toast.success(result.Results[0].ReturnMessage);
 
         try {
-          // Generate single PDF with all selected deliveries grouped by enrollee
-          // Use actualMonths for PDF generation (the months that were actually confirmed)
+          // Calculate the effective months for PDF (use the most common adjusted months or original)
+          const monthsCount = new Map<number, number>();
+          deliveryAdjustments.forEach((adj) => {
+            const count = monthsCount.get(adj.adjustedMonths) || 0;
+            monthsCount.set(adj.adjustedMonths, count + 1);
+          });
+
+          // Find the most common months value
+          let mostCommonMonths = originalMonths;
+          let maxCount = 0;
+          for (const [months, count] of monthsCount.entries()) {
+            if (count > maxCount) {
+              maxCount = count;
+              mostCommonMonths = months;
+            }
+          }
+
+          // Generate single PDF with all selected deliveries
           console.log(
             "Selected Deliveries for PDF (full data):",
             selectedDeliveriesToPack
           );
 
-          // Call the modified PDF generation function with actualMonths
-          await generateDeliveryNotePDF(selectedDeliveriesToPack, actualMonths);
+          await generateDeliveryNotePDF(
+            selectedDeliveriesToPack,
+            mostCommonMonths
+          );
 
-          // Show success message with adjustment info if applicable
+          // Show success message with adjustment info
+          const adjustedCount = deliveryAdjustments.filter(
+            (adj) => adj.isAdjusted
+          ).length;
           const adjustmentInfo =
-            actualMonths !== originalMonths
-              ? ` (adjusted from ${originalMonths} to ${actualMonths} months due to treatment end dates)`
+            adjustedCount > 0
+              ? ` (${adjustedCount} delivery${adjustedCount > 1 ? "ies" : ""} adjusted due to member expiry dates)`
               : "";
 
           toast.success(
@@ -351,7 +314,7 @@ export default function PackPage() {
         isOpen={showDateModal}
         onClose={() => setShowDateModal(false)}
         onConfirm={handleConfirmPack}
-        selectedDeliveries={selectedDeliveriesToPack} // Pass selected deliveries
+        selectedDeliveries={selectedDeliveriesToPack}
       />
     </section>
   );

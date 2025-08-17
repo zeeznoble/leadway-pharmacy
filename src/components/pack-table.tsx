@@ -23,7 +23,7 @@ import { useLocation } from "react-router-dom";
 
 import { DELIVERY_COLUMNS } from "@/lib/constants";
 import { formatDate, transformApiResponse } from "@/lib/helpers";
-import { authStore } from "@/lib/store/app-store";
+import { authStore, appChunk } from "@/lib/store/app-store"; // Add appChunk import
 
 import { Delivery } from "@/types";
 
@@ -72,6 +72,9 @@ export default function PackTable({
   );
   const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set([]));
   const { user } = useChunkValue(authStore);
+  const { enrolleeData } = useChunkValue(appChunk); // Add enrollee data
+
+  console.log(selectedKeys);
 
   const rows = useMemo(
     () =>
@@ -183,6 +186,10 @@ export default function PackTable({
           schemename: row.enrollee.scheme,
           deliveryaddress: row.original.deliveryaddress,
           phonenumber: row.original.phonenumber,
+
+          // Add member expiry date from enrolleeData if available
+          Member_ExpiryDate: enrolleeData?.Member_ExpiryDate || null,
+          memberExpiryDate: enrolleeData?.Member_ExpiryDate || null, // Alternative field name
         };
 
         // Add role-specific fields
@@ -213,6 +220,10 @@ export default function PackTable({
               schemename: selectedRow.enrollee.scheme,
               deliveryaddress: selectedRow.original.deliveryaddress,
               phonenumber: selectedRow.original.phonenumber,
+
+              // Add member expiry date from enrolleeData if available
+              Member_ExpiryDate: enrolleeData?.Member_ExpiryDate || null,
+              memberExpiryDate: enrolleeData?.Member_ExpiryDate || null, // Alternative field name
             };
 
             // Add role-specific fields
@@ -230,6 +241,7 @@ export default function PackTable({
     }
 
     console.log("Selected deliveries for packing:", selectedDeliveries);
+    console.log("Enrollee data:", enrolleeData);
     onPackDelivery(selectedDeliveries);
     setSelectedKeys(new Set([]));
   }, [
@@ -239,6 +251,7 @@ export default function PackTable({
     onPackDelivery,
     router.pathname,
     user?.UserName,
+    enrolleeData, // Add enrolleeData to dependencies
   ]);
 
   const renderCell = (item: RowItem, columnKey: Key): React.ReactNode => {
