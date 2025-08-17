@@ -71,7 +71,7 @@ export default function ToBeDeliveredPage() {
     data: ridersData,
     loading: ridersLoading,
     error: ridersError,
-    reload: riderReload
+    reload: riderReload,
   } = useAsyncChunk(fetchAllRiders);
 
   const riders: Rider[] = ridersData || [];
@@ -233,9 +233,7 @@ export default function ToBeDeliveredPage() {
     }
   };
 
-  const handleConfirmPack = async (
-    nextPackDate: CalendarDate
-  ): Promise<void> => {
+  const handleConfirmPack = async (nextPackDate: any): Promise<void> => {
     try {
       // Store the selected date and deliveries
       setNextDeliveryDate(nextPackDate);
@@ -320,8 +318,8 @@ export default function ToBeDeliveredPage() {
   };
 
   useEffect(() => {
-   riderReload();
-  },[])
+    riderReload();
+  }, []);
 
   return (
     <section className="py-3">
