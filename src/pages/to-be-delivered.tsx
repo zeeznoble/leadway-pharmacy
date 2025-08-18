@@ -233,7 +233,9 @@ export default function ToBeDeliveredPage() {
     }
   };
 
-  const handleConfirmPack = async (nextPackDate: any): Promise<void> => {
+  const handleConfirmPack = async (
+    nextPackDate: CalendarDate
+  ): Promise<void> => {
     try {
       // Store the selected date and deliveries
       setNextDeliveryDate(nextPackDate);
@@ -381,6 +383,7 @@ export default function ToBeDeliveredPage() {
         isOpen={showDateModal}
         onClose={() => setShowDateModal(false)}
         onConfirm={handleConfirmPack}
+        mode="simple"
       />
       <RiderSelectionModal
         isOpen={showRiderModal}
