@@ -19,7 +19,7 @@ export const dashboardStatsChunk = asyncChunk<DashboardStats>(
     // Fetch data in parallel
     const [pharmacyData, enrolleeData] = await Promise.all([
       fetchProvider({}),
-      fetchDeliveries(username, "")
+      fetchDeliveries("", "")
     ]);
 
     // Calculate counts safely
