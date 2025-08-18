@@ -17,11 +17,16 @@ interface DeliveryAdjustment {
 interface PackDateModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (
-    originalMonths: number,
-    deliveryAdjustments: DeliveryAdjustment[]
-  ) => void;
+  // Make onConfirm flexible to handle both old and new interfaces
+  onConfirm:
+    | ((
+        originalMonths: number,
+        deliveryAdjustments: DeliveryAdjustment[]
+      ) => void)
+    | ((date: CalendarDate) => void);
   selectedDeliveries?: any[];
+  // Add a mode prop to determine which interface to use
+  mode?: "advanced" | "simple";
 }
 
 export default function PackDateModal({
@@ -29,6 +34,7 @@ export default function PackDateModal({
   onClose,
   onConfirm,
   selectedDeliveries = [],
+  mode = "advanced", // Default to advanced mode
 }: PackDateModalProps) {
   const [selectedMonths, setSelectedMonths] = React.useState<number>(1);
   const formatter = useDateFormatter({ dateStyle: "full" });
@@ -55,6 +61,10 @@ export default function PackDateModal({
   const calculateDeliveryAdjustments = (
     requestedMonths: number
   ): DeliveryAdjustment[] => {
+    if (mode === "simple") {
+      return []; // No adjustments in simple mode
+    }
+
     return selectedDeliveries.map((delivery) => {
       // Try multiple possible field names for member expiry date
       const memberExpiryDate =
@@ -168,7 +178,21 @@ export default function PackDateModal({
     if (isMonthsInvalid) {
       return; // Prevent confirming if invalid months
     }
-    onConfirm(selectedMonths, deliveryAdjustments);
+
+    if (mode === "simple") {
+      // Simple mode: just pass the calculated date
+      const calculatedDate = calculateFutureDate(selectedMonths);
+      (onConfirm as (date: CalendarDate) => void)(calculatedDate);
+    } else {
+      // Advanced mode: pass original months and delivery adjustments
+      (
+        onConfirm as (
+          originalMonths: number,
+          deliveryAdjustments: DeliveryAdjustment[]
+        ) => void
+      )(selectedMonths, deliveryAdjustments);
+    }
+
     onClose();
     setSelectedMonths(1); // Reset to default
   };
@@ -201,8 +225,8 @@ export default function PackDateModal({
             }
           />
 
-          {/* Show member adjustments */}
-          {uniqueMembers.length > 0 && (
+          {/* Show member adjustments only in advanced mode */}
+          {mode === "advanced" && uniqueMembers.length > 0 && (
             <div className="mt-4">
               <h3 className="font-medium text-sm mb-2">Member Details:</h3>
               <div className="space-y-2 max-h-60 overflow-y-auto">
@@ -252,8 +276,22 @@ export default function PackDateModal({
             </div>
           )}
 
-          {/* Show overall adjustment warning */}
-          {hasAdjustments && !isMonthsInvalid && (
+          {/* Show simple calculated date in simple mode */}
+          {mode === "simple" && (
+            <p className="text-gray-500 text-sm mt-2">
+              Calculated {label.toLowerCase()}:{" "}
+              {!isMonthsInvalid
+                ? formatter.format(
+                    calculateFutureDate(selectedMonths).toDate(
+                      getLocalTimeZone()
+                    )
+                  )
+                : "Invalid input"}
+            </p>
+          )}
+
+          {/* Show overall adjustment warning only in advanced mode */}
+          {mode === "advanced" && hasAdjustments && !isMonthsInvalid && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 mt-4">
               <p className="text-yellow-800 text-sm">
                 <strong>⚠️ Some Dates Adjusted:</strong> Some members'{" "}
@@ -278,7 +316,8 @@ export default function PackDateModal({
             radius="sm"
             isDisabled={isMonthsInvalid}
           >
-            Confirm {hasAdjustments ? `(with adjustments)` : ""}
+            Confirm{" "}
+            {mode === "advanced" && hasAdjustments ? `(with adjustments)` : ""}
           </Button>
         </div>
       </div>
