@@ -41,7 +41,7 @@ export default function DeliveriesPage() {
   const { enrolleeId } = useChunkValue(appChunk);
 
   useEffect(() => {
-    fetchDeliveries(user?.UserName!, enrolleeId);
+    fetchDeliveries("", enrolleeId);
   }, []);
 
   const handleOpenChange = (isOpen: boolean) => {
