@@ -8,7 +8,7 @@ import {
   ModalHeader,
 } from "@heroui/modal";
 
-// import { useChunkValue } from "stunk/react";
+import { useChunkValue } from "stunk/react";
 
 import DeliveryTable from "@/components/delivery-table";
 import EnrolleeSelectionStep from "@/components/deliveries/enrollee-step";
