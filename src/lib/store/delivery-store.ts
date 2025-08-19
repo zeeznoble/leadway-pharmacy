@@ -423,7 +423,7 @@ export const deliveryActions = {
 
       // Refresh deliveries
       const { enrolleeId } = appChunk.get();
-      fetchDeliveries(user?.UserName!, enrolleeId);
+      fetchDeliveries("", enrolleeId);
 
       return response;
     } catch (error) {
