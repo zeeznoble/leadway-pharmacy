@@ -8,7 +8,7 @@ import {
   ModalHeader,
 } from "@heroui/modal";
 
-import { useChunkValue } from "stunk/react";
+// import { useChunkValue } from "stunk/react";
 
 import DeliveryTable from "@/components/delivery-table";
 import EnrolleeSelectionStep from "@/components/deliveries/enrollee-step";
@@ -19,7 +19,7 @@ import ProviderSetup from "@/components/deliveries/provider-setup";
 import AdditionalInfoStep from "@/components/deliveries/additional-setup";
 import DuplicateModal from "@/components/deliveries/duplicate-modal";
 
-import { appChunk, authStore } from "@/lib/store/app-store";
+import { appChunk } from "@/lib/store/app-store";
 import {
   deliveryActions,
   deliveryFormState,
@@ -37,7 +37,7 @@ export default function DeliveriesPage() {
     pendingSubmission,
   } = useChunkValue(deliveryStore);
   const formState = useChunkValue(deliveryFormState);
-  const { user } = useChunkValue(authStore);
+  // const { user } = useChunkValue(authStore);
   const { enrolleeId } = useChunkValue(appChunk);
 
   useEffect(() => {
