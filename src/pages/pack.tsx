@@ -11,6 +11,7 @@ import PackTable from "@/components/pack-table";
 import PackDateModal from "@/components/pack-date-modal";
 import { Button } from "@heroui/button";
 import { formatDateForAPI, generateDeliveryNotePDF } from "@/lib/helpers";
+import { EnrolleeData, fetchEnrolleeById } from "@/lib/services/fetch-enrolee";
 
 interface DeliveryAdjustment {
   enrolleeId: string;
@@ -29,6 +30,11 @@ export default function PackPage() {
   const [selectedDeliveriesToPack, setSelectedDeliveriesToPack] = useState<any>(
     []
   );
+  const [
+    selectedDeliveriesWithEnrolleeData,
+    setSelectedDeliveriesWithEnrolleeData,
+  ] = useState<any[]>([]);
+  const [isLoadingEnrolleeData, setIsLoadingEnrolleeData] = useState(false);
 
   console.log(selectedDeliveriesToPack);
   // Date picker states
@@ -114,14 +120,115 @@ export default function PackPage() {
     }
   };
 
+  // Function to fetch enrollee data for selected deliveries
+  const fetchSelectedEnrolleesData = async (selectedDeliveries: any[]) => {
+    setIsLoadingEnrolleeData(true);
+
+    try {
+      // Get unique enrollee IDs from selected deliveries
+      const uniqueEnrolleeIds = [
+        ...new Set(
+          selectedDeliveries
+            .map(
+              (delivery) =>
+                delivery.EnrolleeId ||
+                delivery.enrolleeid ||
+                delivery.original?.EnrolleeId
+            )
+            .filter(Boolean)
+        ),
+      ];
+
+      console.log("Unique enrollee IDs to fetch:", uniqueEnrolleeIds);
+
+      // Fetch enrollee data for each unique ID
+      const enrolleeDataPromises = uniqueEnrolleeIds.map(
+        async (enrolleeId: string) => {
+          try {
+            const response = await fetchEnrolleeById(enrolleeId);
+            return {
+              enrolleeId,
+              data: response?.result?.[0] || null,
+            };
+          } catch (error) {
+            console.error(
+              `Failed to fetch data for enrollee ${enrolleeId}:`,
+              error
+            );
+            return {
+              enrolleeId,
+              data: null,
+            };
+          }
+        }
+      );
+
+      const enrolleeDataResults = await Promise.all(enrolleeDataPromises);
+
+      // Create a map for quick lookup
+      const enrolleeDataMap = new Map<string, EnrolleeData | null>();
+      enrolleeDataResults.forEach((result) => {
+        enrolleeDataMap.set(result.enrolleeId, result.data);
+      });
+
+      // Enhance selected deliveries with enrollee data
+      const enhancedDeliveries = selectedDeliveries.map((delivery) => {
+        const enrolleeId =
+          delivery.EnrolleeId ||
+          delivery.enrolleeid ||
+          delivery.original?.EnrolleeId;
+        const enrolleeData = enrolleeDataMap.get(enrolleeId);
+
+        return {
+          ...delivery,
+          Member_ExpiryDate: enrolleeData?.Member_ExpiryDate || null,
+          enrolleeData: enrolleeData,
+        };
+      });
+
+      console.log(
+        "Enhanced deliveries with enrollee data:",
+        enhancedDeliveries
+      );
+
+      return enhancedDeliveries;
+    } catch (error) {
+      console.error("Error fetching enrollees data:", error);
+      toast.error("Failed to fetch enrollee information");
+      return selectedDeliveries; // Return original data if fetch fails
+    } finally {
+      setIsLoadingEnrolleeData(false);
+    }
+  };
+
   const handlePackDelivery = async (selectedDeliveries: any[]) => {
     if (selectedDeliveries.length === 0) {
       toast.error("Please select at least one delivery to pack");
       return;
     }
 
-    setSelectedDeliveriesToPack(selectedDeliveries);
-    setShowDateModal(true);
+    // Show loading state
+    toast.loading("Loading enrollee information...", {
+      id: "loading-enrollees",
+    });
+
+    try {
+      // Fetch enrollee data for selected deliveries
+      const enhancedDeliveries =
+        await fetchSelectedEnrolleesData(selectedDeliveries);
+
+      setSelectedDeliveriesToPack(enhancedDeliveries);
+      setSelectedDeliveriesWithEnrolleeData(enhancedDeliveries);
+
+      // Dismiss loading toast
+      toast.dismiss("loading-enrollees");
+
+      setShowDateModal(true);
+    } catch (error) {
+      toast.dismiss("loading-enrollees");
+      console.error("Error preparing deliveries for packing:", error);
+      toast.error("Failed to prepare deliveries for packing");
+    }
   };
 
   const handleConfirmPack = async (
@@ -136,48 +243,51 @@ export default function PackPage() {
       });
 
       // Prepare deliveries for API call with individual adjustments
-      const deliveriesForAPI = selectedDeliveriesToPack.map((delivery: any) => {
-        const enrolleeId = delivery.EnrolleeId || delivery.enrolleeid;
-        const adjustment = adjustmentMap.get(enrolleeId);
+      const deliveriesForAPI = selectedDeliveriesWithEnrolleeData.map(
+        (delivery: any) => {
+          const enrolleeId = delivery.EnrolleeId || delivery.enrolleeid;
+          const adjustment = adjustmentMap.get(enrolleeId);
 
-        console.log(`Processing delivery for ${enrolleeId}:`, {
-          originalMonths,
-          adjustment,
-          delivery: delivery.EntryNo,
-        });
+          console.log(`Processing delivery for ${enrolleeId}:`, {
+            originalMonths,
+            adjustment,
+            delivery: delivery.EntryNo,
+            memberExpiryDate: delivery.Member_ExpiryDate,
+          });
 
-        let finalMonths = originalMonths;
-        let finalDate = "";
+          let finalMonths = originalMonths;
+          let finalDate = "";
 
-        if (adjustment) {
-          finalMonths = adjustment.adjustedMonths;
-          finalDate = adjustment.adjustedDate.toString();
+          if (adjustment) {
+            finalMonths = adjustment.adjustedMonths;
+            finalDate = adjustment.adjustedDate.toString();
 
-          if (adjustment.isAdjusted) {
-            console.log(`Adjusted delivery ${delivery.EntryNo}:`);
-            console.log(`- Original months: ${originalMonths}`);
-            console.log(`- Adjusted months: ${finalMonths}`);
-            console.log(`- Final date: ${finalDate}`);
-            console.log(`- Member expiry: ${adjustment.memberExpiryDate}`);
+            if (adjustment.isAdjusted) {
+              console.log(`Adjusted delivery ${delivery.EntryNo}:`);
+              console.log(`- Original months: ${originalMonths}`);
+              console.log(`- Adjusted months: ${finalMonths}`);
+              console.log(`- Final date: ${finalDate}`);
+              console.log(`- Member expiry: ${adjustment.memberExpiryDate}`);
+            }
+          } else {
+            // Fallback: calculate date manually if no adjustment found
+            const today = new Date();
+            const futureDate = new Date(today);
+            futureDate.setMonth(futureDate.getMonth() + originalMonths);
+            finalDate = futureDate.toISOString().split("T")[0];
           }
-        } else {
-          // Fallback: calculate date manually if no adjustment found
-          const today = new Date();
-          const futureDate = new Date(today);
-          futureDate.setMonth(futureDate.getMonth() + originalMonths);
-          finalDate = futureDate.toISOString().split("T")[0];
+
+          // Create API payload with individual adjustments
+          const apiPayload = {
+            DeliveryEntryNo: delivery.EntryNo,
+            PackedBy: user?.UserName || "",
+            Notes: `${finalMonths}`, // Use individually calculated months
+            nextpackdate: finalDate, // Use individually calculated date
+          };
+
+          return apiPayload;
         }
-
-        // Create API payload with individual adjustments
-        const apiPayload = {
-          DeliveryEntryNo: delivery.EntryNo,
-          PackedBy: user?.UserName || "",
-          Notes: `${finalMonths}`, // Use individually calculated months
-          nextpackdate: finalDate, // Use individually calculated date
-        };
-
-        return apiPayload;
-      });
+      );
 
       console.log("API Payload with individual adjustments:", deliveriesForAPI);
 
@@ -208,11 +318,11 @@ export default function PackPage() {
           // Generate single PDF with all selected deliveries
           console.log(
             "Selected Deliveries for PDF (full data):",
-            selectedDeliveriesToPack
+            selectedDeliveriesWithEnrolleeData
           );
 
           await generateDeliveryNotePDF(
-            selectedDeliveriesToPack,
+            selectedDeliveriesWithEnrolleeData,
             mostCommonMonths
           );
 
@@ -226,7 +336,7 @@ export default function PackPage() {
               : "";
 
           toast.success(
-            `Delivery note PDF with ${selectedDeliveriesToPack.length} deliveries downloaded successfully!${adjustmentInfo}`
+            `Delivery note PDF with ${selectedDeliveriesWithEnrolleeData.length} deliveries downloaded successfully!${adjustmentInfo}`
           );
         } catch (pdfError) {
           console.error("PDF generation error:", pdfError);
@@ -241,6 +351,7 @@ export default function PackPage() {
       toast.error("Failed to pack deliveries");
     } finally {
       setSelectedDeliveriesToPack([]);
+      setSelectedDeliveriesWithEnrolleeData([]);
     }
   };
 
@@ -303,7 +414,9 @@ export default function PackPage() {
 
       <PackTable
         deliveries={state.deliveries}
-        isLoading={state.isLoading || state.isPackingLoading}
+        isLoading={
+          state.isLoading || state.isPackingLoading || isLoadingEnrolleeData
+        }
         error={state.error}
         onSearch={handleSearch}
         onPackDelivery={handlePackDelivery}
@@ -313,7 +426,7 @@ export default function PackPage() {
         isOpen={showDateModal}
         onClose={() => setShowDateModal(false)}
         onConfirm={handleConfirmPack}
-        selectedDeliveries={selectedDeliveriesToPack}
+        selectedDeliveries={selectedDeliveriesWithEnrolleeData}
       />
     </section>
   );
