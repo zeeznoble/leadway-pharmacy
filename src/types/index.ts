@@ -105,6 +105,7 @@ export type Delivery = {
 
   EntryNo?: number;
   DeliveryId?: string;
+  Status?: string;
 };
 
 export type DeliveryData = {
@@ -126,6 +127,7 @@ export type DeliveryApiResponse = {
     procdeureid: string;
     procedurequantity: number;
     username: string;
+    status: string
     inputteddate: string;
     modifieddate: string;
     additionalinformation: string;
