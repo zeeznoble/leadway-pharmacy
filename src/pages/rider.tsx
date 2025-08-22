@@ -39,7 +39,6 @@ export default function RidersPage() {
   const { showViewModal, selectedRiderId } = useChunkValue(viewRiderStore);
   const formData = useChunkValue(riderFormData);
 
-  // Local state to track form validity
   const [isFormCurrentlyValid, setIsFormCurrentlyValid] = useState(false);
 
   const handleOpenChange = (isOpen: boolean) => {
@@ -50,7 +49,6 @@ export default function RidersPage() {
     }
   };
 
-  // Modified to accept data parameter for validation
   const isFormValid = (data = formData) => {
     const requiredFields = [
       "first_name",
@@ -103,9 +101,9 @@ export default function RidersPage() {
       riderActions.setSubmitting(false);
     }
   };
-  
+
   useEffect(() => {
-   reload();
+    reload();
   }, []);
 
   return (
