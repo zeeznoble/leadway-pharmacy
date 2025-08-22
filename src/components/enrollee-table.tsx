@@ -260,7 +260,7 @@ export default function EnrolleeDataTable() {
                     {(columnKey) => (
                       <TableCell>
                         <Link
-                          to="/create-deliveries"
+                          to="/create-delivery"
                           className="block w-full h-full text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200"
                         >
                           {getKeyValue(item, columnKey)}
