@@ -259,6 +259,7 @@ export const transformApiResponse = (apiResponse: any): Delivery => {
     SchemeId: apiResponse.schemeid,
     FrequencyDuration: apiResponse.frequencyduration,
     EndDate: apiResponse.enddate,
+    Status: apiResponse.Status,
     // Additional fields from API response
     EntryNo: apiResponse.entryno,
     DeliveryId: apiResponse.deliveryid,
