@@ -9,7 +9,6 @@ export type State = {
   Value: string;
 };
 
-// States chunk - fetch all states
 export const statesChunk = asyncChunk(async () => {
   try {
     const response = await fetch(`${API_URL}/ListValues/GetStates`);
@@ -19,8 +18,7 @@ export const statesChunk = asyncChunk(async () => {
     const data = await response.json() as State[];
     return data;
   } catch (error) {
-    console.error("Error fetching states:", error);
-    throw error; // Re-throw to let the async chunk handle it properly
+    throw error;
   }
 });
 
@@ -32,7 +30,6 @@ export type City = {
   Value: string;
 };
 
-// Cities chunk - fetch cities by state ID
 export const citiesChunk = asyncChunk(
   async (stateId: string) => {
     if (!stateId) {
@@ -48,11 +45,11 @@ export const citiesChunk = asyncChunk(
       return data;
     } catch (error) {
       console.error("Error fetching cities:", error);
-      throw error; // Re-throw to let the async chunk handle it properly
+      throw error;
     }
   },
   {
-    enabled: true, // Enable it - we'll control when to fetch with parameters
+    enabled: true,
     refresh: {
       staleTime: 5 * 60 * 1000, // 5 minutes
       cacheTime: 10 * 60 * 1000, // 10 minutes
