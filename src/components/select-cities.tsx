@@ -9,7 +9,7 @@ import { City, citiesChunk } from "@/lib/store/states-store";
 interface SelectCitiesProps {
   stateId: string;
   onCityChange?: (cityName: string) => void;
-  selectedCityName?: string; // Add this prop to set initial city
+  selectedCityName?: string;
 }
 
 export default function SelectCities({
@@ -35,9 +35,11 @@ export default function SelectCities({
   const LIMIT = 10;
   const currentOffset = useRef(0);
 
-  // Set initial city selection when cities data loads and we have a selectedCityName
+  const isLagosState = stateId === "72" || stateId === "73";
+  const shouldDisable = isLagosState;
+
   useEffect(() => {
-    if (cities.length > 0 && selectedCityName && selectedCity.size === 0) {
+    if (cities.length > 0 && selectedCityName) {
       const foundCity = cities.find(
         (city) =>
           city.Text.toLowerCase().trim() ===
@@ -48,37 +50,31 @@ export default function SelectCities({
         setSelectedCity(new Set([foundCity.Value]));
       }
     }
-  }, [cities, selectedCityName, selectedCity.size]);
+  }, [cities, selectedCityName]);
 
-  // Update params and fetch cities when stateId changes
   useEffect(() => {
     if (stateId && stateId !== prevStateId.current && stateId.trim() !== "") {
       setIsStateChanging(true);
 
-      // Clear everything immediately
       setSelectedCity(new Set());
       setDisplayedCities([]);
       setHasMore(true);
       currentOffset.current = 0;
       dataLoaded.current = false;
 
-      // Update the previous state reference
       prevStateId.current = stateId;
 
-      // Fetch cities for the new state
       citiesChunk.setParams(stateId);
       citiesChunk.reload(stateId);
     }
   }, [stateId]);
 
-  // Reset state changing flag when new data arrives
   useEffect(() => {
     if (!initLoading && stateId === prevStateId.current) {
       setIsStateChanging(false);
     }
   }, [initLoading, stateId]);
 
-  // Clear cities when no state is selected
   useEffect(() => {
     if (!stateId || stateId.trim() === "") {
       setDisplayedCities([]);
@@ -90,7 +86,6 @@ export default function SelectCities({
     }
   }, [stateId]);
 
-  // Load initial batch of cities
   useEffect(() => {
     if (
       cities.length > 0 &&
@@ -105,8 +100,7 @@ export default function SelectCities({
       currentOffset.current = LIMIT;
       dataLoaded.current = true;
 
-      // Set selected city if we have selectedCityName
-      if (selectedCityName && selectedCity.size === 0) {
+      if (selectedCityName) {
         const foundCity = cities.find(
           (city) =>
             city.Text.toLowerCase().trim() ===
@@ -118,7 +112,7 @@ export default function SelectCities({
         }
       }
     }
-  }, [cities, stateId, data, selectedCityName, selectedCity.size]);
+  }, [cities, stateId, data, selectedCityName]);
 
   const loadMore = useCallback(async () => {
     if (!cities || isLoading || !hasMore) return;
@@ -141,12 +135,13 @@ export default function SelectCities({
 
   const handleSelectionChange = useCallback(
     (keys: SharedSelection) => {
+      if (shouldDisable) return;
+
       const selectedArray = Array.from(keys as Iterable<string>);
       const newCityId = selectedArray[0] || "";
 
       setSelectedCity(new Set(newCityId ? [newCityId] : []));
 
-      // Find the city name for the callback
       const selectedCityData = cities.find((city) => city.Value === newCityId);
       if (selectedCityData && onCityChange) {
         onCityChange(selectedCityData.Text);
@@ -154,11 +149,13 @@ export default function SelectCities({
         onCityChange("");
       }
     },
-    [cities, onCityChange]
+    [cities, onCityChange, shouldDisable]
   );
 
   const handleOpenChange = useCallback(
     (isOpen: boolean) => {
+      if (shouldDisable) return;
+
       setIsOpen(isOpen);
       if (isOpen && cities && displayedCities.length === 0 && stateId) {
         const initialBatch = cities.slice(0, LIMIT);
@@ -167,17 +164,16 @@ export default function SelectCities({
         setHasMore(cities.length > LIMIT);
       }
     },
-    [cities, displayedCities.length, stateId]
+    [cities, displayedCities.length, stateId, shouldDisable]
   );
 
   const [, scrollerRef] = useInfiniteScroll({
     hasMore,
-    isEnabled: isOpen,
+    isEnabled: isOpen && !shouldDisable,
     shouldUseLoader: false,
     onLoadMore: loadMore,
   });
 
-  // Check if state is selected and not empty
   if (!stateId || stateId.trim() === "") {
     return (
       <Select
@@ -209,6 +205,22 @@ export default function SelectCities({
     );
   }
 
+  if (shouldDisable && selectedCityName) {
+    return (
+      <div>
+        <Select
+          label="Select City"
+          radius="sm"
+          isDisabled={true}
+          placeholder={selectedCityName}
+          selectedKeys={selectedCity}
+        >
+          <SelectItem key="auto">{selectedCityName}</SelectItem>
+        </Select>
+      </div>
+    );
+  }
+
   return (
     <div>
       <Select
@@ -220,7 +232,11 @@ export default function SelectCities({
         isLoading={initLoading || isLoading || isStateChanging}
         items={displayedCities ?? []}
         isDisabled={
-          !stateId || cities.length === 0 || initLoading || isStateChanging
+          !stateId ||
+          cities.length === 0 ||
+          initLoading ||
+          isStateChanging ||
+          shouldDisable
         }
         selectedKeys={selectedCity}
         scrollRef={scrollerRef}

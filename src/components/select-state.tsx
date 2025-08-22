@@ -8,7 +8,7 @@ import { appChunk } from "@/lib/store/app-store";
 
 interface SelectStatesProps {
   value?: string;
-  onChange?: (stateId: string, stateName: string) => void; // Callback when state changes
+  onChange?: (stateId: string, stateName: string) => void;
   isRequired?: boolean;
 }
 
@@ -18,12 +18,26 @@ export default function SelectStates({
   isRequired = false,
 }: SelectStatesProps = {}) {
   const [appState, setAppState] = useChunk(appChunk);
-  const { data, loading: initLoading, error } = useAsyncChunk(statesChunk);
+  const {
+    data,
+    loading: initLoading,
+    error,
+    reload,
+  } = useAsyncChunk(statesChunk);
 
   const [displayedStates, setDisplayedStates] = useState<State[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
+  const [_, setIsInitialized] = useState(false);
+
+  // Force reload states if not loaded
+  useEffect(() => {
+    if (!data && !initLoading && !error) {
+      console.log("SelectStates: Force reloading states");
+      reload();
+    }
+  }, [data, initLoading, error, reload]);
 
   const states = Array.isArray(data)
     ? data
@@ -51,14 +65,23 @@ export default function SelectStates({
   }, [value, appState.stateId]);
 
   useEffect(() => {
-    if (states.length > 0 && !dataLoaded.current) {
+    if (states.length > 0 && !dataLoaded.current && !initLoading) {
+      console.log("SelectStates: Initializing with states:", states.length);
+
       const initialBatch = states.slice(0, LIMIT);
       setDisplayedStates(initialBatch);
       setHasMore(states.length > LIMIT);
       currentOffset.current = LIMIT;
 
-      if (!currentValue && states.length > 0 && value === undefined) {
+      // Only set default if we don't have a current value and onChange is not provided
+      if (
+        !currentValue &&
+        states.length > 0 &&
+        value === undefined &&
+        !onChange
+      ) {
         const defaultStateId = states[0].Value;
+        console.log("SelectStates: Setting default state:", defaultStateId);
         setSelectedState(new Set([defaultStateId]));
         setAppState((prev) => ({
           ...prev,
@@ -67,8 +90,9 @@ export default function SelectStates({
       }
 
       dataLoaded.current = true;
+      setIsInitialized(true);
     }
-  }, [states, currentValue, setAppState, value]);
+  }, [states, currentValue, setAppState, value, onChange, initLoading]);
 
   const loadMore = useCallback(async () => {
     if (!states || isLoading || !hasMore) return;
@@ -94,6 +118,8 @@ export default function SelectStates({
       const selectedArray = Array.from(keys as Iterable<string>);
       const newStateId = selectedArray[0] || "";
 
+      console.log("SelectStates: Selection changed:", newStateId);
+
       // Find the state name for the callback
       const selectedStateObj = states.find(
         (state) => state.Value === newStateId
@@ -106,9 +132,11 @@ export default function SelectStates({
 
         // If onChange prop is provided (form integration), use it
         if (onChange) {
+          console.log("SelectStates: Calling onChange callback");
           onChange(newStateId, stateName);
         } else {
           // Otherwise, update global state for backward compatibility
+          console.log("SelectStates: Updating global app state");
           setAppState((prev) => ({
             ...prev,
             stateId: newStateId,
@@ -143,7 +171,16 @@ export default function SelectStates({
   if (error) {
     return (
       <div>
-        <p className="text-red-500 text-sm">
+        <Select
+          label="Select State"
+          placeholder="Failed to load states"
+          radius="sm"
+          isDisabled={true}
+          isRequired={isRequired}
+        >
+          <SelectItem key="error">Failed to load states</SelectItem>
+        </Select>
+        <p className="text-red-500 text-sm mt-1">
           Failed to load states. Please try again.
         </p>
       </div>
@@ -154,7 +191,7 @@ export default function SelectStates({
     <div>
       <Select
         label="Select State"
-        placeholder="Select a state"
+        placeholder={initLoading ? "Loading states..." : "Select a state"}
         radius="sm"
         isLoading={initLoading || isLoading}
         items={displayedStates ?? []}
@@ -169,6 +206,15 @@ export default function SelectStates({
           <SelectItem key={state.Value}>{state.Text}</SelectItem>
         )}
       </Select>
+
+      {/* Debug info in development */}
+      {process.env.NODE_ENV === "development" && (
+        <p className="text-xs text-gray-400 mt-1">
+          States: {states.length}, Selected:{" "}
+          {Array.from(selectedState)[0] || "None"}, Loading:{" "}
+          {initLoading ? "Yes" : "No"}
+        </p>
+      )}
     </div>
   );
 }
