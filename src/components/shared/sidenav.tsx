@@ -9,6 +9,7 @@ import {
   DeliveriesIcon,
   EnrolleeIcon,
   HelpIcon,
+  PendingProvidersIcon,
   PharmacyIcon,
   RiderIcon,
   StockIcon,
@@ -98,6 +99,24 @@ export default function SideNav() {
         />
       ),
       text: "Create Deliveries",
+    },
+    {
+      link: "/provider-pendings",
+      icon: (
+        <PendingProvidersIcon
+          strokeWidth={
+            router.pathname.startsWith("/provider-pendings") ? "1.5" : "1"
+          }
+          stroke={
+            router.pathname.startsWith("/provider-pendings")
+              ? "#ffffff"
+              : "#475467"
+          }
+          width={23}
+          height={20}
+        />
+      ),
+      text: "Pending Approval",
     },
     {
       link: "/pack",
