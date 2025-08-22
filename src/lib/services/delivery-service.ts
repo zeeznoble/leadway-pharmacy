@@ -6,6 +6,7 @@ import { appChunk, authStore } from "@/lib/store/app-store";
 
 import { API_URL, programmaticNavigate } from "../helpers";
 import { DeliveredPackResponse, Delivery, Diagnosis, PackResponse } from "@/types";
+import { asyncChunk } from "stunk";
 
 export const createDelivery = async (deliveryData: { Deliveries: Delivery[] }): Promise<any> => {
   try {
@@ -520,3 +521,12 @@ export const deliverPackDeliveries = async (deliveryLines: any[]): Promise<Deliv
     throw error;
   }
 };
+
+export const fetchSentFor = asyncChunk(async () => {
+  const res = await fetch(`${API_URL}/PharmacyDelivery/GetSentForDelivery`, { method: 'GET' });
+  if (!res.ok) {
+    throw new Error('Failed to fetch riders');
+  }
+  const data = await res.json();
+  return data.result;
+});
