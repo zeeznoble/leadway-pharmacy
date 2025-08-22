@@ -37,7 +37,7 @@ export default function PharmacyDataTable() {
   const [initialFetchDone, setInitialFetchDone] = useState(false);
 
   const getSelectedStateId = () => state.stateId;
-  const getEnrolleeId = () => state.enrolleeId;
+  const getEnrolleeId = () => state.searchCriteria.enrolleeId;
 
   const fetchAllData = async (isButtonClick = false) => {
     setLoading(true);
