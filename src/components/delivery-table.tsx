@@ -47,13 +47,14 @@ interface RowItem {
   startDate: string;
   nextDelivery: string;
   frequency: string;
-  status: boolean;
+  status: string;
+  // isDelivered: boolean;
   diagnosisname: string;
-  diagnosis_id: string;
+  // diagnosis_id: string;
   procedurename: string;
-  procedureid: string;
+  // procedureid: string;
   pharmacyname: string;
-  pharmacyid: number;
+  // pharmacyid: number;
   actions: {
     isDelivered: boolean;
   };
@@ -69,16 +70,13 @@ export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
     delivery: any | null;
   }>({ isOpen: false, delivery: null });
 
-  // Selection state for provider pendings page - using Selection type like PackTable
   const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set([]));
   const [isApproving, setIsApproving] = useState(false);
 
-  // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(5);
+  const [pageSize] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Check if we're on the provider pendings page
   const isProviderPendingsPage = location.pathname === "/provider-pendings";
 
   const handleDeleteClick = (delivery: any) => {
@@ -112,34 +110,26 @@ export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
     }
   };
 
-  // Handle selection change - copied from PackTable pattern
   const handleSelectionChange = (keys: Selection) => {
     console.log("Selection changed:", keys);
 
     if (keys === "all") {
-      // Select all visible rows on current page only
       const currentPageKeys = new Set(
         paginatedRows.map((row) => row.key as string)
       );
       const currentSelected = selectedKeys as Set<string>;
 
-      console.log("Current page keys:", currentPageKeys);
-      console.log("Current selected:", currentSelected);
-
-      // Check if all current page items are already selected
       const allCurrentPageSelected = Array.from(currentPageKeys).every((key) =>
         currentSelected.has(key)
       );
 
       if (allCurrentPageSelected) {
-        // Deselect all current page items
         const newSelection = new Set(
           Array.from(currentSelected).filter((key) => !currentPageKeys.has(key))
         );
         console.log("Deselecting all, new selection:", newSelection);
         setSelectedKeys(newSelection);
       } else {
-        // Add all current page items to selection
         const newSelection = new Set([
           ...Array.from(currentSelected),
           ...Array.from(currentPageKeys),
@@ -225,15 +215,16 @@ export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
           nextDelivery: formatDate(transformedDelivery.NextDeliveryDate),
           deliveryaddress: transformedDelivery.deliveryaddress,
           frequency: transformedDelivery.DeliveryFrequency,
-          status: transformedDelivery.IsDelivered ?? false,
+          // isDelivered: transformedDelivery.IsDelivered ?? false,
+          status: transformedDelivery.Status || "Pending",
           diagnosisname: transformedDelivery.DiagnosisLines[0]?.DiagnosisName,
-          diagnosis_id: transformedDelivery.DiagnosisLines[0]?.DiagnosisId,
+          // diagnosis_id: transformedDelivery.DiagnosisLines[0]?.DiagnosisId,
           procedurename: transformedDelivery.ProcedureLines[0]?.ProcedureName,
-          procedureid: transformedDelivery.ProcedureLines[0]?.ProcedureId,
+          // procedureid: transformedDelivery.ProcedureLines[0]?.ProcedureId,
           actions: {
             isDelivered: transformedDelivery.IsDelivered ?? false,
           },
-          pharmacyid: transformedDelivery.Pharmacyid || 0,
+          // pharmacyid: transformedDelivery.Pharmacyid || 0,
           pharmacyname: transformedDelivery.PharmacyName || "",
           cost: transformedDelivery.cost || "",
 
@@ -288,13 +279,31 @@ export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
         return (
           <div className="flex flex-col">
             <div className="text-md font-medium">{item.enrollee.name}</div>
-            {/* <div className="text-sm text-gray-500">{item.enrollee.scheme}</div> */}
           </div>
         );
       case "status":
+        const getStatusColor = (status: string) => {
+          switch (status?.toLowerCase()) {
+            case "delivered":
+              return "success";
+            case "packed":
+              return "primary";
+            case "pending":
+            case "approved":
+              return "warning";
+            case "cancelled":
+            case "failed":
+              return "danger";
+            default:
+              return "default";
+          }
+        };
+
+        return <Badge color={getStatusColor(item.status)}>{item.status}</Badge>;
+      case "isDelivered": // Keep your existing isDelivered logic if needed
         return (
-          <Badge color={item.status ? "success" : "warning"}>
-            {item.status ? "Delivered" : "Pending"}
+          <Badge color={item.actions.isDelivered ? "success" : "warning"}>
+            {item.actions.isDelivered ? "Yes" : "No"}
           </Badge>
         );
       case "actions":
@@ -304,7 +313,7 @@ export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
               isIconOnly
               aria-label={`Edit delivery for ${item.enrollee.name}`}
               color="default"
-              isDisabled={item.status || isEditing[item.key]}
+              isDisabled={item.actions.isDelivered || isEditing[item.key]}
               isLoading={isEditing[item.key]}
               size="sm"
               variant="flat"
@@ -331,16 +340,10 @@ export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
         );
       case "diagnosisname":
         return <span>{item.diagnosisname}</span>;
-      // case "diagnosis_id":
-      //   return <span className="text-gray-500">{item.diagnosis_id}</span>;
       case "procedurename":
         return <span>{item.procedurename}</span>;
-      // case "procedureid":
-      //   return <span className="text-gray-500">{item.procedureid}</span>;
       case "pharmacyname":
         return <span className="text-gray-500">{item.pharmacyname}</span>;
-      // case "pharmacyid":
-      //   return <span className="text-gray-500">{item.pharmacyid}</span>;
       case "cost":
         return <span className="text-gray-500">{item.cost}</span>;
       default:
