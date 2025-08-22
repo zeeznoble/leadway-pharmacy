@@ -38,7 +38,9 @@ export default function DeliveriesPage() {
   } = useChunkValue(deliveryStore);
   const formState = useChunkValue(deliveryFormState);
   // const { user } = useChunkValue(authStore);
-  const { enrolleeId } = useChunkValue(appChunk);
+  const {
+    searchCriteria: { enrolleeId },
+  } = useChunkValue(appChunk);
 
   useEffect(() => {
     fetchDeliveries("", enrolleeId);
