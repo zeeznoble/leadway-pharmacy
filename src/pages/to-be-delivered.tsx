@@ -12,7 +12,6 @@ import {
   deliverPackDeliveries,
   fetchPacked,
 } from "@/lib/services/delivery-service";
-import PackDateModal from "@/components/pack-date-modal";
 import {
   formatDateForAPI,
   generateDeliveryCode,
@@ -35,6 +34,7 @@ interface Delivery {
   enrollee?: Enrollee;
   phonenumber?: string;
   Notes?: string;
+  nextpackdate?: string;
   [key: string]: any;
 }
 
@@ -52,7 +52,6 @@ export default function ToBeDeliveredPage() {
   const state = useChunkValue(deliveryStore);
   const { user } = useChunkValue(authStore);
 
-  const [showDateModal, setShowDateModal] = useState<boolean>(false);
   const [selectedDeliveriesToPack, setSelectedDeliveriesToPack] = useState<
     Delivery[]
   >([]);
@@ -63,9 +62,6 @@ export default function ToBeDeliveredPage() {
 
   const [showRiderModal, setShowRiderModal] = useState<boolean>(false);
   const [_, setSelectedRider] = useState<Rider | null>(null);
-  const [nextDeliveryDate, setNextDeliveryDate] = useState<CalendarDate | null>(
-    null
-  );
 
   const {
     data: ridersData,
@@ -141,7 +137,9 @@ export default function ToBeDeliveredPage() {
 
     setSelectedDeliveriesToPack(selectedDeliveries);
     console.log("Selected Deliveries to Pack", selectedDeliveries);
-    setShowDateModal(true);
+
+    // Directly show rider selection modal
+    setShowRiderModal(true);
   };
 
   const sendDeliverySms = async (
@@ -233,48 +231,26 @@ export default function ToBeDeliveredPage() {
     }
   };
 
-  const handleConfirmPack = async (
-    nextPackDate: CalendarDate
-  ): Promise<void> => {
-    try {
-      // Store the selected date and deliveries
-      setNextDeliveryDate(nextPackDate);
-      setShowDateModal(false);
-      setShowRiderModal(true);
-    } catch (error) {
-      console.error("Error in handleConfirmPack:", error);
-      toast.error("Failed to proceed with delivery setup");
-    }
-  };
-
   const handleRiderConfirm = async (rider: Rider): Promise<void> => {
     try {
-      if (!nextDeliveryDate) {
-        toast.error("Delivery date not selected");
-        return;
-      }
-
       // Generate verification codes
       const enrolleeVerificationCode = generateVerificationCode();
       const riderDeliveryCode = generateDeliveryCode();
 
       console.log("Selected Delivery to Pack", selectedDeliveriesToPack);
 
-      // Format the date as needed for your API
-      const formattedDate = nextDeliveryDate.toString();
-
       // Create the rider's full name for the API
       const riderFullName = `${rider.first_name} ${rider.last_name}`;
 
       // Transform deliveries to match API structure
       const deliveriesForAPI: DeliveryForAPI[] = selectedDeliveriesToPack.map(
-        (delivery: Delivery) => ({
+        (delivery) => ({
           DeliveryEntryNo: delivery.DeliveryEntryNo,
           Marked_as_delivered_by: riderFullName, // Use rider's name, not logged-in user
           Notes:
             delivery.Notes ||
             `Package for ${delivery.enrollee?.name || "Patient"}`,
-          nextdeliverydate: formattedDate,
+          nextdeliverydate: delivery.NextDeliveryDate || "", // Use nextpackdate as nextdeliverydate
           rider_id: rider.rider_id!,
           receipientcode: enrolleeVerificationCode, // Map to correct field name
           ridercode: riderDeliveryCode, // Map to correct field name
@@ -292,7 +268,7 @@ export default function ToBeDeliveredPage() {
           rider,
           enrolleeVerificationCode,
           riderDeliveryCode,
-          formattedDate
+          selectedDeliveriesToPack[0].nextpackdate || ""
         );
 
         toast.success(
@@ -310,7 +286,7 @@ export default function ToBeDeliveredPage() {
     } finally {
       setSelectedDeliveriesToPack([]);
       setSelectedRider(null);
-      setNextDeliveryDate(null);
+      setShowRiderModal(false);
     }
   };
 
@@ -378,12 +354,6 @@ export default function ToBeDeliveredPage() {
         error={state.error}
         onSearch={handleSearch}
         onPackDelivery={handlePackDelivery}
-      />
-      <PackDateModal
-        isOpen={showDateModal}
-        onClose={() => setShowDateModal(false)}
-        onConfirm={handleConfirmPack}
-        mode="simple"
       />
       <RiderSelectionModal
         isOpen={showRiderModal}
