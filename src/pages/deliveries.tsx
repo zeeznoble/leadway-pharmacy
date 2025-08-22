@@ -82,7 +82,7 @@ export default function DeliveriesPage() {
   };
 
   return (
-    <section className="py-3 px-2">
+    <section className="px-2">
       <div className="flex justify-between mb-4">
         <p className="text-xl">List of Deliveries</p>
         {enrolleeId !== "" ? (
