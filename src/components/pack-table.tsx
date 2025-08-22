@@ -352,7 +352,7 @@ export default function PackTable({
       case "pharmacy":
         return "Search by Pharmacy Name";
       case "address":
-        return "Search by Delivery Address";
+        return "Search by Region";
       default:
         return "Search...";
     }
@@ -376,7 +376,7 @@ export default function PackTable({
             >
               <SelectItem key="enrollee">Enrollee ID</SelectItem>
               <SelectItem key="pharmacy">Pharmacy</SelectItem>
-              <SelectItem key="address">Delivery Address</SelectItem>
+              <SelectItem key="address">Region</SelectItem>
             </Select>
             <Input
               className="flex-1"
