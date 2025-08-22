@@ -12,6 +12,7 @@ import {
   PendingProvidersIcon,
   PharmacyIcon,
   RiderIcon,
+  SentForDeliveryIcon,
   StockIcon,
   TasksIcon,
 } from "../icons/main-icons";
@@ -83,14 +84,14 @@ export default function SideNav() {
       text: "Enrollees",
     },
     {
-      link: "/create-deliveries",
+      link: "/create-delivery",
       icon: (
         <DeliveriesIcon
           strokeWidth={
-            router.pathname.startsWith("/create-deliveries") ? "1.5" : "1"
+            router.pathname.startsWith("/create-delivery") ? "1.5" : "1"
           }
           stroke={
-            router.pathname.startsWith("/create-deliveries")
+            router.pathname.startsWith("/create-delivery")
               ? "#ffffff"
               : "#475467"
           }
@@ -147,6 +148,24 @@ export default function SideNav() {
         />
       ),
       text: "Assign To Rider",
+    },
+    {
+      link: "/sent-for-delivery",
+      icon: (
+        <SentForDeliveryIcon
+          strokeWidth={
+            router.pathname.startsWith("/sent-for-delivery") ? "1.5" : "1"
+          }
+          stroke={
+            router.pathname.startsWith("/sent-for-delivery")
+              ? "#ffffff"
+              : "#475467"
+          }
+          width={23}
+          height={20}
+        />
+      ),
+      text: "Sent For Delivery",
     },
     {
       link: "/rider",
