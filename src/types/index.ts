@@ -119,6 +119,7 @@ export type DeliveryApiResponse = {
     deliveryfrequency: string;
     delStartdate: string;
     nextdeliverydate: string;
+    nextpackdate: string;
     diagnosisname: string;
     diagnosis_id: string;
     procedurename: string;
