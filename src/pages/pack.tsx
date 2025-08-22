@@ -83,7 +83,7 @@ export default function PackPage() {
 
   const handleSearch = async (
     searchTerm: string,
-    searchType: "enrollee" | "pharmacy" = "enrollee"
+    searchType: "enrollee" | "pharmacy" | "address" = "enrollee"
   ) => {
     if (!user?.UserName) {
       toast.error("User information not available");
@@ -99,15 +99,14 @@ export default function PackPage() {
       const toDateStr = formatDateForAPI(toDate);
 
       if (searchTerm) {
-        // For now, we'll use the existing API. You might need to modify the API to support pharmacy search
-        await fetchUnpacked(
-          "",
-          searchType === "enrollee" ? searchTerm : "",
-          fromDateStr,
-          toDateStr
-        );
+        // For enrollee search, use the existing API parameter
+        if (searchType === "enrollee") {
+          await fetchUnpacked("", searchTerm, fromDateStr, toDateStr);
+        } else {
+          await fetchUnpacked("", "", fromDateStr, toDateStr);
+        }
       } else {
-        await fetchUnpacked("", fromDateStr, toDateStr);
+        await fetchUnpacked("", "", fromDateStr, toDateStr);
       }
     } catch (error) {
       const err = error as Error;
@@ -251,7 +250,7 @@ export default function PackPage() {
   };
 
   return (
-    <section className="py-3">
+    <section>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Pack Deliveries</h1>
       </div>
