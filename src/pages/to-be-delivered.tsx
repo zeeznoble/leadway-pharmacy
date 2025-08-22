@@ -116,7 +116,6 @@ export default function ToBeDeliveredPage() {
     try {
       deliveryActions.updateLastSearchedEnrolleeId(enrolleeId);
 
-      // Use the date filters when searching
       const fromDateStr = formatDateForAPI(fromDate);
       const toDateStr = formatDateForAPI(toDate);
 
@@ -138,7 +137,6 @@ export default function ToBeDeliveredPage() {
     setSelectedDeliveriesToPack(selectedDeliveries);
     console.log("Selected Deliveries to Pack", selectedDeliveries);
 
-    // Directly show rider selection modal
     setShowRiderModal(true);
   };
 
@@ -191,7 +189,6 @@ export default function ToBeDeliveredPage() {
         UserId: user?.User_id || 0,
       };
 
-      // Send SMS to enrollee - using phonenumber field from API response
       const enrolleeSmsPayload: SmsPayload = {
         To: fullDeliveryData.phonenumber || "",
         Message: getEnrolleeSmsMessage(
@@ -214,11 +211,6 @@ export default function ToBeDeliveredPage() {
         sendSms(enrolleeSmsPayload),
       ]);
 
-      // Log results for debugging
-      console.log("Rider SMS result:", riderSmsResult);
-      console.log("Enrollee SMS result:", enrolleeSmsResult);
-
-      // Check if both SMS were sent successfully
       if (riderSmsResult.success && enrolleeSmsResult.success) {
         console.log("Both SMS notifications sent successfully");
       } else {
@@ -226,34 +218,30 @@ export default function ToBeDeliveredPage() {
       }
     } catch (error) {
       console.error("Error sending SMS notifications:", error);
-      // Don't throw error here as delivery was already successful
       toast.error("Delivery scheduled but SMS notifications failed");
     }
   };
 
   const handleRiderConfirm = async (rider: Rider): Promise<void> => {
     try {
-      // Generate verification codes
       const enrolleeVerificationCode = generateVerificationCode();
       const riderDeliveryCode = generateDeliveryCode();
 
       console.log("Selected Delivery to Pack", selectedDeliveriesToPack);
 
-      // Create the rider's full name for the API
       const riderFullName = `${rider.first_name} ${rider.last_name}`;
 
-      // Transform deliveries to match API structure
       const deliveriesForAPI: DeliveryForAPI[] = selectedDeliveriesToPack.map(
         (delivery) => ({
           DeliveryEntryNo: delivery.DeliveryEntryNo,
-          Marked_as_delivered_by: riderFullName, // Use rider's name, not logged-in user
+          Marked_as_delivered_by: riderFullName,
           Notes:
             delivery.Notes ||
             `Package for ${delivery.enrollee?.name || "Patient"}`,
-          nextdeliverydate: delivery.NextDeliveryDate || "", // Use nextpackdate as nextdeliverydate
+          nextdeliverydate: delivery.NextDeliveryDate || "",
           rider_id: rider.rider_id!,
-          receipientcode: enrolleeVerificationCode, // Map to correct field name
-          ridercode: riderDeliveryCode, // Map to correct field name
+          receipientcode: enrolleeVerificationCode,
+          ridercode: riderDeliveryCode,
         })
       );
 
