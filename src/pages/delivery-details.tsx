@@ -25,7 +25,7 @@ export default function DeliveryDetailsPage() {
             <p className="text-gray-500 mb-6">
               The requested delivery record could not be found.
             </p>
-            <Button onPress={() => navigate("/create-deliveries")}>
+            <Button onPress={() => navigate("/create-delivery")}>
               Back to Deliveries
             </Button>
           </CardBody>
@@ -38,7 +38,7 @@ export default function DeliveryDetailsPage() {
     <div className="container mx-auto p-4 md:p-8">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Delivery Details</h1>
-        <Button variant="flat" onPress={() => navigate("/create-deliveries")}>
+        <Button variant="flat" onPress={() => navigate("/create-delivery")}>
           Back to Deliveries
         </Button>
       </div>
