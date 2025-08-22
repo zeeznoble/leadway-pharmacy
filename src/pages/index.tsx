@@ -19,9 +19,9 @@ export default function IndexPage() {
   const { deliveries, isLoading, error } = useChunkValue(deliveryStore);
 
   return (
-    <section className="py-6">
+    <section>
       {statsLoading && (
-        <div className="bg-gray-50 text-gray-600 p-4 rounded-lg mb-6">
+        <div className="bg-gray-50 text-gray-600 rounded-lg mb-6">
           Loading dashboard stats...
         </div>
       )}
