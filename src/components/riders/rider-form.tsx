@@ -38,10 +38,24 @@ export default function RiderForm({ onFormChange }: RiderFormProps) {
   // Local state for managing state/city selection during edit
   const [localStateId, setLocalStateId] = useState<string>("");
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isFormReady, setIsFormReady] = useState(false);
 
-  const { data: statesData, loading: statesLoading } =
-    useAsyncChunk(statesChunk);
+  // Force load states when component mounts
+  const {
+    data: statesData,
+    loading: statesLoading,
+    reload: reloadStates,
+  } = useAsyncChunk(statesChunk);
 
+  // Initialize states loading when component mounts
+  useEffect(() => {
+    // Force reload states to ensure they're available
+    if (!statesData && !statesLoading) {
+      reloadStates();
+    }
+  }, [statesData, statesLoading, reloadStates]);
+
+  // Handle editing rider initialization
   useEffect(() => {
     if (editingRider && statesData && !isInitialized && !statesLoading) {
       const states = Array.isArray(statesData) ? statesData : [];
@@ -56,17 +70,28 @@ export default function RiderForm({ onFormChange }: RiderFormProps) {
 
         if (foundState) {
           setLocalStateId(foundState.Value);
-          // Set app state for city loading, but don't interfere with other routes
-          setAppState((prev) => ({
-            ...prev,
-            stateId: foundState.Value,
-            cityId: "", // Will be set when cities load
-          }));
+          // Set app state for city loading with a slight delay to ensure proper sequencing
+          setTimeout(() => {
+            setAppState((prev) => ({
+              ...prev,
+              stateId: foundState.Value,
+              cityId: "",
+            }));
+          }, 100);
+        } else {
+          console.warn("State not found:", editingRider.state_province);
         }
       }
       setIsInitialized(true);
     }
   }, [editingRider, statesData, statesLoading, isInitialized, setAppState]);
+
+  // Set form ready state
+  useEffect(() => {
+    if (statesData && !statesLoading) {
+      setIsFormReady(true);
+    }
+  }, [statesData, statesLoading]);
 
   // Sync local state when global state changes
   useEffect(() => {
@@ -96,10 +121,10 @@ export default function RiderForm({ onFormChange }: RiderFormProps) {
 
   // Notify parent of form validity changes
   useEffect(() => {
-    if (onFormChange) {
+    if (onFormChange && isFormReady) {
       onFormChange(isFormValid(localFormData), localFormData);
     }
-  }, [localFormData, onFormChange]);
+  }, [localFormData, onFormChange, isFormReady]);
 
   const updateLocalField = (
     field: keyof typeof localFormData,
@@ -141,16 +166,34 @@ export default function RiderForm({ onFormChange }: RiderFormProps) {
     updateLocalField("state_province", stateName);
     updateGlobalField("state_province", stateName);
 
-    // Clear city when state changes
-    updateLocalField("city", "");
-    updateGlobalField("city", "");
+    // Auto-select city for Lagos Island and Lagos Mainland
+    let autoSelectedCity = "";
+    if (stateId === "72") {
+      autoSelectedCity = "Lagos Island";
+    } else if (stateId === "73") {
+      autoSelectedCity = "Lagos Mainland";
+    }
 
-    // Update app state for city component
-    setAppState((prev) => ({
-      ...prev,
-      stateId: stateId,
-      cityId: "",
-    }));
+    if (autoSelectedCity) {
+      // Set the auto-selected city
+      updateLocalField("city", autoSelectedCity);
+      updateGlobalField("city", autoSelectedCity);
+      console.log("Auto-selected city:", autoSelectedCity);
+    } else {
+      // Clear city when state changes (for other states)
+      updateLocalField("city", "");
+      updateGlobalField("city", "");
+    }
+
+    // Update app state for city component with proper timing
+    setTimeout(() => {
+      setAppState((prev) => ({
+        ...prev,
+        stateId: stateId,
+        cityId: "",
+      }));
+      console.log("App state updated for cities:", stateId);
+    }, 50);
   };
 
   const handleCityChange = (cityName: string) => {
@@ -171,8 +214,24 @@ export default function RiderForm({ onFormChange }: RiderFormProps) {
     if (!editingRider) {
       setIsInitialized(false);
       setLocalStateId("");
+      setIsFormReady(false);
+      // Small delay to ensure clean state
+      setTimeout(() => {
+        setIsFormReady(true);
+      }, 100);
     }
   }, [editingRider]);
+
+  // Show loading state while states are loading
+  if (statesLoading || !isFormReady) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="md:col-span-3 text-center py-8">
+          <p>Loading form data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -255,19 +314,24 @@ export default function RiderForm({ onFormChange }: RiderFormProps) {
         className="bg-gray-50"
       />
 
-      {/* State selector with form integration */}
-      <SelectStates
-        value={localStateId}
-        onChange={handleStateChange}
-        isRequired
-      />
+      <div>
+        <SelectStates
+          value={localStateId}
+          onChange={handleStateChange}
+          isRequired
+        />
+        {statesLoading && (
+          <p className="text-xs text-gray-500 mt-1">Loading states...</p>
+        )}
+      </div>
 
-      {/* City selector - depends on selected state */}
-      <SelectCities
-        stateId={localStateId}
-        onCityChange={handleCityChange}
-        selectedCityName={localFormData.city} // Pass current city name
-      />
+      <div>
+        <SelectCities
+          stateId={localStateId}
+          onCityChange={handleCityChange}
+          selectedCityName={localFormData.city}
+        />
+      </div>
 
       <Input
         label="Postal Code"
@@ -338,6 +402,20 @@ export default function RiderForm({ onFormChange }: RiderFormProps) {
           onBlur={() => handleBlur("notes")}
         />
       </div>
+
+      {/* Debug info (remove in production) */}
+      {process.env.NODE_ENV === "development" && (
+        <div className="md:col-span-3 text-xs text-gray-400 border-t pt-2">
+          <p>
+            Debug: State ID: {localStateId}, State Name:{" "}
+            {localFormData.state_province}, City: {localFormData.city}
+          </p>
+          <p>
+            States loaded: {statesData ? "Yes" : "No"}, Editing:{" "}
+            {editingRider ? "Yes" : "No"}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
