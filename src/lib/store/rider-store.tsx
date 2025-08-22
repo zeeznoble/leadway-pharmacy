@@ -101,7 +101,7 @@ export const riderActions = {
       address_line1: rider.address_line1,
       address_line2: rider.address_line2 || "",
       city: rider.city,
-      state_province: rider.state_province, // This is correct
+      state_province: rider.state_province,
       postal_code: rider.postal_code,
       country: rider.country || "Nigeria",
       emergency_contact_name: rider.emergency_contact_name,
