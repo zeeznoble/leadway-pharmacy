@@ -42,10 +42,13 @@ export default function PackDateModal({
   const label =
     location.pathname === "/pack" ? "Next Pack Date" : "Next Delivery Date";
 
-  // Calculate the future date based on selected months
-  const calculateFutureDate = (months: number): CalendarDate => {
-    const currentDate = todayDate.toDate(getLocalTimeZone());
-    const futureDate = new Date(currentDate);
+  // Calculate the future date based on selected months from a given start date
+  const calculateFutureDate = (
+    months: number,
+    startDate?: Date
+  ): CalendarDate => {
+    const baseDate = startDate || todayDate.toDate(getLocalTimeZone());
+    const futureDate = new Date(baseDate);
     futureDate.setMonth(futureDate.getMonth() + months);
 
     return new CalendarDate(
@@ -53,6 +56,22 @@ export default function PackDateModal({
       futureDate.getMonth() + 1,
       futureDate.getDate()
     );
+  };
+
+  // Parse NextDeliveryDate string to Date object
+  const parseNextDeliveryDate = (
+    nextDeliveryDateString: string
+  ): Date | null => {
+    if (!nextDeliveryDateString) return null;
+
+    try {
+      const date = new Date(nextDeliveryDateString);
+      if (isNaN(date.getTime())) return null;
+      return date;
+    } catch (error) {
+      console.error("Error parsing next delivery date:", error);
+      return null;
+    }
   };
 
   // Calculate adjustments for each delivery based on member expiry dates
@@ -69,7 +88,18 @@ export default function PackDateModal({
       const memberExpiryDate = delivery.Member_ExpiryDate;
       const enrolleeId = delivery.EnrolleeId;
       const enrolleeName = delivery.EnrolleeName;
-      const calculatedDate = calculateFutureDate(requestedMonths);
+      const nextDeliveryDateString = delivery.NextDeliveryDate;
+
+      // Parse the next delivery date
+      const nextDeliveryDate = parseNextDeliveryDate(nextDeliveryDateString);
+      const startDate =
+        nextDeliveryDate || todayDate.toDate(getLocalTimeZone());
+
+      const calculatedDate = calculateFutureDate(requestedMonths, startDate);
+
+      console.log("Next Delivery Date:", nextDeliveryDateString);
+      console.log("Parsed Next Delivery Date:", nextDeliveryDate);
+      console.log("Using start date:", startDate);
 
       if (!memberExpiryDate) {
         return {
@@ -106,11 +136,11 @@ export default function PackDateModal({
         const expiryDateObj = expiryDate;
 
         if (calculatedDateObj > expiryDateObj) {
-          // Calculate actual months difference between today and expiry date
-          const today = todayDate.toDate(getLocalTimeZone());
-          const yearsDiff = expiryDateObj.getFullYear() - today.getFullYear();
-          const monthsDiff = expiryDateObj.getMonth() - today.getMonth();
-          const daysDiff = expiryDateObj.getDate() - today.getDate();
+          // Calculate actual months difference between start date and expiry date
+          const yearsDiff =
+            expiryDateObj.getFullYear() - startDate.getFullYear();
+          const monthsDiff = expiryDateObj.getMonth() - startDate.getMonth();
+          const daysDiff = expiryDateObj.getDate() - startDate.getDate();
 
           let actualMonths = yearsDiff * 12 + monthsDiff;
 
@@ -191,9 +221,23 @@ export default function PackDateModal({
     }
 
     if (mode === "simple") {
-      // Simple mode: just pass the calculated date
-      const calculatedDate = calculateFutureDate(selectedMonths);
+      // Simple mode: calculate from the first delivery's next delivery date or today
+      const firstDelivery = selectedDeliveries[0];
+      const nextDeliveryDate = firstDelivery
+        ? parseNextDeliveryDate(firstDelivery.NextDeliveryDate)
+        : null;
+      const startDate =
+        nextDeliveryDate || todayDate.toDate(getLocalTimeZone());
+      const calculatedDate = calculateFutureDate(selectedMonths, startDate);
       (onConfirm as (date: CalendarDate) => void)(calculatedDate);
+    } else {
+      // Advanced mode: pass the adjustments
+      (
+        onConfirm as (
+          originalMonths: number,
+          deliveryAdjustments: DeliveryAdjustment[]
+        ) => void
+      )(selectedMonths, deliveryAdjustments);
     }
 
     onClose();
@@ -221,7 +265,7 @@ export default function PackDateModal({
             min="1"
             max="12"
             step="1"
-            description="Enter number of months from today (1-12)"
+            description="Enter number of months from next delivery date (1-12)"
             isInvalid={isMonthsInvalid}
             errorMessage={
               isMonthsInvalid ? "Please enter a number between 1 and 12" : ""
@@ -233,54 +277,76 @@ export default function PackDateModal({
             <div className="mt-4">
               <h3 className="font-medium text-sm mb-2">Member Details:</h3>
               <div className="space-y-2 max-h-60 overflow-y-auto">
-                {uniqueMembers.map((adjustment, index) => (
-                  <div
-                    key={`${adjustment.enrolleeId}-${index}`}
-                    className={`p-3 rounded-md border text-sm ${
-                      adjustment.isAdjusted
-                        ? "bg-yellow-50 border-yellow-200"
-                        : "bg-green-50 border-green-200"
-                    }`}
-                  >
-                    <div className="font-medium">
-                      {adjustment.enrolleeName} ({adjustment.enrolleeId})
+                {uniqueMembers.map((adjustment, index) => {
+                  // Find the original delivery to show next delivery date
+                  const originalDelivery = selectedDeliveries.find(
+                    (d) => d.EnrolleeId === adjustment.enrolleeId
+                  );
+                  const nextDeliveryDate = originalDelivery?.NextDeliveryDate;
+
+                  return (
+                    <div
+                      key={`${adjustment.enrolleeId}-${index}`}
+                      className={`p-3 rounded-md border text-sm ${
+                        adjustment.isAdjusted
+                          ? "bg-yellow-50 border-yellow-200"
+                          : "bg-green-50 border-green-200"
+                      }`}
+                    >
+                      <div className="font-medium">
+                        {adjustment.enrolleeName} ({adjustment.enrolleeId})
+                      </div>
+                      <div className="text-xs text-gray-600 mt-1">
+                        Next Delivery:{" "}
+                        {nextDeliveryDate
+                          ? (() => {
+                              try {
+                                return formatter.format(
+                                  new Date(nextDeliveryDate)
+                                );
+                              } catch {
+                                return nextDeliveryDate;
+                              }
+                            })()
+                          : "N/A"}
+                      </div>
+                      <div className="text-xs text-gray-600 mt-1">
+                        Member Expiry:{" "}
+                        {adjustment.memberExpiryDate !== "N/A"
+                          ? (() => {
+                              try {
+                                return formatter.format(
+                                  new Date(adjustment.memberExpiryDate)
+                                );
+                              } catch {
+                                return adjustment.memberExpiryDate;
+                              }
+                            })()
+                          : "N/A"}
+                      </div>
+                      <div className="text-xs mt-1">
+                        {adjustment.isAdjusted ? (
+                          <span className="text-yellow-700">
+                            ⚠️ Adjusted to {adjustment.adjustedMonths} months
+                            (expires{" "}
+                            {formatter.format(
+                              adjustment.adjustedDate.toDate(getLocalTimeZone())
+                            )}
+                            )
+                          </span>
+                        ) : (
+                          <span className="text-green-700">
+                            ✓ {adjustment.adjustedMonths} months (
+                            {formatter.format(
+                              adjustment.adjustedDate.toDate(getLocalTimeZone())
+                            )}
+                            )
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-600 mt-1">
-                      Member Expiry:{" "}
-                      {adjustment.memberExpiryDate !== "N/A"
-                        ? (() => {
-                            try {
-                              return formatter.format(
-                                new Date(adjustment.memberExpiryDate)
-                              );
-                            } catch {
-                              return adjustment.memberExpiryDate;
-                            }
-                          })()
-                        : "N/A"}
-                    </div>
-                    <div className="text-xs mt-1">
-                      {adjustment.isAdjusted ? (
-                        <span className="text-yellow-700">
-                          ⚠️ Adjusted to {adjustment.adjustedMonths} months
-                          (expires{" "}
-                          {formatter.format(
-                            adjustment.adjustedDate.toDate(getLocalTimeZone())
-                          )}
-                          )
-                        </span>
-                      ) : (
-                        <span className="text-green-700">
-                          ✓ {adjustment.adjustedMonths} months (
-                          {formatter.format(
-                            adjustment.adjustedDate.toDate(getLocalTimeZone())
-                          )}
-                          )
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -290,11 +356,19 @@ export default function PackDateModal({
             <p className="text-gray-500 text-sm mt-2">
               Calculated {label.toLowerCase()}:{" "}
               {!isMonthsInvalid
-                ? formatter.format(
-                    calculateFutureDate(selectedMonths).toDate(
-                      getLocalTimeZone()
-                    )
-                  )
+                ? (() => {
+                    const firstDelivery = selectedDeliveries[0];
+                    const nextDeliveryDate = firstDelivery
+                      ? parseNextDeliveryDate(firstDelivery.NextDeliveryDate)
+                      : null;
+                    const startDate =
+                      nextDeliveryDate || todayDate.toDate(getLocalTimeZone());
+                    return formatter.format(
+                      calculateFutureDate(selectedMonths, startDate).toDate(
+                        getLocalTimeZone()
+                      )
+                    );
+                  })()
                 : "Invalid input"}
             </p>
           )}
@@ -309,7 +383,8 @@ export default function PackDateModal({
               </p>
               <p className="text-yellow-700 text-sm mt-1">
                 Each delivery will be packed with the appropriate number of
-                months based on the individual member's expiry date.
+                months based on the individual member's expiry date and next
+                delivery date.
               </p>
             </div>
           )}
