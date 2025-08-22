@@ -16,9 +16,7 @@ export default function DefaultLayout({
       {/* Scrollable main content */}
       <main className="flex flex-col flex-1 overflow-auto relative">
         <Header />
-        <div className="p-4 sm:p-10 bg-[#FCFCFA] min-h-0 flex-1">
-          {children}
-        </div>
+        <div className="p-4 sm:p-7 bg-[#FCFCFA] min-h-0 flex-1">{children}</div>
       </main>
 
       {/* Mobile SideNav controller */}
