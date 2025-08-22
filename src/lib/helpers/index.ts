@@ -289,7 +289,7 @@ export const getUsername = async (): Promise<string> => {
 
 export const formatDateForAPI = (date: CalendarDate | null): string => {
   if (!date) return "";
-  return `${date.year}-${String(date.month).padStart(2, "0")}-${String(date.day).padStart(2, "0")}`;
+  return `${String(date.day).padStart(2, "0")}-${String(date.month).padStart(2, "0")}-${date.year}`;
 };
 
 export const generateVerificationCode = (): string => {
