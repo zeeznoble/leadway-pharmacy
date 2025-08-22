@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 import { Spinner } from "@heroui/spinner";
+import { Pagination } from "@heroui/pagination";
 import {
   getKeyValue,
   Table,
@@ -20,39 +21,49 @@ import { ErrorText } from "./error-text";
 
 import {
   EnrolleeResponse,
-  fetchEnrolleeById,
+  fetchEnrolleeByMultipleFields,
 } from "@/lib/services/fetch-enrolee";
 import { appChunk } from "@/lib/store/app-store";
 import { ENROLLEE_COLUMNS } from "@/lib/constants";
 
 export default function EnrolleeDataTable() {
-  const { enrolleeId } = useChunkValue(appChunk);
+  const { searchCriteria } = useChunkValue(appChunk);
   const [allData, setAllData] = useState<EnrolleeResponse | null>(null);
   const [displayData, setDisplayData] = useState<EnrolleeResponse | null>(null);
   const [loading, setLoading] = useState(false);
-  const [pageLoading, setPageLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(20);
+  const [pageSize] = useState(10);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [initialFetchDone, setInitialFetchDone] = useState(false);
+  const [totalPages, setTotalPages] = useState(1);
 
   const fetchAllData = async (isButtonClick = false) => {
-    if (!enrolleeId && isButtonClick) {
-      setError("Please enter an Enrollee ID");
+    const hasSearchCriteria =
+      searchCriteria &&
+      Object.values(searchCriteria).some((value) => value?.trim());
+
+    if (!hasSearchCriteria && isButtonClick) {
+      setError("Please enter at least one search criteria");
       return;
     }
 
-    if (!enrolleeId) return;
+    if (!hasSearchCriteria) {
+      setAllData(null);
+      setDisplayData(null);
+      return;
+    }
 
     setLoading(true);
     setError("");
+    setCurrentPage(1);
 
     try {
-      const data = await fetchEnrolleeById(enrolleeId);
+      const data = await fetchEnrolleeByMultipleFields(searchCriteria);
 
       if (!data || !data.result || data.result.length === 0) {
         setError("No enrollee found");
+        setAllData(null);
+        setDisplayData(null);
         setLoading(false);
         return;
       }
@@ -61,7 +72,6 @@ export default function EnrolleeDataTable() {
 
       setAllData(data);
       updateDisplayData(data, 1, searchQuery);
-      setInitialFetchDone(true);
     } catch (error) {
       const err = error as Error;
       const errorMessage = `Failed to fetch enrollee data. Please try again. ${err.message}`;
@@ -71,48 +81,42 @@ export default function EnrolleeDataTable() {
     }
   };
 
-  useEffect(() => {
-    if (!initialFetchDone && enrolleeId) {
-      fetchAllData();
-    }
-  }, [enrolleeId, initialFetchDone]);
-
   const updateDisplayData = (
     data: EnrolleeResponse,
     page: number,
     query: string = ""
   ) => {
-    setPageLoading(true);
+    let filteredResults = [...data.result];
 
-    setTimeout(() => {
-      let filteredResults = [...data.result];
+    if (query.trim()) {
+      const searchLower = query.toLowerCase();
+      filteredResults = filteredResults.filter(
+        (item) =>
+          item.Member_FirstName?.toLowerCase().includes(searchLower) ||
+          item.Member_Surname?.toLowerCase().includes(searchLower) ||
+          item.Member_MobileNo?.toLowerCase().includes(searchLower) ||
+          item.Member_Email?.toLowerCase().includes(searchLower)
+      );
+    }
 
-      if (query.trim()) {
-        const searchLower = query.toLowerCase();
-        filteredResults = filteredResults.filter(
-          (item) =>
-            item.Member_FirstName?.toLowerCase().includes(searchLower) ||
-            item.Member_Surname?.toLowerCase().includes(searchLower)
-        );
-      }
+    const totalItems = filteredResults.length;
+    const totalPages = Math.ceil(totalItems / pageSize);
+    setTotalPages(totalPages);
 
-      const startIndex = (page - 1) * pageSize;
-      const endIndex = Math.min(startIndex + pageSize, filteredResults.length);
+    const startIndex = (page - 1) * pageSize;
+    const endIndex = Math.min(startIndex + pageSize, filteredResults.length);
 
-      const currentPageData = {
-        ...data,
-        result: filteredResults.slice(startIndex, endIndex),
-        currentPage: page,
-        totalRecord: filteredResults.length,
-      };
+    const currentPageData = {
+      ...data,
+      result: filteredResults.slice(startIndex, endIndex),
+      currentPage: page,
+      totalRecord: filteredResults.length,
+    };
 
-      setDisplayData(currentPageData);
-      setPageLoading(false);
-    }, 300);
+    setDisplayData(currentPageData);
   };
 
   const handleSearch = () => {
-    setCurrentPage(1);
     fetchAllData(true);
   };
 
@@ -125,38 +129,72 @@ export default function EnrolleeDataTable() {
     }
   };
 
-  const isStillLoading = loading || pageLoading;
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    if (allData) {
+      updateDisplayData(allData, page, searchQuery);
+    }
+  };
+
+  // const handleClearSearch = () => {
+  //   setAllData(null);
+  //   setDisplayData(null);
+  //   setError("");
+  //   setSearchQuery("");
+  //   setCurrentPage(1);
+  //   setTotalPages(1);
+
+  //   clearSearchCriteria();
+  // };
 
   const serialOffset = (currentPage - 1) * pageSize;
 
   const tableItems = useMemo(() => {
-    if (isStillLoading) return [];
+    if (loading) return [];
 
     return (displayData?.result || []).map((item, index) => ({
       ...item,
       serial: serialOffset + index + 1,
     }));
-  }, [displayData?.result, isStillLoading, currentPage, pageSize]);
+  }, [displayData?.result, loading, currentPage, pageSize]);
+
+  const hasSearchCriteria =
+    searchCriteria &&
+    Object.values(searchCriteria).some((value) => value?.trim());
 
   return (
     <>
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
         <Button
           radius="sm"
           onPress={handleSearch}
-          isDisabled={loading}
+          isDisabled={loading || !hasSearchCriteria}
           color="warning"
           className="text-white font-semibold w-full sm:w-auto"
         >
-          {loading ? "Loading..." : "Search Enrollee"}
+          {loading ? "Searching..." : "Search Enrollee"}
         </Button>
+
+        {/* {(hasSearchCriteria || displayData) && (
+          <Button
+            radius="sm"
+            onPress={handleClearSearch}
+            isDisabled={loading}
+            color="default"
+          >
+            Clear Search
+          </Button>
+        )} */}
       </div>
+
       {error && <ErrorText text={error} />}
+
       {loading && (
         <div className="text-center mt-5">
           <Spinner color="warning" />
         </div>
       )}
+
       {displayData && displayData.status === 200 && (
         <div className="mt-2 bg-white rounded-lg">
           <div className="overflow-x-auto">
@@ -167,7 +205,9 @@ export default function EnrolleeDataTable() {
               topContent={
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-4">
                   <div className="flex flex-col gap-1">
-                    <h3 className="text-lg font-semibold">Enrollees</h3>
+                    <h3 className="text-lg font-semibold">
+                      Enrollees ({allData?.result.length} found)
+                    </h3>
                     <p className="text-sm text-gray-600">
                       Click on any row to create deliveries
                     </p>
@@ -176,14 +216,29 @@ export default function EnrolleeDataTable() {
                     <Input
                       className="w-full sm:w-64"
                       size="lg"
-                      placeholder="Search by first name or surname..."
+                      placeholder="Filter results..."
                       value={searchQuery}
                       onChange={handleSearchChange}
                       radius="sm"
-                      aria-label="Search enrollees"
+                      aria-label="Filter enrollees"
                     />
                   </div>
                 </div>
+              }
+              bottomContent={
+                totalPages > 1 && (
+                  <div className="flex w-full justify-center mt-4">
+                    <Pagination
+                      isCompact
+                      showControls
+                      showShadow
+                      color="warning"
+                      page={currentPage}
+                      total={totalPages}
+                      onChange={handlePageChange}
+                    />
+                  </div>
+                )
               }
             >
               <TableHeader columns={ENROLLEE_COLUMNS}>
@@ -194,7 +249,7 @@ export default function EnrolleeDataTable() {
               <TableBody
                 items={tableItems}
                 loadingContent={<Spinner color="warning" />}
-                loadingState={isStillLoading ? "loading" : "idle"}
+                loadingState={loading ? "loading" : "idle"}
                 emptyContent={"No Enrollee Results Found"}
               >
                 {(item) => (
@@ -217,6 +272,15 @@ export default function EnrolleeDataTable() {
               </TableBody>
             </Table>
           </div>
+        </div>
+      )}
+
+      {!hasSearchCriteria && !loading && (
+        <div className="text-center mt-8 p-8 bg-gray-50 rounded-lg">
+          <p className="text-gray-600">
+            Enter search criteria above and click "Search Enrollee" to find
+            enrollees
+          </p>
         </div>
       )}
     </>
