@@ -8,13 +8,13 @@ import IndexPage from "@/pages/index";
 import PharmacyPage from "@/pages/pharmacy";
 import EnrolleesPage from "@/pages/enrollees";
 import DeliveriesPage from "@/pages/deliveries";
+import ProviderPendingsPage from "@/pages/provider-pendings";
 import PackPage from "@/pages/pack";
 import ToBeDeliveredPage from "@/pages/to-be-delivered";
 import ReportsPage from "@/pages/reports";
 import RiderPage from "@/pages/rider";
 
 import DeliveryDetailsPage from "@/pages/delivery-details";
-
 import { setNavigateFunction } from "./lib/helpers";
 
 function App() {
@@ -32,6 +32,7 @@ function App() {
         <Route path="/pharmacy" element={<PharmacyPage />} />
         <Route path="/enrollees" element={<EnrolleesPage />} />
         <Route path="/create-deliveries" element={<DeliveriesPage />} />
+        <Route path="/provider-pendings" element={<ProviderPendingsPage />} />
         <Route path="/pack" element={<PackPage />} />
         <Route path="/to-be-delivered" element={<ToBeDeliveredPage />} />
         <Route path="/reports" element={<ReportsPage />} />
