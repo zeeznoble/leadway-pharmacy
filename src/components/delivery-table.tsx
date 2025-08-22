@@ -331,16 +331,16 @@ export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
         );
       case "diagnosisname":
         return <span>{item.diagnosisname}</span>;
-      case "diagnosis_id":
-        return <span className="text-gray-500">{item.diagnosis_id}</span>;
+      // case "diagnosis_id":
+      //   return <span className="text-gray-500">{item.diagnosis_id}</span>;
       case "procedurename":
         return <span>{item.procedurename}</span>;
-      case "procedureid":
-        return <span className="text-gray-500">{item.procedureid}</span>;
+      // case "procedureid":
+      //   return <span className="text-gray-500">{item.procedureid}</span>;
       case "pharmacyname":
         return <span className="text-gray-500">{item.pharmacyname}</span>;
-      case "pharmacyid":
-        return <span className="text-gray-500">{item.pharmacyid}</span>;
+      // case "pharmacyid":
+      //   return <span className="text-gray-500">{item.pharmacyid}</span>;
       case "cost":
         return <span className="text-gray-500">{item.cost}</span>;
       default:
