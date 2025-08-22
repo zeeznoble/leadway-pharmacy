@@ -17,7 +17,6 @@ interface DeliveryAdjustment {
 interface PackDateModalProps {
   isOpen: boolean;
   onClose: () => void;
-  // Make onConfirm flexible to handle both old and new interfaces
   onConfirm:
     | ((
         originalMonths: number,
@@ -25,7 +24,6 @@ interface PackDateModalProps {
       ) => void)
     | ((date: CalendarDate) => void);
   selectedDeliveries?: any[];
-  // Add a mode prop to determine which interface to use
   mode?: "advanced" | "simple";
 }
 
@@ -34,7 +32,7 @@ export default function PackDateModal({
   onClose,
   onConfirm,
   selectedDeliveries = [],
-  mode = "advanced", // Default to advanced mode
+  mode = "advanced",
 }: PackDateModalProps) {
   const [selectedMonths, setSelectedMonths] = React.useState<number>(1);
   const formatter = useDateFormatter({ dateStyle: "full" });
@@ -65,18 +63,12 @@ export default function PackDateModal({
       return []; // No adjustments in simple mode
     }
 
-    return selectedDeliveries.map((delivery) => {
-      // Try multiple possible field names for member expiry date
-      const memberExpiryDate =
-        delivery.Member_ExpiryDate ||
-        delivery.memberExpiryDate ||
-        delivery.member_expiry_date ||
-        delivery.MemberExpiryDate;
-      const enrolleeId =
-        delivery.EnrolleeId || delivery.enrolleeid || "Unknown";
-      const enrolleeName =
-        delivery.EnrolleeName || delivery.enrolleename || "Unknown";
+    console.log("Calculating adjustments for deliveries:", selectedDeliveries);
 
+    return selectedDeliveries.map((delivery) => {
+      const memberExpiryDate = delivery.Member_ExpiryDate;
+      const enrolleeId = delivery.EnrolleeId;
+      const enrolleeName = delivery.EnrolleeName;
       const calculatedDate = calculateFutureDate(requestedMonths);
 
       if (!memberExpiryDate) {
@@ -92,6 +84,18 @@ export default function PackDateModal({
 
       try {
         const expiryDate = new Date(memberExpiryDate);
+
+        if (isNaN(expiryDate.getTime())) {
+          return {
+            enrolleeId,
+            enrolleeName,
+            memberExpiryDate: memberExpiryDate,
+            adjustedDate: calculatedDate,
+            adjustedMonths: requestedMonths,
+            isAdjusted: false,
+          };
+        }
+
         const expiryCalendarDate = new CalendarDate(
           expiryDate.getFullYear(),
           expiryDate.getMonth() + 1,
@@ -137,7 +141,6 @@ export default function PackDateModal({
           isAdjusted: false,
         };
       } catch (error) {
-        console.error("Error parsing member expiry date:", error);
         return {
           enrolleeId,
           enrolleeName,
@@ -152,10 +155,18 @@ export default function PackDateModal({
 
   const deliveryAdjustments = calculateDeliveryAdjustments(selectedMonths);
   const hasAdjustments = deliveryAdjustments.some((adj) => adj.isAdjusted);
+
+  // Remove duplicate members based on enrolleeId
   const uniqueMembers = deliveryAdjustments.reduce((acc, adj) => {
-    if (!acc.find((item) => item.enrolleeId === adj.enrolleeId)) {
+    // Check if we already have this enrolleeId
+    const existingIndex = acc.findIndex(
+      (item) => item.enrolleeId === adj.enrolleeId
+    );
+
+    if (existingIndex === -1) {
       acc.push(adj);
     }
+
     return acc;
   }, [] as DeliveryAdjustment[]);
 
@@ -170,7 +181,7 @@ export default function PackDateModal({
     if (!isNaN(numValue)) {
       setSelectedMonths(numValue);
     } else if (value === "") {
-      setSelectedMonths(1); // Default to 1 if empty
+      setSelectedMonths(1);
     }
   };
 
@@ -183,14 +194,6 @@ export default function PackDateModal({
       // Simple mode: just pass the calculated date
       const calculatedDate = calculateFutureDate(selectedMonths);
       (onConfirm as (date: CalendarDate) => void)(calculatedDate);
-    } else {
-      // Advanced mode: pass original months and delivery adjustments
-      (
-        onConfirm as (
-          originalMonths: number,
-          deliveryAdjustments: DeliveryAdjustment[]
-        ) => void
-      )(selectedMonths, deliveryAdjustments);
     }
 
     onClose();
@@ -245,9 +248,15 @@ export default function PackDateModal({
                     <div className="text-xs text-gray-600 mt-1">
                       Member Expiry:{" "}
                       {adjustment.memberExpiryDate !== "N/A"
-                        ? formatter.format(
-                            new Date(adjustment.memberExpiryDate)
-                          )
+                        ? (() => {
+                            try {
+                              return formatter.format(
+                                new Date(adjustment.memberExpiryDate)
+                              );
+                            } catch {
+                              return adjustment.memberExpiryDate;
+                            }
+                          })()
                         : "N/A"}
                     </div>
                     <div className="text-xs mt-1">
