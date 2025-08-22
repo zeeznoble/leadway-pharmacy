@@ -1,8 +1,8 @@
 import { Dispatch, SetStateAction } from "react"
 import toast from "react-hot-toast";
 
-import { deliveryStore } from "../store/delivery-store";
-import { authStore } from "../store/app-store";
+import { deliveryStore } from "@/lib/store/delivery-store";
+import { appChunk, authStore } from "@/lib/store/app-store";
 
 import { API_URL, programmaticNavigate } from "../helpers";
 import { DeliveredPackResponse, Delivery, Diagnosis, PackResponse } from "@/types";
@@ -70,14 +70,14 @@ export const createDelivery = async (deliveryData: { Deliveries: Delivery[] }): 
 };
 
 
-export const fetchDeliveries = async (username: string, enrolleeId: string): Promise<any> => {
+export const fetchDeliveries = async (username: string, enrolleeId: string, actionType?: string): Promise<any> => {
   try {
     deliveryStore.set((state) => ({
       ...state,
       isLoading: true,
     }));
 
-    const apiUrl = `${API_URL}/PharmacyDelivery/GetTracking?username=${encodeURIComponent(username || "")}&enrolleeId=${encodeURIComponent(enrolleeId || "")}`;
+    const apiUrl = `${API_URL}/PharmacyDelivery/GetTracking?username=${encodeURIComponent(username || "")}&enrolleeId=${encodeURIComponent(enrolleeId || "")}&ACTIONTYPE=${actionType || ""}`;
 
     console.log("Fetching deliveries from:", apiUrl);
 
@@ -132,7 +132,7 @@ export const fetchUnpacked = async (username: string, enrolleeId: string, fromDa
 
     const data = await response.json();
 
-    console.log("Packs:", data);
+    console.log("unPacked:", data);
 
     if (data.result) {
       deliveryStore.set((state) => ({
@@ -257,14 +257,25 @@ export const editDelivery = async (formData: any): Promise<any> => {
 
     // toast.success(data.ReturnMessage || "Delivery updated successfully");
 
-    // Refresh the deliveries list
-    const { user } = authStore.get();
-    if (user?.UserName) {
-      fetchDeliveries(user.UserName, formData?.EnrolleeId);
+    // Refresh deliveries based on current page - CHECK PROVIDER-PENDINGS FIRST
+    const enrolleeId = formData?.EnrolleeId;
+
+    if (window.location.pathname === '/provider-pendings') {
+      // For provider-pendings page, use different parameters
+      console.log("Refreshing for provider-pendings page after edit");
+      if (enrolleeId) {
+        await fetchDeliveries("", enrolleeId, "9");
+      }
+    } else {
+      // For other pages, use normal fetch
+      const { user } = authStore.get();
+      if (user?.UserName && enrolleeId) {
+        console.log("Refreshing for regular page after edit");
+        await fetchDeliveries(user.UserName, enrolleeId);
+      }
     }
 
     programmaticNavigate('/enrollees');
-
 
     return data;
   } catch (error) {
@@ -317,11 +328,19 @@ export const deleteDelivery = async (delivery: any, setIsDeleting: Dispatch<SetS
 
     toast.success(data.ReturnMessage || "Delivery deleted successfully");
 
-    const { user } = authStore.get();
-    if (user?.UserName) {
-      const enrolleeId = delivery.original.EnrolleeId;
-      if (enrolleeId) {
-        fetchDeliveries(user.UserName, enrolleeId);
+    // Refresh deliveries based on current page - CHECK PROVIDER-PENDINGS FIRST
+    const enrolleeId = delivery.original.EnrolleeId;
+
+    if (window.location.pathname === '/provider-pendings') {
+      // For provider-pendings page, use different parameters
+      console.log("Refreshing for provider-pendings page");
+      await fetchDeliveries("", enrolleeId, "9");
+    } else {
+      // For other pages, use normal fetch
+      const { user } = authStore.get();
+      if (user?.UserName && enrolleeId) {
+        console.log("Refreshing for regular page");
+        await fetchDeliveries(user.UserName, enrolleeId);
       }
     }
   } catch (error) {
@@ -332,6 +351,77 @@ export const deleteDelivery = async (delivery: any, setIsDeleting: Dispatch<SetS
   }
 };
 
+// NEW: Approve deliveries function
+export const approveDeliveries = async (selectedDeliveries: any[]): Promise<any> => {
+  try {
+    deliveryStore.set((state) => ({
+      ...state,
+      isSubmitting: true,
+    }));
+
+    const apiUrl = `${API_URL}/PharmacyDelivery/ApproveDeliveryLine`;
+
+    // Transform selected deliveries to the required payload format
+    const payload = selectedDeliveries.map(delivery => ({
+      EntryNo: parseInt(delivery.key) // Convert string key back to number
+    }));
+
+    console.log("Approve deliveries payload:", payload);
+
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+
+    deliveryStore.set((state) => ({
+      ...state,
+      isSubmitting: false,
+    }));
+
+    if (!response.ok) {
+      throw new Error(data.ReturnMessage || `Failed to approve deliveries: ${response.status} ${response.statusText}`);
+    }
+
+    console.log("Approve deliveries API response:", data);
+
+    // Refresh deliveries based on current page - CHECK PROVIDER-PENDINGS FIRST
+    const enrolleeId = appChunk.get().enrolleeId;
+
+    if (window.location.pathname === '/provider-pendings') {
+      // For provider-pendings page, refresh with different parameters
+      console.log("Refreshing for provider-pendings page after approval");
+      if (enrolleeId) {
+        await fetchDeliveries("", enrolleeId, "9");
+      }
+    } else {
+      // For other pages, use normal refresh logic
+      const { user } = authStore.get();
+      if (user?.UserName && enrolleeId) {
+        console.log("Refreshing for regular page after approval");
+        await fetchDeliveries(user.UserName, enrolleeId);
+      }
+    }
+
+    return {
+      status: response.status,
+      result: data,
+      ReturnMessage: data.ReturnMessage || "Deliveries approved successfully",
+    };
+  } catch (error) {
+    deliveryStore.set((state) => ({
+      ...state,
+      isSubmitting: false,
+    }));
+
+    console.error("Approve deliveries error:", error);
+    throw error;
+  }
+};
 
 export const packDeliveries = async (deliveryLines: any[]): Promise<PackResponse> => {
   try {
