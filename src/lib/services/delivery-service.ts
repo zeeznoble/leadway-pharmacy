@@ -97,6 +97,7 @@ export const fetchDeliveries = async (username: string, enrolleeId: string, acti
         deliveries: data.result,
         isLoading: false,
         error: null,
+        nextPackDate: data.result.nextpackdate || null,
       }));
       return data;
     } else {
@@ -140,6 +141,7 @@ export const fetchUnpacked = async (username: string, enrolleeId: string, fromDa
         deliveries: data.result,
         isLoading: false,
         error: null,
+        nextPackDate: data.result.nextpackdate || null,
       }));
       return data;
     } else {
@@ -182,6 +184,7 @@ export const fetchPacked = async (username: string, enrolleeId: string, fromDate
         deliveries: data.result,
         isLoading: false,
         error: null,
+        nextPackDate: data.result.nextpackdate || null,
       }));
       return data;
     } else {
