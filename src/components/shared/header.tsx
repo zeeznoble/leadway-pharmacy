@@ -22,7 +22,7 @@ export default function Header() {
     const path = router.pathname;
     if (path === "/") return "Dashboard";
     if (path === "/enrollee") return "Enrollee";
-    if (path === "/to-be-delivered") return "To Be Delivered";
+    if (path === "/to-be-delivered") return "Assign to Rider";
     if (path === "/provider-pendings") return "Provider Pendings";
     return path.substring(1).charAt(0).toUpperCase() + path.substring(2);
   };

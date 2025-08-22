@@ -146,7 +146,7 @@ export default function SideNav() {
           height={20}
         />
       ),
-      text: "To be Delivered",
+      text: "Assign To Rider",
     },
     {
       link: "/rider",
