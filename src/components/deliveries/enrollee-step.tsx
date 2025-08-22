@@ -9,7 +9,10 @@ import { deliveryActions, deliveryFormState } from "@/lib/store/delivery-store";
 export default function EnrolleeSelectionStep() {
   const formState = useChunkValue(deliveryFormState);
   const { user } = useChunkValue(authStore);
-  const { enrolleeId, enrolleeData } = useChunkValue(appChunk);
+  const {
+    searchCriteria: { enrolleeId },
+    enrolleeData,
+  } = useChunkValue(appChunk);
 
   useEffect(() => {
     if (user && !formState.isEditing) {
