@@ -31,7 +31,7 @@ interface RowItem {
   startDate: string;
   nextDelivery: string;
   frequency: string;
-  status: boolean;
+  status: string;
   diagnosisname: string;
   diagnosis_id: string;
   procedurename: string;
@@ -44,15 +44,14 @@ interface RowItem {
 export default function StaticDeliveryTable({
   deliveries,
 }: DeliveryTableProps) {
-  // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10); // Adjust as needed
+  const [pageSize] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
-    setCurrentPage(1); // Reset to first page on search
+    setCurrentPage(1);
   };
 
   const handlePageChange = (page: number) => {
@@ -74,7 +73,7 @@ export default function StaticDeliveryTable({
           nextDelivery: formatDate(transformedDelivery.NextDeliveryDate),
           frequency: transformedDelivery.DeliveryFrequency,
           deliveryaddress: transformedDelivery.deliveryaddress,
-          status: transformedDelivery.IsDelivered ?? false,
+          status: transformedDelivery.Status || "Pending",
           diagnosisname: transformedDelivery.DiagnosisLines[0]?.DiagnosisName,
           diagnosis_id: transformedDelivery.DiagnosisLines[0]?.DiagnosisId,
           procedurename: transformedDelivery.ProcedureLines[0]?.ProcedureName,
@@ -124,11 +123,7 @@ export default function StaticDeliveryTable({
           </div>
         );
       case "status":
-        return (
-          <Badge color={item.status ? "success" : "warning"}>
-            {item.status ? "Delivered" : "Pending"}
-          </Badge>
-        );
+        return <Badge>{item.status}</Badge>;
       case "diagnosisname":
         return <span>{item.diagnosisname}</span>;
       // case "diagnosis_id":
