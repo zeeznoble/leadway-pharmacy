@@ -243,8 +243,6 @@ export default function ToBeDeliveredPage() {
         })
       );
 
-      console.log("Deliveries for API:", deliveriesForAPI);
-
       // Send for delivery
       const result = await deliverPackDeliveries(deliveriesForAPI);
 
