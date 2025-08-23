@@ -49,7 +49,7 @@ interface RowItem {
   deliveryaddress: string;
   nextDelivery: string;
   frequency: string;
-  status: boolean;
+  status: string;
   diagnosisname: string;
   diagnosis_id: string;
   procedurename: string;
@@ -82,6 +82,8 @@ export default function PackTable({
   const { user } = useChunkValue(authStore);
   const { enrolleeData } = useChunkValue(appChunk);
 
+  console.log("PackTable Deliveries:", deliveries);
+
   const rows = useMemo(
     () =>
       deliveries.map((delivery) => {
@@ -97,7 +99,7 @@ export default function PackTable({
           deliveryaddress: transformedDelivery.deliveryaddress || "",
           nextDelivery: formatDate(transformedDelivery.NextDeliveryDate),
           frequency: transformedDelivery.DeliveryFrequency,
-          status: transformedDelivery.IsDelivered ?? false,
+          status: transformedDelivery.Status ?? "",
           diagnosisname: transformedDelivery.DiagnosisLines[0]?.DiagnosisName,
           diagnosis_id: transformedDelivery.DiagnosisLines[0]?.DiagnosisId,
           procedurename: transformedDelivery.ProcedureLines[0]?.ProcedureName,
@@ -180,13 +182,11 @@ export default function PackTable({
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    // Don't clear selections when changing pages
   };
 
   const filteredRows = useMemo(() => {
-    let filtered = rows.filter((row) => !row.status);
+    let filtered = rows;
 
-    // Apply search filtering based on search type and term
     if (searchTerm.trim()) {
       const searchTermLower = searchTerm.toLowerCase();
 
@@ -217,20 +217,17 @@ export default function PackTable({
     return filteredRows.slice(start, end);
   }, [filteredRows, currentPage, pageSize]);
 
-  // Calculate actual selected count across all pages
   const getSelectedCount = (selection: Selection): number => {
     if (selection === "all") {
       return filteredRows.filter((row) => !row.status).length;
     }
 
-    // Count only selections that exist in the current filtered data
     const currentSelection = selection as Set<string>;
     const validKeys = new Set(filteredRows.map((row) => row.key));
     return Array.from(currentSelection).filter((key) => validKeys.has(key))
       .length;
   };
 
-  // Check if all items on current page are selected
   const isCurrentPageFullySelected = useMemo(() => {
     if (selectedKeys === "all") return true;
 
@@ -251,7 +248,6 @@ export default function PackTable({
       return;
     }
 
-    // Get selected deliveries from all pages, not just current page
     const selectedDeliveries = Array.from(currentSelection)
       .map((key: string) => {
         const selectedRow = filteredRows.find((row) => row.key === key);
@@ -308,33 +304,23 @@ export default function PackTable({
       case "deliveryaddress":
         return <span className="text-sm">{item.deliveryaddress || "N/A"}</span>;
       case "status":
-        return (
-          <Badge color={item.status ? "success" : "warning"}>
-            {item.status ? "Delivered" : "Pending"}
-          </Badge>
-        );
+        return <Badge>{item.status}</Badge>;
       case "diagnosisname":
         return <span>{item.diagnosisname}</span>;
-      case "diagnosis_id":
-        return <span className="text-gray-500">{item.diagnosis_id}</span>;
+      // case "diagnosis_id":
+      //   return <span className="text-gray-500">{item.diagnosis_id}</span>;
       case "procedurename":
         return <span>{item.procedurename}</span>;
-      case "procedureid":
-        return <span className="text-gray-500">{item.procedureid}</span>;
+      // case "procedureid":
+      //   return <span className="text-gray-500">{item.procedureid}</span>;
       case "pharmacyname":
         return <span className="text-gray-500">{item.pharmacyname}</span>;
-      case "pharmacyid":
-        return <span className="text-gray-500">{item.pharmacyid}</span>;
+      // case "pharmacyid":
+      //   return <span className="text-gray-500">{item.pharmacyid}</span>;
       default:
         return getKeyValue(item, columnKey);
     }
   };
-
-  const disabledKeys = useMemo(() => {
-    return new Set(
-      paginatedRows.filter((row) => row.status).map((row) => row.key)
-    );
-  }, [paginatedRows]);
 
   const selectedCount = getSelectedCount(selectedKeys);
 
@@ -472,7 +458,6 @@ export default function PackTable({
             selectionMode="multiple"
             selectedKeys={selectedKeys}
             onSelectionChange={handleSelectionChange}
-            disabledKeys={disabledKeys}
             color="primary"
             topContent={
               <div className="mt-4 text-sm text-gray-500">
