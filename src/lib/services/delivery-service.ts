@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction } from "react"
 import toast from "react-hot-toast";
 
 import { deliveryStore } from "@/lib/store/delivery-store";
-import { appChunk, authStore } from "@/lib/store/app-store";
+import { authStore } from "@/lib/store/app-store";
 
 import { API_URL, programmaticNavigate } from "../helpers";
 import { DeliveredPackResponse, Delivery, Diagnosis, PackResponse } from "@/types";
@@ -177,7 +177,6 @@ export const fetchPacked = async (username: string, enrolleeId: string, fromDate
 
     const data = await response.json();
 
-    console.log("Packs:", data);
 
     if (data.result) {
       deliveryStore.set((state) => ({
@@ -272,11 +271,8 @@ export const editDelivery = async (formData: any): Promise<any> => {
       }
     } else {
       // For other pages, use normal fetch
-      const { user } = authStore.get();
-      if (user?.UserName && enrolleeId) {
-        console.log("Refreshing for regular page after edit");
-        await fetchDeliveries(user.UserName, enrolleeId);
-      }
+      await fetchDeliveries("", enrolleeId);
+
     }
 
     programmaticNavigate('/enrollees');
@@ -336,16 +332,12 @@ export const deleteDelivery = async (delivery: any, setIsDeleting: Dispatch<SetS
     const enrolleeId = delivery.original.EnrolleeId;
 
     if (window.location.pathname === '/provider-pendings') {
-      // For provider-pendings page, use different parameters
-      console.log("Refreshing for provider-pendings page");
-      await fetchDeliveries("", enrolleeId, "9");
+      await fetchDeliveries("", "", "9");
     } else {
       // For other pages, use normal fetch
-      const { user } = authStore.get();
-      if (user?.UserName && enrolleeId) {
-        console.log("Refreshing for regular page");
-        await fetchDeliveries(user.UserName, enrolleeId);
-      }
+
+      await fetchDeliveries("", enrolleeId);
+
     }
   } catch (error) {
     console.error("Delete delivery error:", error);
@@ -355,7 +347,6 @@ export const deleteDelivery = async (delivery: any, setIsDeleting: Dispatch<SetS
   }
 };
 
-// NEW: Approve deliveries function
 export const approveDeliveries = async (selectedDeliveries: any[]): Promise<any> => {
   try {
     deliveryStore.set((state) => ({
@@ -365,10 +356,11 @@ export const approveDeliveries = async (selectedDeliveries: any[]): Promise<any>
 
     const apiUrl = `${API_URL}/PharmacyDelivery/ApproveDeliveryLine`;
 
-    // Transform selected deliveries to the required payload format
     const payload = selectedDeliveries.map(delivery => ({
-      EntryNo: parseInt(delivery.key) // Convert string key back to number
+      EntryNo: parseInt(delivery.key)
     }));
+
+    console.log("Approving deliveries at:", apiUrl);
 
     console.log("Approve deliveries payload:", payload);
 
@@ -393,28 +385,15 @@ export const approveDeliveries = async (selectedDeliveries: any[]): Promise<any>
 
     console.log("Approve deliveries API response:", data);
 
-    // Refresh deliveries based on current page - CHECK PROVIDER-PENDINGS FIRST
-    const enrolleeId = appChunk.get().enrolleeId;
+    // const enrolleeId = appChunk.get().enrolleeId;
 
-    if (window.location.pathname === '/provider-pendings') {
-      // For provider-pendings page, refresh with different parameters
-      console.log("Refreshing for provider-pendings page after approval");
-      if (enrolleeId) {
-        await fetchDeliveries("", enrolleeId, "9");
-      }
-    } else {
-      // For other pages, use normal refresh logic
-      const { user } = authStore.get();
-      if (user?.UserName && enrolleeId) {
-        console.log("Refreshing for regular page after approval");
-        await fetchDeliveries(user.UserName, enrolleeId);
-      }
-    }
+    console.log("Refreshing for regular page after approval");
+    await fetchDeliveries("", "", "9");
 
     return {
       status: response.status,
       result: data,
-      ReturnMessage: data.ReturnMessage || "Deliveries approved successfully",
+      ReturnMessage: "Deliveries approved successfully",
     };
   } catch (error) {
     deliveryStore.set((state) => ({
