@@ -56,6 +56,8 @@ export default function ToBeDeliveredPage() {
     Delivery[]
   >([]);
 
+  console.log("Deliveries to be Delivered State:", state.deliveries);
+
   // Date picker states
   const [fromDate, setFromDate] = useState<CalendarDate | null>(null);
   const [toDate, setToDate] = useState<CalendarDate | null>(null);
@@ -79,7 +81,7 @@ export default function ToBeDeliveredPage() {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
-    fetchPacked(user.UserName, enrolleeId, fromDateStr, toDateStr);
+    fetchPacked("", enrolleeId, fromDateStr, toDateStr);
   };
 
   useEffect(() => {
@@ -95,7 +97,7 @@ export default function ToBeDeliveredPage() {
   useEffect(() => {
     if (state.packingSuccess) {
       if (user?.UserName) {
-        fetchPacked(user.UserName, state.lastSearchedEnrolleeId || "");
+        fetchPacked("", state.lastSearchedEnrolleeId || "");
       }
       deliveryActions.setPackingSuccess(false);
     }
@@ -119,7 +121,7 @@ export default function ToBeDeliveredPage() {
       const fromDateStr = formatDateForAPI(fromDate);
       const toDateStr = formatDateForAPI(toDate);
 
-      await fetchPacked(user.UserName, enrolleeId, fromDateStr, toDateStr);
+      await fetchPacked("", enrolleeId, fromDateStr, toDateStr);
     } catch (error) {
       const err = error as Error;
       toast.error(err.message);
@@ -135,7 +137,6 @@ export default function ToBeDeliveredPage() {
     }
 
     setSelectedDeliveriesToPack(selectedDeliveries);
-    console.log("Selected Deliveries to Pack", selectedDeliveries);
 
     setShowRiderModal(true);
   };
@@ -147,7 +148,6 @@ export default function ToBeDeliveredPage() {
     deliveryDate: string
   ): Promise<void> => {
     try {
-      // Format the delivery date for display
       const formattedDisplayDate = new Date(deliveryDate).toLocaleDateString(
         "en-US",
         {
@@ -157,11 +157,9 @@ export default function ToBeDeliveredPage() {
         }
       );
 
-      // Get enrollee information from selected deliveries
       const selectedDeliveryEntryNo =
         selectedDeliveriesToPack[0].DeliveryEntryNo;
 
-      // Find the full delivery data from state using the DeliveryEntryNo
       const fullDeliveryData = state.deliveries.find(
         (delivery: any) => delivery.entryno === selectedDeliveryEntryNo
       );
@@ -285,7 +283,7 @@ export default function ToBeDeliveredPage() {
 
   useEffect(() => {
     riderReload();
-  }, []);
+  }, [state.deliveries]);
 
   return (
     <section className="py-3">
