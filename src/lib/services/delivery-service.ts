@@ -69,14 +69,15 @@ export const createDelivery = async (deliveryData: { Deliveries: Delivery[] }): 
   }
 };
 
-export const fetchDeliveries = async (username: string, enrolleeId: string, actionType?: string): Promise<any> => {
+export const fetchDeliveries = async (username: string, enrolleeId: string, actionType?: string, fromDate?: string, toDate?: string
+): Promise<any> => {
   try {
     deliveryStore.set((state) => ({
       ...state,
       isLoading: true,
     }));
 
-    const apiUrl = `${API_URL}/PharmacyDelivery/GetTracking?username=${encodeURIComponent(username || "")}&enrolleeId=${encodeURIComponent(enrolleeId || "")}&ACTIONTYPE=${actionType || ""}`;
+    const apiUrl = `${API_URL}/PharmacyDelivery/GetTracking?username=${encodeURIComponent(username || "")}&enrolleeId=${encodeURIComponent(enrolleeId || "")}&ACTIONTYPE=${actionType || ""}&FromDate=${fromDate || ""}&Todate=${toDate || ""}`;
 
     console.log("Fetching deliveries from:", apiUrl);
 
@@ -535,7 +536,7 @@ export const createClaimRequests = async (selectedDeliveries: any[]): Promise<an
 
     console.log("Create claim requests API response:", data);
 
-    await fetchSentForDelivery();
+    await fetchSentForDelivery("", "", "");
 
     let successMessage = data.Message || "Claim requests created successfully";
 
@@ -669,14 +670,14 @@ export const deliverPackDeliveries = async (deliveryLines: any[]): Promise<Deliv
   }
 };
 
-export const fetchSentForDelivery = async (): Promise<any> => {
+export const fetchSentForDelivery = async (fromDate?: string, toDate?: string, enrolleeId?: string): Promise<any> => {
   try {
     deliveryStore.set((state) => ({
       ...state,
       isLoading: true,
     }));
 
-    const apiUrl = `${API_URL}/PharmacyDelivery/SentDeliveries`;
+    const apiUrl = `${API_URL}/PharmacyDelivery/SentDeliveries?enrolleeId=${encodeURIComponent(enrolleeId || "")}&FromDate=${fromDate || ""}&Todate=${toDate || ""}`;
 
     console.log("Fetching sent for delivery from:", apiUrl);
 
