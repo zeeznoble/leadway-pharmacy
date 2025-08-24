@@ -101,6 +101,7 @@ export type Delivery = {
   PharmacyName: string;
   deliveryaddress: string,
   phonenumber: string;
+  recipientcode?: string;
   cost: string;
 
   EntryNo?: number;
