@@ -63,3 +63,8 @@ export const clearSearchCriteria = () => {
     enrolleeData: null
   }));
 };
+
+export const logout = () => {
+  authStore.reset();
+  appChunk.reset();
+}
