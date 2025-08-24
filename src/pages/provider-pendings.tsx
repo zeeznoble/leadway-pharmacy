@@ -44,12 +44,10 @@ export default function ProviderPendingsPage() {
   const { user } = useChunkValue(authStore);
   const { enrolleeId } = useChunkValue(appChunk);
 
-  // Date picker states
   const [fromDate, setFromDate] = useState<CalendarDate | null>(null);
   const [toDate, setToDate] = useState<CalendarDate | null>(null);
   const [hasInitialLoad, setHasInitialLoad] = useState(false);
 
-  // Store the last searched term for refresh purposes
   const [lastSearchedEnrolleeId, setLastSearchedEnrolleeId] = useState("");
   const [lastSearchType, setLastSearchType] = useState<
     "enrollee" | "pharmacy" | "address"
@@ -64,20 +62,12 @@ export default function ProviderPendingsPage() {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
-    // For now, the API only supports enrollee search, so we only use searchEnrolleeId for enrollee searches
     const enrolleeIdToUse =
       searchType === "enrollee" ? searchEnrolleeId || enrolleeId : enrolleeId;
 
-    fetchDeliveries(
-      "",
-      enrolleeIdToUse,
-      "9", // Status for provider pendings
-      fromDateStr,
-      toDateStr
-    );
+    fetchDeliveries("", enrolleeIdToUse, "9", fromDateStr, toDateStr);
   };
 
-  // Initial load effect
   useEffect(() => {
     if (user?.UserName && !hasInitialLoad) {
       loadDeliveries();
@@ -85,7 +75,6 @@ export default function ProviderPendingsPage() {
     }
   }, [user?.UserName, hasInitialLoad]);
 
-  // Effect for date changes (only after initial load)
   useEffect(() => {
     if (user?.UserName && hasInitialLoad) {
       loadDeliveries(lastSearchedEnrolleeId, lastSearchType);
