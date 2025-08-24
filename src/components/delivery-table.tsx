@@ -30,6 +30,7 @@ import { deliveryActions } from "@/lib/store/delivery-store";
 import {
   deleteDelivery,
   approveDeliveries,
+  createClaimRequests,
 } from "@/lib/services/delivery-service";
 import { formatDate, transformApiResponse } from "@/lib/helpers";
 import { Delivery } from "@/types";
@@ -48,13 +49,10 @@ interface RowItem {
   nextDelivery: string;
   frequency: string;
   status: string;
-  // isDelivered: boolean;
   diagnosisname: string;
-  // diagnosis_id: string;
   procedurename: string;
-  // procedureid: string;
   pharmacyname: string;
-  // pharmacyid: number;
+  recipientcode?: string;
   actions: {
     isDelivered: boolean;
   };
@@ -72,12 +70,14 @@ export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
 
   const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set([]));
   const [isApproving, setIsApproving] = useState(false);
+  const [isClaiming, setIsClaiming] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
 
   const isProviderPendingsPage = location.pathname === "/provider-pendings";
+  const isSentForDeliveryPage = location.pathname === "/sent-for-delivery";
 
   const handleDeleteClick = (delivery: any) => {
     setDeleteConfirmation({ isOpen: true, delivery });
@@ -143,7 +143,7 @@ export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
     }
   };
 
-  // Calculate selected count - copied from PackTable
+  // Calculate selected count
   const getSelectedCount = (selection: Selection): number => {
     if (selection === "all") {
       return paginatedRows.length;
@@ -190,6 +190,95 @@ export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
     }
   };
 
+  const handleClaimLines = async () => {
+    const selectedCount = getSelectedCount(selectedKeys);
+
+    if (selectedCount === 0) {
+      toast.error("Please select deliveries to create claims");
+      return;
+    }
+
+    setIsClaiming(true);
+    try {
+      // Get selected delivery items from all rows (not just current page)
+      const currentSelection = selectedKeys as Set<string>;
+
+      // Find all selected deliveries across all pages
+      const allSelectedDeliveries = rows.filter((row) =>
+        currentSelection.has(row.key)
+      );
+
+      console.log("Creating claims for deliveries:", allSelectedDeliveries);
+
+      // Call the create claims API
+      const result = await createClaimRequests(allSelectedDeliveries);
+
+      if (result.status === 200 || result.status === 201) {
+        // Show detailed success message
+        if (result.Claims && result.Claims.length > 0) {
+          const successfulClaims = result.Claims.filter(
+            (claim: any) => claim.Status === "Success"
+          );
+          const failedClaims = result.Claims.filter(
+            (claim: any) => claim.Status !== "Success"
+          );
+
+          if (successfulClaims.length > 0) {
+            // Show success toast with claim numbers
+            const claimNumbers = successfulClaims
+              .map((claim: any) => claim.ClaimNo)
+              .join(", ");
+            toast.success(
+              `Successfully created ${successfulClaims.length} claim(s)\nClaim Numbers: ${claimNumbers}`,
+              {
+                duration: 6000,
+                style: {
+                  maxWidth: "500px",
+                },
+              }
+            );
+          }
+
+          if (failedClaims.length > 0) {
+            // Show warning for failed claims
+            const failureMessages = failedClaims
+              .map((claim: any) => `${claim.ClaimNo}: ${claim.Message}`)
+              .join("\n");
+            toast.error(
+              `${failedClaims.length} claim(s) failed:\n${failureMessages}`,
+              {
+                duration: 8000,
+                style: {
+                  maxWidth: "500px",
+                },
+              }
+            );
+          }
+        } else {
+          // Fallback success message
+          toast.success(
+            result.ReturnMessage ||
+              `Successfully created claims for ${selectedCount} delivery(s)`,
+            { duration: 4000 }
+          );
+        }
+
+        setSelectedKeys(new Set([])); // Clear selection
+      } else {
+        throw new Error(result.ReturnMessage || "Failed to create claims");
+      }
+    } catch (error) {
+      console.error("Create claims error:", error);
+      toast.error(`Failed to create claims: ${(error as Error).message}`, {
+        duration: 6000,
+        style: {
+          maxWidth: "500px",
+        },
+      });
+    } finally {
+      setIsClaiming(false);
+    }
+  };
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
@@ -215,19 +304,15 @@ export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
           nextDelivery: formatDate(transformedDelivery.NextDeliveryDate),
           deliveryaddress: transformedDelivery.deliveryaddress,
           frequency: transformedDelivery.DeliveryFrequency,
-          // isDelivered: transformedDelivery.IsDelivered ?? false,
+          recipentcode: transformedDelivery.recipientcode,
           status: transformedDelivery.Status || "Pending",
           diagnosisname: transformedDelivery.DiagnosisLines[0]?.DiagnosisName,
-          // diagnosis_id: transformedDelivery.DiagnosisLines[0]?.DiagnosisId,
           procedurename: transformedDelivery.ProcedureLines[0]?.ProcedureName,
-          // procedureid: transformedDelivery.ProcedureLines[0]?.ProcedureId,
           actions: {
             isDelivered: transformedDelivery.IsDelivered ?? false,
           },
-          // pharmacyid: transformedDelivery.Pharmacyid || 0,
           pharmacyname: transformedDelivery.PharmacyName || "",
           cost: transformedDelivery.cost || "",
-
           original: transformedDelivery,
         };
       }),
@@ -300,7 +385,7 @@ export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
         };
 
         return <Badge color={getStatusColor(item.status)}>{item.status}</Badge>;
-      case "isDelivered": // Keep your existing isDelivered logic if needed
+      case "isDelivered":
         return (
           <Badge color={item.actions.isDelivered ? "success" : "warning"}>
             {item.actions.isDelivered ? "Yes" : "No"}
@@ -379,10 +464,20 @@ export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
           ) : null
         }
         className="min-w-full"
-        selectionMode={isProviderPendingsPage ? "multiple" : undefined}
-        selectedKeys={isProviderPendingsPage ? selectedKeys : undefined}
+        selectionMode={
+          isProviderPendingsPage || isSentForDeliveryPage
+            ? "multiple"
+            : undefined
+        }
+        selectedKeys={
+          isProviderPendingsPage || isSentForDeliveryPage
+            ? selectedKeys
+            : undefined
+        }
         onSelectionChange={
-          isProviderPendingsPage ? handleSelectionChange : undefined
+          isProviderPendingsPage || isSentForDeliveryPage
+            ? handleSelectionChange
+            : undefined
         }
         color="primary"
         topContent={
@@ -417,34 +512,50 @@ export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
               </div>
             </div>
 
-            {/* Approve Button - Only show on provider pendings page */}
-            {isProviderPendingsPage && selectedCount > 0 && (
-              <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-blue-900">
-                    {selectedCount} delivery(s) selected
-                  </span>
-                  {process.env.NODE_ENV === "development" && (
-                    <span className="text-xs text-gray-600">
-                      Keys:{" "}
-                      {selectedKeys === "all"
-                        ? "all"
-                        : Array.from(selectedKeys as Set<string>).join(", ")}
+            {(isProviderPendingsPage || isSentForDeliveryPage) &&
+              selectedCount > 0 && (
+                <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-blue-900">
+                      {selectedCount} delivery(s) selected
                     </span>
-                  )}
+                    {process.env.NODE_ENV === "development" && (
+                      <span className="text-xs text-gray-600">
+                        Keys:{" "}
+                        {selectedKeys === "all"
+                          ? "all"
+                          : Array.from(selectedKeys as Set<string>).join(", ")}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    {isProviderPendingsPage && (
+                      <Button
+                        color="primary"
+                        radius="sm"
+                        size="md"
+                        isLoading={isApproving}
+                        isDisabled={isApproving}
+                        onPress={handleApprove}
+                      >
+                        {isApproving ? "Approving..." : "Approve Selected"}
+                      </Button>
+                    )}
+                    {isSentForDeliveryPage && (
+                      <Button
+                        color="secondary"
+                        radius="sm"
+                        size="md"
+                        isLoading={isClaiming}
+                        isDisabled={isClaiming}
+                        onPress={handleClaimLines}
+                      >
+                        {isClaiming ? "Creating Claims..." : "Claim Lines"}
+                      </Button>
+                    )}
+                  </div>
                 </div>
-                <Button
-                  color="primary"
-                  radius="sm"
-                  size="md"
-                  isLoading={isApproving}
-                  isDisabled={isApproving}
-                  onPress={handleApprove}
-                >
-                  {isApproving ? "Approving..." : "Approve Selected"}
-                </Button>
-              </div>
-            )}
+              )}
           </div>
         }
       >
