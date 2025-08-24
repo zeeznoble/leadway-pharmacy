@@ -267,7 +267,8 @@ export const transformApiResponse = (apiResponse: any): Delivery => {
     PharmacyName: apiResponse.pharmacyname,
     deliveryaddress: apiResponse.deliveryaddress,
     phonenumber: apiResponse.phonenumber,
-    cost: apiResponse.cost
+    cost: apiResponse.cost,
+    recipientcode: apiResponse.recipientcode,
   };
 
 };
