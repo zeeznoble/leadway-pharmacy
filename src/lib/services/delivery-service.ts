@@ -6,7 +6,6 @@ import { authStore } from "@/lib/store/app-store";
 
 import { API_URL, programmaticNavigate } from "../helpers";
 import { DeliveredPackResponse, Delivery, Diagnosis, PackResponse } from "@/types";
-import { asyncChunk } from "stunk";
 
 export const createDelivery = async (deliveryData: { Deliveries: Delivery[] }): Promise<any> => {
   try {
@@ -69,7 +68,6 @@ export const createDelivery = async (deliveryData: { Deliveries: Delivery[] }): 
     };
   }
 };
-
 
 export const fetchDeliveries = async (username: string, enrolleeId: string, actionType?: string): Promise<any> => {
   try {
@@ -227,7 +225,6 @@ export const fetchDiagnoses = async (): Promise<Diagnosis[]> => {
     return [];
   }
 };
-
 
 export const editDelivery = async (formData: any): Promise<any> => {
   try {
@@ -406,6 +403,177 @@ export const approveDeliveries = async (selectedDeliveries: any[]): Promise<any>
   }
 };
 
+export const createClaimRequests = async (selectedDeliveries: any[]): Promise<any> => {
+  try {
+    deliveryStore.set((state) => ({
+      ...state,
+      isSubmitting: true,
+    }));
+
+    const { user } = authStore.get();
+
+    if (!user?.Email || !user?.User_id) {
+      throw new Error("User information not available");
+    }
+
+    const apiUrl = `${API_URL}/EnrolleeClaims/AddMultipleMemberClaimsWithDetails`;
+
+    const groupedByCriteria = selectedDeliveries.reduce((acc, delivery) => {
+      const enrolleeId = delivery.original.enrolleeid || delivery.original.EnrolleeId;
+      const recipientCode = delivery.original.recipientcode || "";
+      const pharmacyId = delivery.original.pharmacyid || delivery.original.Pharmacyid;
+
+      const groupKey = `${enrolleeId}|${recipientCode}|${pharmacyId}`;
+
+      if (!acc[groupKey]) {
+        acc[groupKey] = [];
+      }
+      acc[groupKey].push(delivery);
+      return acc;
+    }, {} as Record<string, any[]>);
+
+    const claims: any[] = Object.entries(groupedByCriteria).map(([_, deliveries]: any) => {
+      const firstDelivery: any = deliveries[0].original;
+      const enrolleeId: string = firstDelivery.enrolleeid || firstDelivery.EnrolleeId;
+      const recipientCode: string = firstDelivery.recipientcode || "";
+      const pharmacyId: number = firstDelivery.pharmacyid || firstDelivery.Pharmacyid;
+
+      const totalCost: number = deliveries.reduce((sum: number, delivery: any) => {
+        const cost: number = parseFloat(delivery.original.cost || "0");
+        return sum + cost;
+      }, 0);
+
+      const numberOfClaims: number = deliveries.length;
+
+      const today: string = new Date().toISOString();
+
+      const claimDetails: any[] = deliveries.map((delivery: any, index: number) => {
+        const deliveryData: any = delivery.original;
+        const cost: number = parseFloat(deliveryData.cost || "0");
+
+        const quantity: number = deliveryData.procedurequantity ||
+          deliveryData.ProcedureLines?.[0]?.ProcedureQuantity || 1;
+
+        const treatmentDate: Date = new Date();
+        treatmentDate.setMinutes(treatmentDate.getMinutes() + (index * 5));
+
+        const procedureId = deliveryData.procdeureid ||
+          deliveryData.procedureid ||
+          deliveryData.ProcedureLines?.[0]?.ProcedureId;
+
+        const diagnosisId = deliveryData.diagnosis_id ||
+          deliveryData.DiagnosisLines?.[0]?.DiagnosisId;
+
+        const schemeId = deliveryData.schemeid || deliveryData.SchemeId;
+        const parsedSchemeId = parseInt(schemeId?.replace(/[^0-9]/g, '') || "1");
+
+        return {
+          Units: quantity,
+          TariffAmt: cost,
+          TreatmentDate: treatmentDate.toISOString(),
+          AmtClaimed: cost,
+          Operator: user.User_id,
+          TarifCode: procedureId,
+          DiagnosisCode: diagnosisId,
+          ClaimLineSchemeID: parsedSchemeId
+        };
+      });
+
+      const diagnosisName: string = deliveries
+        .map((d: any) =>
+          d.original.diagnosisname ||
+          d.original.DiagnosisLines?.[0]?.DiagnosisName
+        )
+        .filter((name: string, index: number, arr: string[]) =>
+          name && arr.indexOf(name) === index
+        )
+        .join(", ");
+
+      return {
+        EnrolleeId: enrolleeId,
+        DateOfService: today,
+        PlaceOfService: firstDelivery.pharmacyname || firstDelivery.PharmacyName || "Pharmacy Benefit",
+        PlaceOfServiceAddress: firstDelivery.deliveryaddress || "Default Address",
+        PlaceOfServiceConsultant: "PBM App",
+        ClaimAmount: totalCost,
+        NumberOfClaims: numberOfClaims,
+        ClaimAilment: diagnosisName,
+        ClaimRemarks: "PBM App Claim",
+        receipientcode: recipientCode,
+        Providerid: pharmacyId,
+        ClaimDetails: claimDetails
+      };
+    });
+
+    const payload = {
+      Username: user.Email,
+      Claims: claims
+    };
+
+    console.log("Creating claim requests at:", apiUrl);
+    console.log("Claim requests payload:", payload);
+
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+
+    deliveryStore.set((state) => ({
+      ...state,
+      isSubmitting: false,
+    }));
+
+    if (!response.ok) {
+      throw new Error(data.Message || data.ReturnMessage || `Failed to create claim requests: ${response.status} ${response.statusText}`);
+    }
+
+    console.log("Create claim requests API response:", data);
+
+    await fetchSentForDelivery();
+
+    let successMessage = data.Message || "Claim requests created successfully";
+
+    if (data.Claims && data.Claims.length > 0) {
+      const successfulClaims = data.Claims.filter((claim: any) => claim.Status === "Success");
+      const failedClaims = data.Claims.filter((claim: any) => claim.Status !== "Success");
+
+      if (successfulClaims.length > 0) {
+        const claimNumbers = successfulClaims.map((claim: any) => claim.ClaimNo).join(", ");
+        successMessage += `\nClaim Numbers: ${claimNumbers}`;
+      }
+
+      if (failedClaims.length > 0) {
+        const failureMessages = failedClaims.map((claim: any) => `${claim.ClaimNo}: ${claim.Message}`).join("; ");
+        successMessage += `\nFailed Claims: ${failureMessages}`;
+      }
+    }
+
+    return {
+      status: response.status,
+      result: data,
+      ReturnMessage: successMessage,
+      TotalClaims: data.TotalClaims,
+      SuccessCount: data.SuccessCount,
+      FailureCount: data.FailureCount,
+      Claims: data.Claims
+    };
+  } catch (error) {
+    deliveryStore.set((state) => ({
+      ...state,
+      isSubmitting: false,
+    }));
+
+    console.error("Create claim requests error:", error);
+    throw error;
+  }
+};
+
 export const packDeliveries = async (deliveryLines: any[]): Promise<PackResponse> => {
   try {
     deliveryStore.set((state) => ({
@@ -501,11 +669,50 @@ export const deliverPackDeliveries = async (deliveryLines: any[]): Promise<Deliv
   }
 };
 
-export const fetchSentFor = asyncChunk(async () => {
-  const res = await fetch(`${API_URL}/PharmacyDelivery/GetSentForDelivery`, { method: 'GET' });
-  if (!res.ok) {
-    throw new Error('Failed to fetch riders');
+export const fetchSentForDelivery = async (): Promise<any> => {
+  try {
+    deliveryStore.set((state) => ({
+      ...state,
+      isLoading: true,
+    }));
+
+    const apiUrl = `${API_URL}/PharmacyDelivery/SentDeliveries`;
+
+    console.log("Fetching sent for delivery from:", apiUrl);
+
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    console.log("Sent for delivery API response:", data);
+
+    if (data.result) {
+      deliveryStore.set((state) => ({
+        ...state,
+        deliveries: data.result,
+        isLoading: false,
+        error: null,
+      }));
+      return data;
+    } else {
+      throw new Error(data.ReturnMessage || "Failed to fetch sent for delivery");
+    }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Failed to connect to the server";
+    deliveryStore.set((state) => ({
+      ...state,
+      isLoading: false,
+      error: errorMessage,
+    }));
+    throw error;
   }
-  const data = await res.json();
-  return data.result;
-});
+};
