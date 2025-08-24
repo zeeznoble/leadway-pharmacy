@@ -378,7 +378,7 @@ export default function PackTable({
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <div className="flex w-full sm:w-auto items-center flex-1 gap-2">
             <Select
-              aria-label="search-stuffs"
+              aria-label="search-packs"
               className="w-48"
               placeholder="Search by"
               selectedKeys={[searchType]}
