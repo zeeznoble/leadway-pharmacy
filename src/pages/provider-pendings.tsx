@@ -49,7 +49,6 @@ export default function ProviderPendingsPage() {
       deliveryActions.openModal();
     } else {
       deliveryActions.closeModal();
-      // Only reset form if not editing
       if (!formState.isEditing) {
         deliveryFormState.reset();
       }
