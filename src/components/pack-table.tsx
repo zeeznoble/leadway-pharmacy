@@ -45,7 +45,7 @@ interface RowItem {
     name: string;
     scheme: string;
   };
-  startDate: string;
+  // startDate: string;
   deliveryaddress: string;
   nextDelivery: string;
   frequency: string;
@@ -95,7 +95,7 @@ export default function PackTable({
             name: transformedDelivery.EnrolleeName,
             scheme: transformedDelivery.SchemeName,
           },
-          startDate: formatDate(transformedDelivery.DelStartDate),
+          // startDate: formatDate(transformedDelivery.DelStartDate),
           deliveryaddress: transformedDelivery.deliveryaddress || "",
           nextDelivery: formatDate(transformedDelivery.NextDeliveryDate),
           frequency: transformedDelivery.DeliveryFrequency,
@@ -129,7 +129,7 @@ export default function PackTable({
 
   const handleSearch = () => {
     setCurrentPage(1);
-    setSelectedKeys(new Set([])); // Clear selections when searching
+    setSelectedKeys(new Set([]));
     onSearch(searchTerm, searchType);
   };
 
@@ -142,16 +142,19 @@ export default function PackTable({
   const handleClearSearch = () => {
     setSearchTerm("");
     setCurrentPage(1);
-    setSelectedKeys(new Set([])); // Clear selections when clearing search
+    setSelectedKeys(new Set([]));
     onSearch("");
   };
 
   const handleSelectionChange = (keys: Selection) => {
     if (keys === "all") {
       // Select all visible rows on current page only
+      // Only filter out delivered items, not all items with status
       const currentPageKeys = new Set(
         paginatedRows
-          .filter((row) => !row.status)
+          .filter(
+            (row) => !row.actions.isDelivered && row.status !== "Delivered"
+          ) // Only exclude delivered items
           .map((row) => row.key as string)
       );
       const currentSelected = selectedKeys as Set<string>;
@@ -219,7 +222,9 @@ export default function PackTable({
 
   const getSelectedCount = (selection: Selection): number => {
     if (selection === "all") {
-      return filteredRows.filter((row) => !row.status).length;
+      return filteredRows.filter(
+        (row) => !row.actions.isDelivered && row.status !== "Delivered"
+      ).length;
     }
 
     const currentSelection = selection as Set<string>;
@@ -232,7 +237,9 @@ export default function PackTable({
     if (selectedKeys === "all") return true;
 
     const currentSelection = selectedKeys as Set<string>;
-    const selectableRowsOnPage = paginatedRows.filter((row) => !row.status);
+    const selectableRowsOnPage = paginatedRows.filter(
+      (row) => !row.actions.isDelivered && row.status !== "Delivered"
+    );
 
     if (selectableRowsOnPage.length === 0) return false;
 
@@ -304,7 +311,19 @@ export default function PackTable({
       case "deliveryaddress":
         return <span className="text-sm">{item.deliveryaddress || "N/A"}</span>;
       case "status":
-        return <Badge>{item.status}</Badge>;
+        return (
+          <Badge
+            color={
+              item.status === "Packed"
+                ? "success"
+                : item.status === "Delivered"
+                  ? "primary"
+                  : "default"
+            }
+          >
+            {item.status}
+          </Badge>
+        );
       case "diagnosisname":
         return <span>{item.diagnosisname}</span>;
       // case "diagnosis_id":
@@ -321,6 +340,15 @@ export default function PackTable({
         return getKeyValue(item, columnKey);
     }
   };
+
+  // // Define disabled keys for rows that shouldn't be selectable
+  // const disabledKeys = useMemo(() => {
+  //   return new Set(
+  //     paginatedRows
+  //       .filter((row) => row.actions.isDelivered || row.status === "Delivered")
+  //       .map((row) => row.key)
+  //   );
+  // }, [paginatedRows]);
 
   const selectedCount = getSelectedCount(selectedKeys);
 
@@ -458,6 +486,7 @@ export default function PackTable({
             selectionMode="multiple"
             selectedKeys={selectedKeys}
             onSelectionChange={handleSelectionChange}
+            // disabledKeys={disabledKeys}
             color="primary"
             topContent={
               <div className="mt-4 text-sm text-gray-500">
@@ -467,7 +496,10 @@ export default function PackTable({
                 {selectedCount > 0 && (
                   <p className="text-blue-600">
                     {isCurrentPageFullySelected &&
-                    paginatedRows.filter((row) => !row.status).length > 0
+                    paginatedRows.filter(
+                      (row) =>
+                        !row.actions.isDelivered && row.status !== "Delivered"
+                    ).length > 0
                       ? `All items on page ${currentPage} are selected`
                       : `${selectedCount} items selected across all pages`}
                   </p>
