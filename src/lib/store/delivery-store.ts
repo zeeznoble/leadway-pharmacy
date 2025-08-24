@@ -347,7 +347,6 @@ export const deliveryActions = {
             result.ReturnMessage.toLowerCase().includes("duplicate"));
 
         if (isDuplicateResponse) {
-          // Parse the warnings to extract duplicate delivery information
           const warnings = result.Warnings || [];
           const duplicateDeliveries = warnings.map((warning: string, index: number) => {
             // Extract information from warning message
