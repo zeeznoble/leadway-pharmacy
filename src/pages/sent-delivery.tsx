@@ -9,25 +9,22 @@ import DeliveryTable from "@/components/delivery-table";
 import { deliveryStore } from "@/lib/store/delivery-store";
 import { fetchSentForDelivery } from "@/lib/services/delivery-service";
 import { formatDateForAPI } from "@/lib/helpers";
-import { authStore, appChunk } from "@/lib/store/app-store"; // Added appChunk import
-
+import { authStore, appChunk } from "@/lib/store/app-store";
 export default function SentDeliveryPage() {
   const { deliveries, isLoading, error } = useChunkValue(deliveryStore);
   const { user } = useChunkValue(authStore);
-  const { enrolleeId } = useChunkValue(appChunk); // Added enrolleeId
+  const { enrolleeId } = useChunkValue(appChunk);
 
   // Date picker states
   const [fromDate, setFromDate] = useState<CalendarDate | null>(null);
   const [toDate, setToDate] = useState<CalendarDate | null>(null);
   const [hasInitialLoad, setHasInitialLoad] = useState(false);
 
-  // Store the last searched term for refresh purposes
   const [lastSearchedEnrolleeId, setLastSearchedEnrolleeId] = useState("");
   const [lastSearchType, setLastSearchType] = useState<
     "enrollee" | "pharmacy" | "address"
   >("enrollee");
 
-  // Updated loadSentForDelivery to accept search parameters
   const loadSentForDelivery = async (
     searchEnrolleeId: string = "",
     searchType: "enrollee" | "pharmacy" | "address" = "enrollee"
@@ -38,12 +35,9 @@ export default function SentDeliveryPage() {
       const fromDateStr = formatDateForAPI(fromDate);
       const toDateStr = formatDateForAPI(toDate);
 
-      // For now, the API only supports enrollee search, so we only use searchEnrolleeId for enrollee searches
       const enrolleeIdToUse =
         searchType === "enrollee" ? searchEnrolleeId || enrolleeId : enrolleeId;
 
-      // Pass the enrolleeId to fetchSentForDelivery if it supports it
-      // If fetchSentForDelivery doesn't support enrolleeId parameter, you may need to update the service
       await fetchSentForDelivery(fromDateStr, toDateStr, enrolleeIdToUse);
     } catch (error) {
       console.error("Failed to load sent for delivery:", error);
