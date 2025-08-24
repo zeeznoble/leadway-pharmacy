@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Table,
   TableHeader,
@@ -20,6 +20,8 @@ import {
 import { Badge } from "@heroui/badge";
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
+import { Select, SelectItem } from "@heroui/select";
+import { Spinner } from "@heroui/spinner";
 import { Key } from "@react-types/shared";
 import toast from "react-hot-toast";
 
@@ -37,6 +39,13 @@ import { Delivery } from "@/types";
 
 interface DeliveryTableProps {
   deliveries: Delivery[];
+  isLoading?: boolean;
+  onSearch?: (
+    searchTerm: string,
+    searchType?: "enrollee" | "pharmacy" | "address"
+  ) => void;
+  currentSearchTerm?: string;
+  currentSearchType?: "enrollee" | "pharmacy" | "address";
 }
 
 interface RowItem {
@@ -46,6 +55,7 @@ interface RowItem {
     scheme: string;
   };
   startDate: string;
+  deliveryaddress: string;
   nextDelivery: string;
   frequency: string;
   status: string;
@@ -60,7 +70,13 @@ interface RowItem {
   cost: string;
 }
 
-export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
+export default function DeliveryTable({
+  deliveries,
+  isLoading = false,
+  onSearch,
+  currentSearchTerm = "",
+  currentSearchType = "enrollee",
+}: DeliveryTableProps) {
   const [isDeleting, setIsDeleting] = useState<Record<string, boolean>>({});
   const [isEditing, setIsEditing] = useState<Record<string, boolean>>({});
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
@@ -74,7 +90,18 @@ export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [searchQuery, setSearchQuery] = useState("");
+
+  // Search functionality - initialize with current values from parent
+  const [searchTerm, setSearchTerm] = useState(currentSearchTerm);
+  const [searchType, setSearchType] = useState<
+    "enrollee" | "pharmacy" | "address"
+  >(currentSearchType);
+
+  // Update local state when parent props change
+  useEffect(() => {
+    setSearchTerm(currentSearchTerm);
+    setSearchType(currentSearchType);
+  }, [currentSearchTerm, currentSearchType]);
 
   const isProviderPendingsPage = location.pathname === "/provider-pendings";
   const isSentForDeliveryPage = location.pathname === "/sent-for-delivery";
@@ -279,10 +306,38 @@ export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
       setIsClaiming(false);
     }
   };
+
+  // Search functionality
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const query = e.target.value;
-    setSearchQuery(query);
+    setSearchTerm(e.target.value);
+  };
+
+  const handleSearchTypeChange = (value: string) => {
+    setSearchType(value as "enrollee" | "pharmacy" | "address");
+    setSearchTerm("");
+  };
+
+  const handleSearch = () => {
     setCurrentPage(1);
+    setSelectedKeys(new Set([]));
+    if (onSearch) {
+      onSearch(searchTerm, searchType);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
+
+  const handleClearSearch = () => {
+    setSearchTerm("");
+    setCurrentPage(1);
+    setSelectedKeys(new Set([]));
+    if (onSearch) {
+      onSearch("");
+    }
   };
 
   const handlePageChange = (page: number) => {
@@ -302,7 +357,7 @@ export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
           },
           startDate: formatDate(transformedDelivery.DelStartDate),
           nextDelivery: formatDate(transformedDelivery.NextDeliveryDate),
-          deliveryaddress: transformedDelivery.deliveryaddress,
+          deliveryaddress: transformedDelivery.deliveryaddress || "",
           frequency: transformedDelivery.DeliveryFrequency,
           recipentcode: transformedDelivery.recipientcode,
           status: transformedDelivery.Status || "Pending",
@@ -319,21 +374,34 @@ export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
     [deliveries]
   );
 
-  // Filter rows based on search query
+  // Filter rows based on search (local filtering when needed)
   const filteredRows = useMemo(() => {
-    if (!searchQuery.trim()) return rows;
+    // If onSearch is provided and it's an enrollee search, don't filter locally
+    if (onSearch && searchType === "enrollee") {
+      return rows;
+    }
 
-    const searchLower = searchQuery.toLowerCase();
+    // For pharmacy and address searches, or when no onSearch prop, filter locally
+    if (!searchTerm.trim()) return rows;
 
-    return rows.filter(
-      (row) =>
-        row.enrollee.name.toLowerCase().includes(searchLower) ||
-        row.enrollee.scheme.toLowerCase().includes(searchLower) ||
-        row.diagnosisname.toLowerCase().includes(searchLower) ||
-        row.procedurename.toLowerCase().includes(searchLower) ||
-        row.pharmacyname.toLowerCase().includes(searchLower)
-    );
-  }, [rows, searchQuery]);
+    const searchTermLower = searchTerm.toLowerCase();
+
+    return rows.filter((row) => {
+      switch (searchType) {
+        case "pharmacy":
+          return row.pharmacyname.toLowerCase().includes(searchTermLower);
+        case "address":
+          return row.deliveryaddress.toLowerCase().includes(searchTermLower);
+        case "enrollee":
+          return (
+            row.enrollee.name.toLowerCase().includes(searchTermLower) ||
+            row.key.toLowerCase().includes(searchTermLower)
+          );
+        default:
+          return true;
+      }
+    });
+  }, [rows, searchType, searchTerm, onSearch]);
 
   // Calculate pagination values
   const totalPages = Math.ceil(filteredRows.length / pageSize);
@@ -366,6 +434,8 @@ export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
             <div className="text-md font-medium">{item.enrollee.name}</div>
           </div>
         );
+      case "deliveryaddress":
+        return <span className="text-sm">{item.deliveryaddress || "N/A"}</span>;
       case "status":
         const getStatusColor = (status: string) => {
           switch (status?.toLowerCase()) {
@@ -438,7 +508,27 @@ export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
 
   const selectedCount = getSelectedCount(selectedKeys);
 
-  if (deliveries.length === 0) {
+  const getSearchPlaceholder = (searchType: string): string => {
+    switch (searchType) {
+      case "enrollee":
+        return "Search by Enrollee ID or Name";
+      case "pharmacy":
+        return "Search by Pharmacy Name";
+      case "address":
+        return "Search by Region";
+      default:
+        return "Search...";
+    }
+  };
+
+  const showNoResults =
+    !isLoading &&
+    filteredRows.length === 0 &&
+    (searchTerm || deliveries.length > 0);
+  const showInitialMessage =
+    !isLoading && deliveries.length === 0 && !searchTerm;
+
+  if (showInitialMessage) {
     return (
       <div className="text-center p-8 text-gray-500">
         No deliveries found. Create a new delivery to get started.
@@ -448,132 +538,213 @@ export default function DeliveryTable({ deliveries }: DeliveryTableProps) {
 
   return (
     <>
-      <Table
-        aria-label="Deliveries Table"
-        bottomContent={
-          totalPages > 1 ? (
-            <div className="flex w-full justify-center">
-              <Pagination
-                isCompact
-                showControls
-                page={currentPage}
-                total={totalPages}
-                onChange={handlePageChange}
-              />
-            </div>
-          ) : null
-        }
-        className="min-w-full"
-        selectionMode={
-          isProviderPendingsPage || isSentForDeliveryPage
-            ? "multiple"
-            : undefined
-        }
-        selectedKeys={
-          isProviderPendingsPage || isSentForDeliveryPage
-            ? selectedKeys
-            : undefined
-        }
-        onSelectionChange={
-          isProviderPendingsPage || isSentForDeliveryPage
-            ? handleSelectionChange
-            : undefined
-        }
-        color="primary"
-        topContent={
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex flex-col gap-1">
-                {location.pathname === "/create-delivery" && (
-                  <>
-                    <h3 className="text-lg font-semibold">Deliveries</h3>
-                    <p className="text-sm text-gray-600">
-                      Manage and track delivery status
-                    </p>
+      {/* Search Section */}
+      <div className="mb-6 flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="flex w-full sm:w-auto items-center flex-1 gap-2">
+            <Select
+              aria-label="search-type"
+              className="w-48"
+              placeholder="Search by"
+              selectedKeys={[searchType]}
+              onSelectionChange={(keys) => {
+                const key = Array.from(keys)[0] as string;
+                handleSearchTypeChange(key);
+              }}
+              radius="sm"
+            >
+              <SelectItem key="enrollee">Enrollee ID</SelectItem>
+              <SelectItem key="pharmacy">Pharmacy</SelectItem>
+              <SelectItem key="address">Region</SelectItem>
+            </Select>
+            <Input
+              className="flex-1"
+              placeholder={getSearchPlaceholder(searchType)}
+              value={searchTerm}
+              onChange={handleSearchChange}
+              onKeyUp={handleKeyPress}
+              radius="sm"
+            />
+
+            <Button
+              color="primary"
+              radius="sm"
+              onPress={handleSearch}
+              isDisabled={isLoading}
+            >
+              {isLoading ? <Spinner size="sm" color="white" /> : "Search"}
+            </Button>
+            {searchTerm && (
+              <Button
+                color="default"
+                radius="sm"
+                onPress={handleClearSearch}
+                isDisabled={isLoading}
+              >
+                Clear
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <div className="flex justify-between items-center">
+          <div className="text-sm text-gray-600">
+            {searchTerm && (
+              <span>
+                Searching for "{searchTerm}" in{" "}
+                {searchType === "enrollee"
+                  ? "Enrollee ID/Name"
+                  : searchType === "pharmacy"
+                    ? "Pharmacy Name"
+                    : "Delivery Address"}
+                {filteredRows.length > 0 &&
+                  ` - Found ${filteredRows.length} result(s)`}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {showNoResults && (
+        <div className="text-center p-8 text-gray-500">
+          <p>No deliveries found matching your search criteria.</p>
+          <p className="text-sm mt-2">
+            Try adjusting your search term or search by a different field.
+          </p>
+        </div>
+      )}
+
+      {isLoading ? (
+        <div className="text-center p-8">
+          <Spinner color="primary" />
+          <p className="mt-2 text-gray-600">Loading deliveries...</p>
+        </div>
+      ) : filteredRows.length > 0 ? (
+        <Table
+          aria-label="Deliveries Table"
+          bottomContent={
+            totalPages > 1 ? (
+              <div className="flex w-full justify-center">
+                <Pagination
+                  isCompact
+                  showControls
+                  page={currentPage}
+                  total={totalPages}
+                  onChange={handlePageChange}
+                />
+              </div>
+            ) : null
+          }
+          className="min-w-full"
+          selectionMode={
+            isProviderPendingsPage || isSentForDeliveryPage
+              ? "multiple"
+              : undefined
+          }
+          selectedKeys={
+            isProviderPendingsPage || isSentForDeliveryPage
+              ? selectedKeys
+              : undefined
+          }
+          onSelectionChange={
+            isProviderPendingsPage || isSentForDeliveryPage
+              ? handleSelectionChange
+              : undefined
+          }
+          color="primary"
+          topContent={
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex flex-col gap-1">
+                  {location.pathname === "/create-delivery" ? (
+                    <>
+                      <h3 className="text-lg font-semibold">Deliveries</h3>
+                      <p className="text-sm text-gray-600">
+                        Manage and track delivery status
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Total: {filteredRows.length} deliveries
+                        {searchTerm && (
+                          <span> (filtered from {rows.length})</span>
+                        )}
+                      </p>
+                    </>
+                  ) : (
                     <p className="text-xs text-gray-500">
                       Total: {filteredRows.length} deliveries
-                      {searchQuery && (
+                      {searchTerm && (
                         <span> (filtered from {rows.length})</span>
                       )}
                     </p>
-                  </>
-                )}
-              </div>
-              <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center w-full sm:w-auto">
-                <Input
-                  aria-label="Search deliveries"
-                  className="w-full sm:w-96"
-                  placeholder="Search by enrollee, diagnosis, procedure..."
-                  radius="sm"
-                  size="lg"
-                  value={searchQuery}
-                  onChange={handleSearchChange}
-                />
-              </div>
-            </div>
-
-            {(isProviderPendingsPage || isSentForDeliveryPage) &&
-              selectedCount > 0 && (
-                <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-blue-900">
-                      {selectedCount} delivery(s) selected
-                    </span>
-                    {process.env.NODE_ENV === "development" && (
-                      <span className="text-xs text-gray-600">
-                        Keys:{" "}
-                        {selectedKeys === "all"
-                          ? "all"
-                          : Array.from(selectedKeys as Set<string>).join(", ")}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    {isProviderPendingsPage && (
-                      <Button
-                        color="primary"
-                        radius="sm"
-                        size="md"
-                        isLoading={isApproving}
-                        isDisabled={isApproving}
-                        onPress={handleApprove}
-                      >
-                        {isApproving ? "Approving..." : "Approve Selected"}
-                      </Button>
-                    )}
-                    {isSentForDeliveryPage && (
-                      <Button
-                        color="secondary"
-                        radius="sm"
-                        size="md"
-                        isLoading={isClaiming}
-                        isDisabled={isClaiming}
-                        onPress={handleClaimLines}
-                      >
-                        {isClaiming ? "Creating Claims..." : "Claim Lines"}
-                      </Button>
-                    )}
-                  </div>
+                  )}
                 </div>
-              )}
-          </div>
-        }
-      >
-        <TableHeader columns={columnsWithActions}>
-          {(column) => (
-            <TableColumn key={column.key}>{column.label}</TableColumn>
-          )}
-        </TableHeader>
-        <TableBody items={paginatedRows}>
-          {(item) => (
-            <TableRow key={item.key}>
-              {(columnKey) => (
-                <TableCell>{renderCell(item, columnKey)}</TableCell>
-              )}
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+              </div>
+
+              {(isProviderPendingsPage || isSentForDeliveryPage) &&
+                selectedCount > 0 && (
+                  <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-medium text-blue-900">
+                        {selectedCount} delivery(s) selected
+                      </span>
+                      {process.env.NODE_ENV === "development" && (
+                        <span className="text-xs text-gray-600">
+                          Keys:{" "}
+                          {selectedKeys === "all"
+                            ? "all"
+                            : Array.from(selectedKeys as Set<string>).join(
+                                ", "
+                              )}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      {isProviderPendingsPage && (
+                        <Button
+                          color="primary"
+                          radius="sm"
+                          size="md"
+                          isLoading={isApproving}
+                          isDisabled={isApproving}
+                          onPress={handleApprove}
+                        >
+                          {isApproving ? "Approving..." : "Approve Selected"}
+                        </Button>
+                      )}
+                      {isSentForDeliveryPage && (
+                        <Button
+                          color="secondary"
+                          radius="sm"
+                          size="md"
+                          isLoading={isClaiming}
+                          isDisabled={isClaiming}
+                          onPress={handleClaimLines}
+                        >
+                          {isClaiming ? "Creating Claims..." : "Claim Lines"}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )}
+            </div>
+          }
+        >
+          <TableHeader columns={columnsWithActions}>
+            {(column) => (
+              <TableColumn key={column.key}>{column.label}</TableColumn>
+            )}
+          </TableHeader>
+          <TableBody items={paginatedRows}>
+            {(item) => (
+              <TableRow key={item.key}>
+                {(columnKey) => (
+                  <TableCell>{renderCell(item, columnKey)}</TableCell>
+                )}
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      ) : null}
 
       {/* Delete Confirmation Modal */}
       <Modal
