@@ -2,7 +2,7 @@ import { User } from "@/types";
 
 export const DELIVERY_COLUMNS = [
   { key: "enrollee", label: "Enrollee" },
-  { key: "startDate", label: "Start Date" },
+  // { key: "startDate", label: "Start Date" },
   { key: "nextDelivery", label: "Next Delivery" },
   { key: "frequency", label: "Frequency" },
   // { key: "isDelivered", label: "Is Delivered" },
