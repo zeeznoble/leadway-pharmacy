@@ -1,5 +1,4 @@
 import { useLocation } from "react-router-dom";
-
 import { Avatar } from "@heroui/avatar";
 import {
   Dropdown,
@@ -7,12 +6,11 @@ import {
   DropdownMenu,
   DropdownItem,
 } from "@heroui/dropdown";
-
 import { useChunkValue } from "stunk/react";
 
 import { ToggleIcon } from "../icons/main-icons";
 
-import { authStore } from "@/lib/store/app-store";
+import { authStore, logout } from "@/lib/store/app-store";
 
 export default function Header() {
   const router = useLocation();
@@ -63,8 +61,8 @@ export default function Header() {
               <p className="font-semibold">Signed in as</p>
               <p className="font-semibold">{state.user?.Email}</p>
             </DropdownItem>
-            <DropdownItem key="settings">My Settings</DropdownItem>
-            <DropdownItem key="logout" color="danger">
+            {/* <DropdownItem key="settings">My Settings</DropdownItem> */}
+            <DropdownItem key="logout" color="danger" onClick={logout}>
               Log Out
             </DropdownItem>
           </DropdownMenu>
