@@ -1,6 +1,7 @@
-import { Rider } from "@/types";
 import { chunk } from "stunk";
 import { appChunk } from "./app-store";
+
+import { Rider } from "@/types";
 
 interface RiderState {
   showModal: boolean;
