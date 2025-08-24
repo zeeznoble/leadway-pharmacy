@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAsyncChunk, useChunkValue } from "stunk/react";
 import toast from "react-hot-toast";
-import { CalendarDate, today, getLocalTimeZone } from "@internationalized/date";
+import { CalendarDate } from "@internationalized/date";
 import { DatePicker } from "@heroui/date-picker";
 
 import PackTable from "@/components/pack-table";
@@ -296,7 +296,7 @@ export default function ToBeDeliveredPage() {
               label="From Date"
               value={fromDate}
               onChange={setFromDate}
-              maxValue={toDate || today(getLocalTimeZone())}
+              // maxValue={toDate || today(getLocalTimeZone())}
               className="w-full sm:max-w-md"
               size="sm"
               radius="sm"
@@ -306,7 +306,7 @@ export default function ToBeDeliveredPage() {
               value={toDate}
               onChange={setToDate}
               minValue={fromDate || undefined}
-              maxValue={today(getLocalTimeZone())}
+              // maxValue={today(getLocalTimeZone())}
               className="w-full sm:max-w-md"
               size="sm"
               radius="sm"
