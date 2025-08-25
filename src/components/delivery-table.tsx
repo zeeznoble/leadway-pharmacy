@@ -316,7 +316,6 @@ export default function DeliveryTable({
     }
   };
 
-  // Search functionality
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
@@ -328,7 +327,6 @@ export default function DeliveryTable({
     setSearchTerm("");
   };
 
-  // Helper function to check if search should go to API
   const shouldUseApiSearch = (searchType: string): boolean => {
     return searchType === "enrolleeId";
   };
@@ -337,13 +335,9 @@ export default function DeliveryTable({
     setCurrentPage(1);
     setSelectedKeys(new Set([]));
 
-    // Only call onSearch for enrolleeId searches (API search)
     if (onSearch && shouldUseApiSearch(searchType)) {
-      // Convert back to "enrollee" for the parent component
       onSearch(searchTerm, "enrollee");
     }
-    // For enrolleeName, pharmacy, and address searches, we just let the local filtering handle it
-    // No API call is made for these search types
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -356,8 +350,7 @@ export default function DeliveryTable({
     setSearchTerm("");
     setCurrentPage(1);
     setSelectedKeys(new Set([]));
-    // Reset to default search type
-    setSearchType("enrolleeId");
+    setSearchType("enrolleeName");
     if (onSearch) {
       onSearch("", "enrollee");
     }
@@ -550,12 +543,9 @@ export default function DeliveryTable({
   const showNoResults =
     !isLoading && filteredRows.length === 0 && searchTerm.trim() !== "";
 
-  // Modified condition: only show initial message when there are no deliveries AND no search term AND not loading
-  // But we want to always show the search UI unless it's the very initial empty state
   const showInitialMessage =
     !isLoading && deliveries.length === 0 && !searchTerm && !currentSearchTerm;
 
-  // Always show search UI unless it's the very initial empty state
   const shouldShowSearchUI = !showInitialMessage;
 
   if (showInitialMessage) {
@@ -568,7 +558,6 @@ export default function DeliveryTable({
 
   return (
     <>
-      {/* Search Section - Always show unless it's the initial empty state */}
       {shouldShowSearchUI && (
         <div className="mb-6 flex flex-col gap-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
@@ -584,8 +573,8 @@ export default function DeliveryTable({
                 }}
                 radius="sm"
               >
-                <SelectItem key="enrolleeId">Enrollee ID</SelectItem>
                 <SelectItem key="enrolleeName">Enrollee Name</SelectItem>
+                <SelectItem key="enrolleeId">Enrollee ID</SelectItem>
                 <SelectItem key="pharmacy">Pharmacy</SelectItem>
                 <SelectItem key="address">Region</SelectItem>
               </Select>
