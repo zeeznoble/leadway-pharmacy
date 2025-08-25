@@ -94,13 +94,22 @@ export default function DeliveryTable({
   // Search functionality - initialize with current values from parent
   const [searchTerm, setSearchTerm] = useState(currentSearchTerm);
   const [searchType, setSearchType] = useState<
-    "enrollee" | "pharmacy" | "address"
-  >(currentSearchType);
+    "enrolleeId" | "enrolleeName" | "pharmacy" | "address"
+  >(
+    currentSearchType === "enrollee"
+      ? "enrolleeId"
+      : (currentSearchType as "pharmacy" | "address")
+  );
 
   // Update local state when parent props change
   useEffect(() => {
     setSearchTerm(currentSearchTerm);
-    setSearchType(currentSearchType);
+    // Map the parent's "enrollee" type to our more specific types
+    if (currentSearchType === "enrollee") {
+      setSearchType("enrolleeId"); // Default to ID search
+    } else {
+      setSearchType(currentSearchType as "pharmacy" | "address");
+    }
   }, [currentSearchTerm, currentSearchType]);
 
   const isProviderPendingsPage = location.pathname === "/provider-pendings";
@@ -313,16 +322,28 @@ export default function DeliveryTable({
   };
 
   const handleSearchTypeChange = (value: string) => {
-    setSearchType(value as "enrollee" | "pharmacy" | "address");
+    setSearchType(
+      value as "enrolleeId" | "enrolleeName" | "pharmacy" | "address"
+    );
     setSearchTerm("");
+  };
+
+  // Helper function to check if search should go to API
+  const shouldUseApiSearch = (searchType: string): boolean => {
+    return searchType === "enrolleeId";
   };
 
   const handleSearch = () => {
     setCurrentPage(1);
     setSelectedKeys(new Set([]));
-    if (onSearch) {
-      onSearch(searchTerm, searchType);
+
+    // Only call onSearch for enrolleeId searches (API search)
+    if (onSearch && shouldUseApiSearch(searchType)) {
+      // Convert back to "enrollee" for the parent component
+      onSearch(searchTerm, "enrollee");
     }
+    // For enrolleeName, pharmacy, and address searches, we just let the local filtering handle it
+    // No API call is made for these search types
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -335,7 +356,8 @@ export default function DeliveryTable({
     setSearchTerm("");
     setCurrentPage(1);
     setSelectedKeys(new Set([]));
-    setSearchType("enrollee");
+    // Reset to default search type
+    setSearchType("enrolleeId");
     if (onSearch) {
       onSearch("", "enrollee");
     }
@@ -349,6 +371,8 @@ export default function DeliveryTable({
     () =>
       deliveries.map((delivery) => {
         const transformedDelivery = transformApiResponse(delivery);
+
+        console.log(transformedDelivery);
 
         return {
           key: `${transformedDelivery.EntryNo}`,
@@ -375,29 +399,28 @@ export default function DeliveryTable({
     [deliveries]
   );
 
-  // Filter rows based on search (local filtering when needed)
   const filteredRows = useMemo(() => {
-    // If onSearch is provided and it's an enrollee search, don't filter locally
-    if (onSearch && searchType === "enrollee") {
+    if (onSearch && searchType === "enrolleeId") {
       return rows;
     }
 
-    // For pharmacy and address searches, or when no onSearch prop, filter locally
     if (!searchTerm.trim()) return rows;
 
     const searchTermLower = searchTerm.toLowerCase();
 
     return rows.filter((row) => {
       switch (searchType) {
-        case "pharmacy":
-          return row.pharmacyname.toLowerCase().includes(searchTermLower);
-        case "address":
-          return row.deliveryaddress.toLowerCase().includes(searchTermLower);
-        case "enrollee":
+        case "enrolleeName":
           return (
             row.enrollee.name.toLowerCase().includes(searchTermLower) ||
             row.key.toLowerCase().includes(searchTermLower)
           );
+        case "enrolleeId":
+          return row.key.toLowerCase().includes(searchTermLower);
+        case "pharmacy":
+          return row.pharmacyname.toLowerCase().includes(searchTermLower);
+        case "address":
+          return row.deliveryaddress.toLowerCase().includes(searchTermLower);
         default:
           return true;
       }
@@ -511,8 +534,10 @@ export default function DeliveryTable({
 
   const getSearchPlaceholder = (searchType: string): string => {
     switch (searchType) {
-      case "enrollee":
-        return "Search by Enrollee ID or Name";
+      case "enrolleeId":
+        return "Search by Enrollee ID";
+      case "enrolleeName":
+        return "Search by Enrollee Name";
       case "pharmacy":
         return "Search by Pharmacy Name";
       case "address":
@@ -559,7 +584,8 @@ export default function DeliveryTable({
                 }}
                 radius="sm"
               >
-                <SelectItem key="enrollee">Enrollee ID</SelectItem>
+                <SelectItem key="enrolleeId">Enrollee ID</SelectItem>
+                <SelectItem key="enrolleeName">Enrollee Name</SelectItem>
                 <SelectItem key="pharmacy">Pharmacy</SelectItem>
                 <SelectItem key="address">Region</SelectItem>
               </Select>
@@ -598,13 +624,17 @@ export default function DeliveryTable({
               {(searchTerm || currentSearchTerm) && (
                 <span>
                   Searching for "{searchTerm || currentSearchTerm}" in{" "}
-                  {searchType === "enrollee"
-                    ? "Enrollee ID/Name"
-                    : searchType === "pharmacy"
-                      ? "Pharmacy Name"
-                      : "Delivery Address"}
+                  {searchType === "enrolleeId"
+                    ? "Enrollee ID"
+                    : searchType === "enrolleeName"
+                      ? "Enrollee Name"
+                      : searchType === "pharmacy"
+                        ? "Pharmacy Name"
+                        : "Delivery Address"}
                   {filteredRows.length > 0 &&
                     ` - Found ${filteredRows.length} result(s)`}
+                  {searchType === "enrolleeId" && onSearch && " (API Search)"}
+                  {searchType !== "enrolleeId" && " (Local Filter)"}
                 </span>
               )}
             </div>
