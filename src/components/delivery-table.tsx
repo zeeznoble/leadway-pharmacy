@@ -335,8 +335,9 @@ export default function DeliveryTable({
     setSearchTerm("");
     setCurrentPage(1);
     setSelectedKeys(new Set([]));
+    setSearchType("enrollee");
     if (onSearch) {
-      onSearch("");
+      onSearch("", "enrollee");
     }
   };
 
@@ -522,11 +523,15 @@ export default function DeliveryTable({
   };
 
   const showNoResults =
-    !isLoading &&
-    filteredRows.length === 0 &&
-    (searchTerm || deliveries.length > 0);
+    !isLoading && filteredRows.length === 0 && searchTerm.trim() !== "";
+
+  // Modified condition: only show initial message when there are no deliveries AND no search term AND not loading
+  // But we want to always show the search UI unless it's the very initial empty state
   const showInitialMessage =
-    !isLoading && deliveries.length === 0 && !searchTerm;
+    !isLoading && deliveries.length === 0 && !searchTerm && !currentSearchTerm;
+
+  // Always show search UI unless it's the very initial empty state
+  const shouldShowSearchUI = !showInitialMessage;
 
   if (showInitialMessage) {
     return (
@@ -538,72 +543,74 @@ export default function DeliveryTable({
 
   return (
     <>
-      {/* Search Section */}
-      <div className="mb-6 flex flex-col gap-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <div className="flex w-full sm:w-auto items-center flex-1 gap-2">
-            <Select
-              aria-label="search-type"
-              className="w-48"
-              placeholder="Search by"
-              selectedKeys={[searchType]}
-              onSelectionChange={(keys) => {
-                const key = Array.from(keys)[0] as string;
-                handleSearchTypeChange(key);
-              }}
-              radius="sm"
-            >
-              <SelectItem key="enrollee">Enrollee ID</SelectItem>
-              <SelectItem key="pharmacy">Pharmacy</SelectItem>
-              <SelectItem key="address">Region</SelectItem>
-            </Select>
-            <Input
-              className="flex-1"
-              placeholder={getSearchPlaceholder(searchType)}
-              value={searchTerm}
-              onChange={handleSearchChange}
-              onKeyUp={handleKeyPress}
-              radius="sm"
-            />
-
-            <Button
-              color="primary"
-              radius="sm"
-              onPress={handleSearch}
-              isDisabled={isLoading}
-            >
-              {isLoading ? <Spinner size="sm" color="white" /> : "Search"}
-            </Button>
-            {searchTerm && (
-              <Button
-                color="default"
+      {/* Search Section - Always show unless it's the initial empty state */}
+      {shouldShowSearchUI && (
+        <div className="mb-6 flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="flex w-full sm:w-auto items-center flex-1 gap-2">
+              <Select
+                aria-label="search-type"
+                className="w-48"
+                placeholder="Search by"
+                selectedKeys={[searchType]}
+                onSelectionChange={(keys) => {
+                  const key = Array.from(keys)[0] as string;
+                  handleSearchTypeChange(key);
+                }}
                 radius="sm"
-                onPress={handleClearSearch}
+              >
+                <SelectItem key="enrollee">Enrollee ID</SelectItem>
+                <SelectItem key="pharmacy">Pharmacy</SelectItem>
+                <SelectItem key="address">Region</SelectItem>
+              </Select>
+              <Input
+                className="flex-1"
+                placeholder={getSearchPlaceholder(searchType)}
+                value={searchTerm}
+                onChange={handleSearchChange}
+                onKeyUp={handleKeyPress}
+                radius="sm"
+              />
+
+              <Button
+                color="primary"
+                radius="sm"
+                onPress={handleSearch}
                 isDisabled={isLoading}
               >
-                Clear
+                {isLoading ? <Spinner size="sm" color="white" /> : "Search"}
               </Button>
-            )}
+              {(searchTerm || currentSearchTerm) && (
+                <Button
+                  color="default"
+                  radius="sm"
+                  onPress={handleClearSearch}
+                  isDisabled={isLoading}
+                >
+                  Clear
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
 
-        <div className="flex justify-between items-center">
-          <div className="text-sm text-gray-600">
-            {searchTerm && (
-              <span>
-                Searching for "{searchTerm}" in{" "}
-                {searchType === "enrollee"
-                  ? "Enrollee ID/Name"
-                  : searchType === "pharmacy"
-                    ? "Pharmacy Name"
-                    : "Delivery Address"}
-                {filteredRows.length > 0 &&
-                  ` - Found ${filteredRows.length} result(s)`}
-              </span>
-            )}
+          <div className="flex justify-between items-center">
+            <div className="text-sm text-gray-600">
+              {(searchTerm || currentSearchTerm) && (
+                <span>
+                  Searching for "{searchTerm || currentSearchTerm}" in{" "}
+                  {searchType === "enrollee"
+                    ? "Enrollee ID/Name"
+                    : searchType === "pharmacy"
+                      ? "Pharmacy Name"
+                      : "Delivery Address"}
+                  {filteredRows.length > 0 &&
+                    ` - Found ${filteredRows.length} result(s)`}
+                </span>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {showNoResults && (
         <div className="text-center p-8 text-gray-500">
@@ -664,7 +671,7 @@ export default function DeliveryTable({
                       </p>
                       <p className="text-xs text-gray-500">
                         Total: {filteredRows.length} deliveries
-                        {searchTerm && (
+                        {(searchTerm || currentSearchTerm) && (
                           <span> (filtered from {rows.length})</span>
                         )}
                       </p>
@@ -672,7 +679,7 @@ export default function DeliveryTable({
                   ) : (
                     <p className="text-xs text-gray-500">
                       Total: {filteredRows.length} deliveries
-                      {searchTerm && (
+                      {(searchTerm || currentSearchTerm) && (
                         <span> (filtered from {rows.length})</span>
                       )}
                     </p>
