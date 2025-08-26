@@ -68,14 +68,11 @@ export default function DiagnosisProcedureStep() {
       formState.procedureLines.find((p) => p.ProcedureId === procedureId)
         ?.ProcedureQuantity || 1;
 
-    // Calculate unit cost from current total cost
     const unitCost =
       currentQuantity > 0 ? numericCost / currentQuantity : numericCost;
 
-    // Calculate new total cost
     const newTotalCost = Math.round(unitCost * newQuantity).toString();
 
-    // Update both quantity and cost
     deliveryActions.updateProcedureQuantity(procedureId, newQuantity);
     deliveryActions.updateProcedureCost(procedureId, newTotalCost);
   };
@@ -86,7 +83,7 @@ export default function DiagnosisProcedureStep() {
       return;
     }
     handleSearch(inputValue);
-    setSelectedProcedure(new Set()); // Clear selection when searching
+    setSelectedProcedure(new Set());
     setSelectedProcedureObj(null);
   };
 
@@ -99,7 +96,6 @@ export default function DiagnosisProcedureStep() {
   const handleSelectionChange = (selection: SharedSelection) => {
     setSelectedProcedure(selection as Set<string>);
 
-    // Find the selected procedure object
     const selectedKey = Array.from(selection as Set<string>)[0];
     if (selectedKey) {
       const selected = items.find(
@@ -185,9 +181,7 @@ export default function DiagnosisProcedureStep() {
           </h3>
 
           <div className="space-y-4">
-            {/* Search and Select Row */}
             <div className="grid grid-cols-1 md:grid-cols-20 gap-4">
-              {/* Left side - Search Input (35%) */}
               <div className="md:col-span-7 space-y-3">
                 <Input
                   label="Search Procedures"
@@ -213,7 +207,6 @@ export default function DiagnosisProcedureStep() {
                 </Button>
               </div>
 
-              {/* Right side - Select Dropdown (65%) */}
               <div className="md:col-span-13 space-y-3">
                 {hasSearched && items.length > 0 ? (
                   <Select
@@ -256,14 +249,12 @@ export default function DiagnosisProcedureStep() {
               </div>
             </div>
 
-            {/* Loading more indicator */}
             {isLoading && items.length > 0 && (
               <div className="text-center py-2 text-sm text-gray-500">
                 Loading more results...
               </div>
             )}
 
-            {/* Search state messages */}
             {hasSearched && items.length === 0 && !isLoading && (
               <div className="text-center py-4 text-gray-500">
                 <p>No procedures found for "{inputValue}"</p>
@@ -280,7 +271,6 @@ export default function DiagnosisProcedureStep() {
               </div>
             )}
 
-            {/* Added Procedures List */}
             {formState.procedureLines.length === 0 ? (
               <p className="text-gray-500 text-sm">No procedures added yet</p>
             ) : (
@@ -291,7 +281,6 @@ export default function DiagnosisProcedureStep() {
                       key={procedure.ProcedureId}
                       className="bg-gray-50 rounded-lg p-4 flex items-center justify-between"
                     >
-                      {/* Left side - Procedure info */}
                       <div className="flex-1 min-w-0">
                         <div className="mb-2">
                           <p className="font-medium text-gray-900 truncate">
@@ -311,7 +300,6 @@ export default function DiagnosisProcedureStep() {
                           </div>
                         </div>
 
-                        {/* Input fields in a row */}
                         <div className="flex gap-3 max-w-xs">
                           <Input
                             type="text"
@@ -346,7 +334,6 @@ export default function DiagnosisProcedureStep() {
                         </div>
                       </div>
 
-                      {/* Right side - Remove button */}
                       <Button
                         size="sm"
                         color="danger"
