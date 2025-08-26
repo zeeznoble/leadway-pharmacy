@@ -38,12 +38,10 @@ export default function DeliveriesPage() {
   } = useChunkValue(deliveryStore);
   const formState = useChunkValue(deliveryFormState);
   // const { user } = useChunkValue(authStore);
-  const {
-    searchCriteria: { enrolleeId },
-  } = useChunkValue(appChunk);
+  const { searchCriteria } = useChunkValue(appChunk);
 
   useEffect(() => {
-    fetchDeliveries("", enrolleeId);
+    fetchDeliveries("", searchCriteria.enrolleeId);
   }, []);
 
   const handleOpenChange = (isOpen: boolean) => {
@@ -87,11 +85,15 @@ export default function DeliveriesPage() {
     <section className="px-2">
       <div className="flex justify-between mb-4">
         <p className="text-xl">List of Deliveries</p>
-        {enrolleeId !== "" ? (
+        {searchCriteria.enrolleeId !== "" ||
+        searchCriteria.firstName !== "" ||
+        searchCriteria.lastName !== "" ||
+        searchCriteria.mobileNo !== "" ||
+        searchCriteria.email !== "" ? (
           <Button
-            size="lg"
-            radius="sm"
             color="primary"
+            radius="sm"
+            size="lg"
             onPress={deliveryActions.openModal}
           >
             Create Delivery
