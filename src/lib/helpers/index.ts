@@ -410,10 +410,10 @@ export const generateDeliveryNotePDF = async (deliveryData: DeliveryNoteData[], 
     doc.setFont('helvetica', 'normal');
     doc.text('LEADWAY HEALTH LTD', doc.internal.pageSize.width - 20, 35, { align: 'right' });
     doc.text('121-123, Funso Williams Avenue, Iponri, Surulere,', doc.internal.pageSize.width - 20, 42, { align: 'right' });
-    doc.text('Lagos', doc.internal.pageSize.width - 20, 49, { align: 'right' });
-    doc.text('101241 Surulere', doc.internal.pageSize.width - 20, 56, { align: 'right' });
-    doc.text('Nigeria', doc.internal.pageSize.width - 20, 63, { align: 'right' });
-    doc.text('healthcare@leadway.com', doc.internal.pageSize.width - 20, 77, { align: 'right' });
+    doc.text('Lagos, Nigeria', doc.internal.pageSize.width - 20, 49, { align: 'right' });
+    // doc.text('101241 Surulere', doc.internal.pageSize.width - 20, 56, { align: 'right' });
+    // doc.text('Nigeria', doc.internal.pageSize.width - 20, 63, { align: 'right' });
+    // doc.text('healthcare@leadway.com', doc.internal.pageSize.width - 20, 77, { align: 'right' });
 
     // Delivery note details
     doc.setFontSize(10);
