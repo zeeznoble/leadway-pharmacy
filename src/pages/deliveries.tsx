@@ -121,6 +121,7 @@ export default function DeliveriesPage() {
           return !element.className.includes("heroui-select");
         }}
         size="3xl"
+        scrollBehavior="outside"
       >
         <ModalContent>
           <ModalHeader className="flex flex-col gap-1">
