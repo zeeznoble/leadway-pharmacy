@@ -11,6 +11,7 @@ export type EnrolleeData = {
   Member_Email: string,
   Member_othernames: string,
   Member_Age: number,
+  Member_EnrolleeID: string,
   Member_Gender: string,
   Member_MemberStatus: number,
   Member_MemberStatus_Description: string,
