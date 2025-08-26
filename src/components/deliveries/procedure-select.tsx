@@ -184,7 +184,7 @@ export default function ProcedureSearch({
           placeholder="Enter procedure name to search..."
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          onKeyPress={handleKeyPress}
+          onKeyUp={handleKeyPress}
           isDisabled={isDisabled}
           startContent={<SearchIcon className="w-4 h-4 text-gray-400" />}
         />
