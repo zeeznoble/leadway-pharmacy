@@ -6,6 +6,7 @@ import { deliveryFormState } from "../store/delivery-store";
 interface ProcedureApiItem {
   tariff_code: string;
   tariff_desc: string;
+  Cost: string;
 }
 
 interface ProcedureApiResponse {
@@ -59,17 +60,11 @@ export async function fetchProcedures(
 
     const data = await response.json() as ProcedureApiResponse;
 
-    console.log("Procedure API Response:", {
-      page,
-      searchTerm: searchTerm || 'all',
-      resultCount: data.result.length,
-    });
-
     const procedures: Procedure[] = data.result.map((item: ProcedureApiItem) => ({
       ProcedureId: item.tariff_code,
       ProcedureName: item.tariff_desc,
       ProcedureQuantity: 1,
-      cost: ""
+      cost: item.Cost
     }));
 
     proceduresCache = page === 0 ? procedures : [...proceduresCache, ...procedures];
