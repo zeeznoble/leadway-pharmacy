@@ -16,7 +16,10 @@ export default function EnrolleeSelectionStep() {
 
   useEffect(() => {
     if (user && !formState.isEditing) {
-      deliveryActions.updateFormField("enrolleeId", enrolleeId);
+      deliveryActions.updateFormField(
+        "enrolleeId",
+        enrolleeId || enrolleeData?.Member_EnrolleeID
+      );
       deliveryActions.updateFormField(
         "enrolleeName",
         `${enrolleeData?.Member_MemberTitle} ${enrolleeData?.Member_FirstName} ${enrolleeData?.Member_Surname}`
