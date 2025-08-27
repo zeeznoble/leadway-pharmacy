@@ -23,6 +23,10 @@ export default function DiagnosisProcedureStep() {
     null
   );
 
+  const [originalCosts, setOriginalCosts] = useState<Map<string, string>>(
+    new Map()
+  );
+
   // Procedure search states
   const [inputValue, setInputValue] = useState("");
   const [selectedProcedure, setSelectedProcedure] = useState<Set<string>>(
@@ -52,7 +56,21 @@ export default function DiagnosisProcedureStep() {
 
   const handleAddProcedure = () => {
     if (selectedProcedureObj) {
-      deliveryActions.addProcedure(selectedProcedureObj);
+      // Store the original cost from the selected procedure
+      setOriginalCosts((prev) =>
+        new Map(prev).set(
+          selectedProcedureObj.ProcedureId,
+          selectedProcedureObj.cost || "0"
+        )
+      );
+
+      // Add procedure with cost set to empty string initially (since it's unchanged)
+      const procedureToAdd = {
+        ...selectedProcedureObj,
+        cost: "0", // Set as empty since it hasn't been modified by user
+      };
+
+      deliveryActions.addProcedure(procedureToAdd);
       setSelectedProcedureObj(null);
       setSelectedProcedure(new Set());
     }
@@ -68,11 +86,14 @@ export default function DiagnosisProcedureStep() {
       formState.procedureLines.find((p) => p.ProcedureId === procedureId)
         ?.ProcedureQuantity || 1;
 
+    // Calculate unit cost from current total cost
     const unitCost =
       currentQuantity > 0 ? numericCost / currentQuantity : numericCost;
 
+    // Calculate new total cost
     const newTotalCost = Math.round(unitCost * newQuantity).toString();
 
+    // Update both quantity and cost
     deliveryActions.updateProcedureQuantity(procedureId, newQuantity);
     deliveryActions.updateProcedureCost(procedureId, newTotalCost);
   };
@@ -83,7 +104,7 @@ export default function DiagnosisProcedureStep() {
       return;
     }
     handleSearch(inputValue);
-    setSelectedProcedure(new Set());
+    setSelectedProcedure(new Set()); // Clear selection when searching
     setSelectedProcedureObj(null);
   };
 
@@ -96,6 +117,7 @@ export default function DiagnosisProcedureStep() {
   const handleSelectionChange = (selection: SharedSelection) => {
     setSelectedProcedure(selection as Set<string>);
 
+    // Find the selected procedure object
     const selectedKey = Array.from(selection as Set<string>)[0];
     if (selectedKey) {
       const selected = items.find(
@@ -181,7 +203,9 @@ export default function DiagnosisProcedureStep() {
           </h3>
 
           <div className="space-y-4">
+            {/* Search and Select Row */}
             <div className="grid grid-cols-1 md:grid-cols-20 gap-4">
+              {/* Left side - Search Input (35%) */}
               <div className="md:col-span-7 space-y-3">
                 <Input
                   label="Search Procedures"
@@ -207,6 +231,7 @@ export default function DiagnosisProcedureStep() {
                 </Button>
               </div>
 
+              {/* Right side - Select Dropdown (65%) */}
               <div className="md:col-span-13 space-y-3">
                 {hasSearched && items.length > 0 ? (
                   <Select
@@ -249,12 +274,14 @@ export default function DiagnosisProcedureStep() {
               </div>
             </div>
 
+            {/* Loading more indicator */}
             {isLoading && items.length > 0 && (
               <div className="text-center py-2 text-sm text-gray-500">
                 Loading more results...
               </div>
             )}
 
+            {/* Search state messages */}
             {hasSearched && items.length === 0 && !isLoading && (
               <div className="text-center py-4 text-gray-500">
                 <p>No procedures found for "{inputValue}"</p>
@@ -271,6 +298,7 @@ export default function DiagnosisProcedureStep() {
               </div>
             )}
 
+            {/* Added Procedures List */}
             {formState.procedureLines.length === 0 ? (
               <p className="text-gray-500 text-sm">No procedures added yet</p>
             ) : (
@@ -281,6 +309,7 @@ export default function DiagnosisProcedureStep() {
                       key={procedure.ProcedureId}
                       className="bg-gray-50 rounded-lg p-4 flex items-center justify-between"
                     >
+                      {/* Left side - Procedure info */}
                       <div className="flex-1 min-w-0">
                         <div className="mb-2">
                           <p className="font-medium text-gray-900 truncate">
@@ -300,18 +329,34 @@ export default function DiagnosisProcedureStep() {
                           </div>
                         </div>
 
+                        {/* Input fields in a row */}
                         <div className="flex gap-3 max-w-xs">
                           <Input
                             type="text"
                             size="sm"
                             label="Unit Cost"
-                            value={procedure.cost || ""}
-                            onChange={(e) =>
+                            value={
+                              // Show original cost if current cost is empty (unchanged)
+                              procedure.cost === ""
+                                ? originalCosts.get(procedure.ProcedureId) ||
+                                  "0"
+                                : procedure.cost
+                            }
+                            onChange={(e) => {
+                              const newValue = e.target.value;
+                              const originalCost =
+                                originalCosts.get(procedure.ProcedureId) || "0";
+
+                              // If the new value equals original cost, send empty string
+                              // Otherwise, send the actual new value
+                              const costToSave =
+                                newValue === originalCost ? "" : newValue;
+
                               deliveryActions.updateProcedureCost(
                                 procedure.ProcedureId,
-                                e.target.value
-                              )
-                            }
+                                costToSave
+                              );
+                            }}
                             placeholder="0"
                             className="w-24"
                           />
@@ -334,6 +379,7 @@ export default function DiagnosisProcedureStep() {
                         </div>
                       </div>
 
+                      {/* Right side - Remove button */}
                       <Button
                         size="sm"
                         color="danger"
