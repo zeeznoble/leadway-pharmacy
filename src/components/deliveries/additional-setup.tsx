@@ -6,18 +6,18 @@ import { Textarea } from "@heroui/input";
 export default function AdditionalInfoStep() {
   const formState = useChunkValue(deliveryFormState);
 
-  const calculateTotalCost = () => {
-    if (!formState.procedureLines || formState.procedureLines.length === 0) {
-      return "0";
-    }
+  // const calculateTotalCost = () => {
+  //   if (!formState.procedureLines || formState.procedureLines.length === 0) {
+  //     return "0";
+  //   }
 
-    return formState.procedureLines
-      .map((proc) => {
-        const costValue = proc.cost ? proc.cost : "0";
-        return costValue;
-      })
-      .join(" + ");
-  };
+  //   return formState.procedureLines
+  //     .map((proc) => {
+  //       const costValue = proc.cost ? proc.cost : "0";
+  //       return costValue;
+  //     })
+  //     .join(" + ");
+  // };
 
   return (
     <div>
@@ -53,18 +53,16 @@ export default function AdditionalInfoStep() {
           <p>
             <strong>Start Date:</strong> {formState.delStartDate}
           </p>
-          <p>
-            <strong>Duration:</strong> {formState.frequencyDuration} months
-          </p>
+
           <p>
             <strong>Diagnoses:</strong> {formState.diagnosisLines.length}
           </p>
           <p>
             <strong>Procedures:</strong> {formState.procedureLines.length}
           </p>
-          <p>
+          {/* <p>
             <strong>Cost:</strong> {calculateTotalCost()}
-          </p>
+          </p> */}
         </div>
       </div>
     </div>
