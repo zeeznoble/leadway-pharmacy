@@ -364,8 +364,7 @@ type DeliveryNoteData = {
 }
 
 export const generateDeliveryNotePDF = async (deliveryData: DeliveryNoteData[], selectedMonths: number, nextpackdate: string) => {
-  console.log("Data that will show in PDF", deliveryData)
-  console.log("Date that will show in PDF", nextpackdate)
+
   const doc = new jsPDF();
 
   // Group deliveries by EnrolleeID
