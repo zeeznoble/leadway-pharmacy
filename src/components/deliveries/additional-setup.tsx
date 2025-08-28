@@ -1,7 +1,7 @@
 import { useChunkValue } from "stunk/react";
 
 import { deliveryActions, deliveryFormState } from "@/lib/store/delivery-store";
-import { Textarea } from "@heroui/input";
+import { Input } from "@heroui/input";
 
 export default function AdditionalInfoStep() {
   const formState = useChunkValue(deliveryFormState);
@@ -21,12 +21,11 @@ export default function AdditionalInfoStep() {
 
   return (
     <div>
-      <h3 className="text-lg font-medium mb-4">Additional Information</h3>
+      <h3 className="text-lg font-medium mb-4">Alternative Phone Number</h3>
 
-      <Textarea
-        label="Additional Notes"
-        placeholder="Enter any additional information about this delivery"
-        rows={5}
+      <Input
+        label="Alternative Phone Number"
+        placeholder="Enter Alt Phone Number"
         value={formState.additionalInformation}
         onChange={(e) =>
           deliveryActions.updateFormField(
