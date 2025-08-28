@@ -35,7 +35,7 @@ import {
   createClaimRequests,
 } from "@/lib/services/delivery-service";
 import { formatDate, transformApiResponse } from "@/lib/helpers";
-import { Delivery } from "@/types";
+import type { Delivery } from "@/types";
 
 interface DeliveryTableProps {
   deliveries: Delivery[];
@@ -91,7 +91,6 @@ export default function DeliveryTable({
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
 
-  // Search functionality - initialize with current values from parent
   const [searchTerm, setSearchTerm] = useState(currentSearchTerm);
   const [searchType, setSearchType] = useState<
     "enrolleeId" | "enrolleeName" | "pharmacy" | "address"
@@ -101,12 +100,10 @@ export default function DeliveryTable({
       : (currentSearchType as "pharmacy" | "address")
   );
 
-  // Update local state when parent props change
   useEffect(() => {
     setSearchTerm(currentSearchTerm);
-    // Map the parent's "enrollee" type to our more specific types
     if (currentSearchType === "enrollee") {
-      setSearchType("enrolleeId"); // Default to ID search
+      setSearchType("enrolleeName");
     } else {
       setSearchType(currentSearchType as "pharmacy" | "address");
     }
@@ -147,8 +144,6 @@ export default function DeliveryTable({
   };
 
   const handleSelectionChange = (keys: Selection) => {
-    console.log("Selection changed:", keys);
-
     if (keys === "all") {
       const currentPageKeys = new Set(
         paginatedRows.map((row) => row.key as string)
@@ -163,23 +158,19 @@ export default function DeliveryTable({
         const newSelection = new Set(
           Array.from(currentSelected).filter((key) => !currentPageKeys.has(key))
         );
-        console.log("Deselecting all, new selection:", newSelection);
         setSelectedKeys(newSelection);
       } else {
         const newSelection = new Set([
           ...Array.from(currentSelected),
           ...Array.from(currentPageKeys),
         ]);
-        console.log("Selecting all, new selection:", newSelection);
         setSelectedKeys(newSelection);
       }
     } else {
-      console.log("Regular selection:", keys);
       setSelectedKeys(keys);
     }
   };
 
-  // Calculate selected count
   const getSelectedCount = (selection: Selection): number => {
     if (selection === "all") {
       return paginatedRows.length;
@@ -198,7 +189,6 @@ export default function DeliveryTable({
 
     setIsApproving(true);
     try {
-      // Get selected delivery items
       const currentSelection = selectedKeys as Set<string>;
       const selectedDeliveries = paginatedRows.filter((row) =>
         currentSelection.has(row.key)
@@ -206,7 +196,6 @@ export default function DeliveryTable({
 
       console.log("Approving deliveries:", selectedDeliveries);
 
-      // Call the approve API (refresh is handled inside the service)
       const result = await approveDeliveries(selectedDeliveries);
 
       if (result.status === 200 || result.status === 201) {
@@ -214,7 +203,7 @@ export default function DeliveryTable({
           result.ReturnMessage ||
             `Successfully approved ${selectedCount} delivery(s)`
         );
-        setSelectedKeys(new Set([])); // Clear selection
+        setSelectedKeys(new Set([]));
       } else {
         throw new Error(result.ReturnMessage || "Failed to approve deliveries");
       }
@@ -236,21 +225,15 @@ export default function DeliveryTable({
 
     setIsClaiming(true);
     try {
-      // Get selected delivery items from all rows (not just current page)
       const currentSelection = selectedKeys as Set<string>;
 
-      // Find all selected deliveries across all pages
       const allSelectedDeliveries = rows.filter((row) =>
         currentSelection.has(row.key)
       );
 
-      console.log("Creating claims for deliveries:", allSelectedDeliveries);
-
-      // Call the create claims API
       const result = await createClaimRequests(allSelectedDeliveries);
 
       if (result.status === 200 || result.status === 201) {
-        // Show detailed success message
         if (result.Claims && result.Claims.length > 0) {
           const successfulClaims = result.Claims.filter(
             (claim: any) => claim.Status === "Success"
@@ -260,7 +243,6 @@ export default function DeliveryTable({
           );
 
           if (successfulClaims.length > 0) {
-            // Show success toast with claim numbers
             const claimNumbers = successfulClaims
               .map((claim: any) => claim.ClaimNo)
               .join(", ");
@@ -276,7 +258,6 @@ export default function DeliveryTable({
           }
 
           if (failedClaims.length > 0) {
-            // Show warning for failed claims
             const failureMessages = failedClaims
               .map((claim: any) => `${claim.ClaimNo}: ${claim.Message}`)
               .join("\n");
@@ -291,7 +272,6 @@ export default function DeliveryTable({
             );
           }
         } else {
-          // Fallback success message
           toast.success(
             result.ReturnMessage ||
               `Successfully created claims for ${selectedCount} delivery(s)`,
@@ -299,7 +279,7 @@ export default function DeliveryTable({
           );
         }
 
-        setSelectedKeys(new Set([])); // Clear selection
+        setSelectedKeys(new Set([]));
       } else {
         throw new Error(result.ReturnMessage || "Failed to create claims");
       }
@@ -420,10 +400,22 @@ export default function DeliveryTable({
     });
   }, [rows, searchType, searchTerm, onSearch]);
 
-  // Calculate pagination values
+  const isGloballySelected = useMemo(() => {
+    if (selectedKeys === "all") return false;
+
+    const currentSelection = selectedKeys as Set<string>;
+    const allSelectableKeys = filteredRows
+      .filter((row) => !row.actions.isDelivered && row.status !== "Delivered")
+      .map((row) => row.key);
+
+    return (
+      allSelectableKeys.length > 0 &&
+      allSelectableKeys.every((key) => currentSelection.has(key))
+    );
+  }, [selectedKeys, filteredRows]);
+
   const totalPages = Math.ceil(filteredRows.length / pageSize);
 
-  // Get items for current page
   const paginatedRows = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
     const endIndex = Math.min(startIndex + pageSize, filteredRows.length);
@@ -442,6 +434,23 @@ export default function DeliveryTable({
     ],
     []
   );
+
+  const handleGlobalSelectAll = () => {
+    const allSelectableKeys = filteredRows
+      .filter((row) => !row.actions.isDelivered && row.status !== "Delivered")
+      .map((row) => row.key);
+
+    const currentSelected = selectedKeys as Set<string>;
+    const allGlobalSelected = allSelectableKeys.every((key) =>
+      currentSelected.has(key)
+    );
+
+    if (allGlobalSelected) {
+      setSelectedKeys(new Set([]));
+    } else {
+      setSelectedKeys(new Set(allSelectableKeys));
+    }
+  };
 
   const renderCell = (item: RowItem, columnKey: Key): React.ReactNode => {
     switch (columnKey) {
@@ -555,6 +564,10 @@ export default function DeliveryTable({
       </div>
     );
   }
+
+  const totalSelectableItems = filteredRows.filter(
+    (row) => !row.actions.isDelivered && row.status !== "Delivered"
+  ).length;
 
   return (
     <>
@@ -751,6 +764,24 @@ export default function DeliveryTable({
                       )}
                     </div>
                   </div>
+                )}
+
+              {(isProviderPendingsPage || isSentForDeliveryPage) &&
+                totalPages > 1 &&
+                totalSelectableItems > 0 && (
+                  <Button
+                    className="self-end"
+                    color={isGloballySelected ? "warning" : "default"}
+                    radius="md"
+                    size="sm"
+                    variant="flat"
+                    onPress={handleGlobalSelectAll}
+                    isDisabled={isLoading}
+                  >
+                    {isGloballySelected
+                      ? `Deselect All (${totalSelectableItems})`
+                      : `Select All Pages (${totalSelectableItems})`}
+                  </Button>
                 )}
             </div>
           }
