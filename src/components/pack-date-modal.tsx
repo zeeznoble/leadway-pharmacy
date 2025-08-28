@@ -338,11 +338,6 @@ export default function PackDateModal({
                         {adjustment.isAdjusted ? (
                           <span className="text-yellow-700">
                             ⚠️ Adjusted to {adjustment.adjustedMonths} months
-                            (expires{" "}
-                            {formatter.format(
-                              adjustment.adjustedDate.toDate(getLocalTimeZone())
-                            )}
-                            )
                           </span>
                         ) : (
                           <span className="text-green-700">
