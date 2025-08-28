@@ -356,13 +356,13 @@ export default function DeliveryTable({
 
   const rows = useMemo(
     () =>
-      deliveries.map((delivery) => {
+      deliveries.map((delivery, index) => {
         const transformedDelivery = transformApiResponse(delivery);
 
-        console.log(transformedDelivery);
+        const uniqueKey = `${transformedDelivery.EntryNo || index}-${Date.now()}-${Math.random()}`;
 
         return {
-          key: `${transformedDelivery.EntryNo}`,
+          key: uniqueKey,
           enrollee: {
             name: transformedDelivery.EnrolleeName,
             id: transformedDelivery.EnrolleeId,
