@@ -130,20 +130,22 @@ export default function PackDateModal({
         const expiryWithGrace = new Date(expiryDate);
         expiryWithGrace.setDate(expiryWithGrace.getDate() + 23);
 
-        const expiryCalendarDate = new CalendarDate(
-          expiryDate.getFullYear(),
-          expiryDate.getMonth() + 1,
-          expiryDate.getDate()
-        );
+        // const expiryCalendarDate = new CalendarDate(
+        //   expiryDate.getFullYear(),
+        //   expiryDate.getMonth() + 1,
+        //   expiryDate.getDate()
+        // );
 
         const calculatedDateObj = calculatedDate.toDate(getLocalTimeZone());
 
         // Compare against expiry date WITH grace period
         if (calculatedDateObj > expiryWithGrace) {
-          // Calculate actual months difference between start date and original expiry date (not grace period)
-          const yearsDiff = expiryDate.getFullYear() - startDate.getFullYear();
-          const monthsDiff = expiryDate.getMonth() - startDate.getMonth();
-          const daysDiff = expiryDate.getDate() - startDate.getDate();
+          // Instead of calculating months between start date and original expiry,
+          // calculate months between start date and expiry WITH grace period
+          const yearsDiff =
+            expiryWithGrace.getFullYear() - startDate.getFullYear();
+          const monthsDiff = expiryWithGrace.getMonth() - startDate.getMonth();
+          const daysDiff = expiryWithGrace.getDate() - startDate.getDate();
 
           let actualMonths = yearsDiff * 12 + monthsDiff;
 
@@ -155,11 +157,18 @@ export default function PackDateModal({
           // Ensure actualMonths is at least 1 and not greater than requested
           actualMonths = Math.max(1, Math.min(actualMonths, requestedMonths));
 
+          // Use the grace period date for the adjusted date
+          const graceCalendarDate = new CalendarDate(
+            expiryWithGrace.getFullYear(),
+            expiryWithGrace.getMonth() + 1,
+            expiryWithGrace.getDate()
+          );
+
           return {
             enrolleeId,
             enrolleeName,
             memberExpiryDate,
-            adjustedDate: expiryCalendarDate,
+            adjustedDate: graceCalendarDate,
             adjustedMonths: actualMonths,
             isAdjusted: true,
           };
@@ -189,7 +198,6 @@ export default function PackDateModal({
   const deliveryAdjustments = calculateDeliveryAdjustments(selectedMonths);
   const hasAdjustments = deliveryAdjustments.some((adj) => adj.isAdjusted);
 
-  // Remove duplicate members based on enrolleeId
   const uniqueMembers = deliveryAdjustments.reduce((acc, adj) => {
     // Check if we already have this enrolleeId
     const existingIndex = acc.findIndex(
@@ -203,7 +211,6 @@ export default function PackDateModal({
     return acc;
   }, [] as DeliveryAdjustment[]);
 
-  // Validate months input (1-12)
   const isMonthsInvalid =
     selectedMonths < 1 ||
     selectedMonths > 12 ||
@@ -220,7 +227,7 @@ export default function PackDateModal({
 
   const handleConfirm = () => {
     if (isMonthsInvalid) {
-      return; // Prevent confirming if invalid months
+      return;
     }
 
     if (mode === "simple") {
