@@ -28,7 +28,7 @@ import {
 } from "@/lib/store/delivery-store";
 import { fetchDeliveries } from "@/lib/services/delivery-service";
 import { formatDateForAPI } from "@/lib/helpers";
-import { CalendarDate, getLocalTimeZone, today } from "@internationalized/date";
+import { CalendarDate } from "@internationalized/date";
 import { DatePicker } from "@heroui/date-picker";
 
 export default function ProviderPendingsPage() {
@@ -169,7 +169,7 @@ export default function ProviderPendingsPage() {
               showMonthAndYearPickers
               value={fromDate}
               onChange={setFromDate}
-              maxValue={toDate || today(getLocalTimeZone())}
+              // maxValue={toDate || today(getLocalTimeZone())}
               className="w-full sm:max-w-md"
               size="sm"
               radius="sm"
