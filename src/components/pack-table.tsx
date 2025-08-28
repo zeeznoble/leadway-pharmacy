@@ -41,6 +41,7 @@ interface RowItem {
   key: string;
   enrollee: {
     name: string;
+    id: string;
     scheme: string;
   };
   // startDate: string;
@@ -92,6 +93,7 @@ export default function PackTable({
           key: `${transformedDelivery.EntryNo}`,
           enrollee: {
             name: transformedDelivery.EnrolleeName,
+            id: transformedDelivery.EnrolleeId,
             scheme: transformedDelivery.SchemeName,
           },
           deliveryaddress: transformedDelivery.deliveryaddress || "",
@@ -254,18 +256,33 @@ export default function PackTable({
     return filteredRows.slice(start, end);
   }, [filteredRows, currentPage, pageSize]);
 
-  const getSelectedCount = (selection: Selection): number => {
+  const getSelectedRows = (selection: Selection) => {
     if (selection === "all") {
       return filteredRows.filter(
         (row) => !row.actions.isDelivered && row.status !== "Delivered"
-      ).length;
+      );
     }
 
     const currentSelection = selection as Set<string>;
     const validKeys = new Set(filteredRows.map((row) => row.key));
-    return Array.from(currentSelection).filter((key) => validKeys.has(key))
-      .length;
+    return filteredRows.filter(
+      (row) => currentSelection.has(row.key) && validKeys.has(row.key)
+    );
   };
+
+  const getSelectedCount = (selection: Selection) => {
+    return getSelectedRows(selection).length;
+  };
+
+  const getEnrolleeCount = (selection: Selection) => {
+    const selectedRows = getSelectedRows(selection);
+    const uniqueEnrolleeIds = new Set(
+      selectedRows.map((row) => row.enrollee.id)
+    );
+    return uniqueEnrolleeIds.size;
+  };
+
+  const uniqueEnrolleeCount = getEnrolleeCount(selectedKeys);
 
   const isCurrentPageFullySelected = useMemo(() => {
     if (selectedKeys === "all") return true;
@@ -285,7 +302,6 @@ export default function PackTable({
     const selectedCount = getSelectedCount(selectedKeys);
 
     if (selectedCount === 0) {
-      alert("Please select at least one delivery to pack");
       return;
     }
 
@@ -535,6 +551,9 @@ export default function PackTable({
                     </p>
                   )}
                 </div>
+                <span className="text-sm font-medium text-blue-900">
+                  Distinct Selected: {uniqueEnrolleeCount}
+                </span>
                 {totalPages > 1 && totalSelectableItems > 0 && (
                   <Button
                     color={isGloballySelected ? "warning" : "default"}
