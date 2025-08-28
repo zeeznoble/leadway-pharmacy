@@ -79,7 +79,7 @@ export default function PackDateModal({
     requestedMonths: number
   ): DeliveryAdjustment[] => {
     if (mode === "simple") {
-      return []; // No adjustments in simple mode
+      return [];
     }
 
     console.log("Calculating adjustments for deliveries:", selectedDeliveries);
@@ -126,6 +126,10 @@ export default function PackDateModal({
           };
         }
 
+        // Add 23 days grace period to the expiry date
+        const expiryWithGrace = new Date(expiryDate);
+        expiryWithGrace.setDate(expiryWithGrace.getDate() + 23);
+
         const expiryCalendarDate = new CalendarDate(
           expiryDate.getFullYear(),
           expiryDate.getMonth() + 1,
@@ -133,14 +137,13 @@ export default function PackDateModal({
         );
 
         const calculatedDateObj = calculatedDate.toDate(getLocalTimeZone());
-        const expiryDateObj = expiryDate;
 
-        if (calculatedDateObj > expiryDateObj) {
-          // Calculate actual months difference between start date and expiry date
-          const yearsDiff =
-            expiryDateObj.getFullYear() - startDate.getFullYear();
-          const monthsDiff = expiryDateObj.getMonth() - startDate.getMonth();
-          const daysDiff = expiryDateObj.getDate() - startDate.getDate();
+        // Compare against expiry date WITH grace period
+        if (calculatedDateObj > expiryWithGrace) {
+          // Calculate actual months difference between start date and original expiry date (not grace period)
+          const yearsDiff = expiryDate.getFullYear() - startDate.getFullYear();
+          const monthsDiff = expiryDate.getMonth() - startDate.getMonth();
+          const daysDiff = expiryDate.getDate() - startDate.getDate();
 
           let actualMonths = yearsDiff * 12 + monthsDiff;
 
