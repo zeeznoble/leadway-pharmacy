@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useChunkValue } from "stunk/react";
-import { CalendarDate, today, getLocalTimeZone } from "@internationalized/date";
+import { CalendarDate } from "@internationalized/date";
 import { DatePicker } from "@heroui/date-picker";
 import { Button } from "@heroui/button";
 
@@ -114,7 +114,7 @@ export default function SentDeliveryPage() {
               showMonthAndYearPickers
               value={fromDate}
               onChange={setFromDate}
-              maxValue={toDate || today(getLocalTimeZone())}
+              // maxValue={toDate || today(getLocalTimeZone())}
               className="w-full sm:max-w-md"
               size="sm"
               radius="sm"
