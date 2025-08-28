@@ -51,6 +51,7 @@ interface RowItem {
   frequency: string;
   status: string;
   diagnosisname: string;
+  cost: string;
   diagnosis_id: string;
   procedurename: string;
   procedureid: string;
@@ -104,6 +105,7 @@ export default function PackTable({
           diagnosis_id: transformedDelivery.DiagnosisLines[0]?.DiagnosisId,
           procedurename: transformedDelivery.ProcedureLines[0]?.ProcedureName,
           procedureid: transformedDelivery.ProcedureLines[0]?.ProcedureId,
+          cost: transformedDelivery.cost || "",
           actions: {
             isDelivered: transformedDelivery.IsDelivered ?? false,
           },
@@ -115,7 +117,10 @@ export default function PackTable({
     [deliveries]
   );
 
-  const columnsWithActions = useMemo(() => [...DELIVERY_COLUMNS], []);
+  const columnsWithActions = useMemo(
+    () => [...DELIVERY_COLUMNS, { key: "cost", label: "Cost" }],
+    []
+  );
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
