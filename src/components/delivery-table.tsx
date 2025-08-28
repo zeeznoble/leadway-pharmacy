@@ -52,6 +52,7 @@ interface RowItem {
   key: string;
   enrollee: {
     name: string;
+    id: string;
     scheme: string;
   };
   startDate: string;
@@ -171,12 +172,25 @@ export default function DeliveryTable({
     }
   };
 
-  const getSelectedCount = (selection: Selection): number => {
+  const getSelectedRows = (selection: Selection) => {
     if (selection === "all") {
-      return paginatedRows.length;
+      return paginatedRows;
     }
+
     const currentSelection = selection as Set<string>;
-    return currentSelection.size;
+    return paginatedRows.filter((row) => currentSelection.has(row.key));
+  };
+
+  const getSelectedCount = (selection: Selection) => {
+    return getSelectedRows(selection).length;
+  };
+
+  const getEnrolleeCount = (selection: Selection) => {
+    const selectedRows = getSelectedRows(selection);
+    const uniqueEnrolleeIds = new Set(
+      selectedRows.map((row) => row.enrollee.id)
+    );
+    return uniqueEnrolleeIds.size;
   };
 
   const handleApprove = async () => {
@@ -351,6 +365,7 @@ export default function DeliveryTable({
           key: `${transformedDelivery.EntryNo}`,
           enrollee: {
             name: transformedDelivery.EnrolleeName,
+            id: transformedDelivery.EnrolleeId,
             scheme: transformedDelivery.SchemeName,
           },
           startDate: formatDate(transformedDelivery.DelStartDate),
@@ -533,6 +548,7 @@ export default function DeliveryTable({
   };
 
   const selectedCount = getSelectedCount(selectedKeys);
+  const uniqueEnrolleeCount = getEnrolleeCount(selectedKeys);
 
   const getSearchPlaceholder = (searchType: string): string => {
     switch (searchType) {
@@ -725,6 +741,9 @@ export default function DeliveryTable({
                     <div className="flex items-center gap-3">
                       <span className="text-sm font-medium text-blue-900">
                         {selectedCount} delivery(s) selected
+                      </span>
+                      <span className="text-sm font-medium text-blue-900">
+                        Distinct Selected: {uniqueEnrolleeCount}
                       </span>
                       {process.env.NODE_ENV === "development" && (
                         <span className="text-xs text-gray-600">
