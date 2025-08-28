@@ -1,7 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-
 import { useChunkValue } from "stunk/react";
-
 import {
   Table,
   TableHeader,
@@ -22,7 +20,7 @@ import { Pagination } from "@heroui/pagination";
 import { Key } from "@react-types/shared";
 import { useLocation } from "react-router-dom";
 
-import { DELIVERY_COLUMNS } from "@/lib/constants";
+import { DELIVERY_PACK_COLUMNS } from "@/lib/constants";
 import { formatDate, transformApiResponse } from "@/lib/helpers";
 import { authStore, appChunk } from "@/lib/store/app-store";
 
@@ -78,7 +76,7 @@ export default function PackTable({
   >("enrollee");
   const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set([]));
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10);
+  const [pageSize] = useState(50);
 
   const { user } = useChunkValue(authStore);
   const { enrolleeData } = useChunkValue(appChunk);
@@ -96,7 +94,6 @@ export default function PackTable({
             name: transformedDelivery.EnrolleeName,
             scheme: transformedDelivery.SchemeName,
           },
-          // startDate: formatDate(transformedDelivery.DelStartDate),
           deliveryaddress: transformedDelivery.deliveryaddress || "",
           nextDelivery: formatDate(transformedDelivery.NextDeliveryDate),
           frequency: transformedDelivery.DeliveryFrequency,
@@ -118,7 +115,7 @@ export default function PackTable({
   );
 
   const columnsWithActions = useMemo(
-    () => [...DELIVERY_COLUMNS, { key: "cost", label: "Cost" }],
+    () => [...DELIVERY_PACK_COLUMNS, { key: "cost", label: "Cost" }],
     []
   );
 
@@ -188,6 +185,24 @@ export default function PackTable({
     }
   };
 
+  // NEW: Handle global select all (across all pages)
+  const handleGlobalSelectAll = () => {
+    const allSelectableKeys = filteredRows
+      .filter((row) => !row.actions.isDelivered && row.status !== "Delivered")
+      .map((row) => row.key);
+
+    const currentSelected = selectedKeys as Set<string>;
+    const allGlobalSelected = allSelectableKeys.every((key) =>
+      currentSelected.has(key)
+    );
+
+    if (allGlobalSelected) {
+      setSelectedKeys(new Set([]));
+    } else {
+      setSelectedKeys(new Set(allSelectableKeys));
+    }
+  };
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
@@ -217,6 +232,20 @@ export default function PackTable({
 
     return filtered;
   }, [rows, searchType, searchTerm]);
+
+  const isGloballySelected = useMemo(() => {
+    if (selectedKeys === "all") return false;
+
+    const currentSelection = selectedKeys as Set<string>;
+    const allSelectableKeys = filteredRows
+      .filter((row) => !row.actions.isDelivered && row.status !== "Delivered")
+      .map((row) => row.key);
+
+    return (
+      allSelectableKeys.length > 0 &&
+      allSelectableKeys.every((key) => currentSelection.has(key))
+    );
+  }, [selectedKeys, filteredRows]);
 
   const totalPages = Math.ceil(filteredRows.length / pageSize);
   const paginatedRows = useMemo(() => {
@@ -310,7 +339,6 @@ export default function PackTable({
         return (
           <div className="flex flex-col">
             <div className="text-md font-medium">{item.enrollee.name}</div>
-            {/* <div className="text-sm text-gray-500">{item.enrollee.scheme}</div> */}
           </div>
         );
       case "deliveryaddress":
@@ -331,29 +359,14 @@ export default function PackTable({
         );
       case "diagnosisname":
         return <span>{item.diagnosisname}</span>;
-      // case "diagnosis_id":
-      //   return <span className="text-gray-500">{item.diagnosis_id}</span>;
       case "procedurename":
         return <span>{item.procedurename}</span>;
-      // case "procedureid":
-      //   return <span className="text-gray-500">{item.procedureid}</span>;
       case "pharmacyname":
         return <span className="text-gray-500">{item.pharmacyname}</span>;
-      // case "pharmacyid":
-      //   return <span className="text-gray-500">{item.pharmacyid}</span>;
       default:
         return getKeyValue(item, columnKey);
     }
   };
-
-  // // Define disabled keys for rows that shouldn't be selectable
-  // const disabledKeys = useMemo(() => {
-  //   return new Set(
-  //     paginatedRows
-  //       .filter((row) => row.actions.isDelivered || row.status === "Delivered")
-  //       .map((row) => row.key)
-  //   );
-  // }, [paginatedRows]);
 
   const selectedCount = getSelectedCount(selectedKeys);
 
@@ -376,6 +389,11 @@ export default function PackTable({
         return "Search...";
     }
   };
+
+  // NEW: Get total selectable items count
+  const totalSelectableItems = filteredRows.filter(
+    (row) => !row.actions.isDelivered && row.status !== "Delivered"
+  ).length;
 
   return (
     <>
@@ -427,21 +445,24 @@ export default function PackTable({
           </div>
         </div>
 
-        <div className="flex justify-between items-center">
-          <div className="text-sm text-gray-600">
-            {searchTerm && (
-              <span>
-                Searching for "{searchTerm}" in{" "}
-                {searchType === "enrollee"
-                  ? "Enrollee ID/Name"
-                  : searchType === "pharmacy"
-                    ? "Pharmacy Name"
-                    : "Delivery Address"}
-                {filteredRows.length > 0 &&
-                  ` - Found ${filteredRows.length} result(s)`}
-              </span>
-            )}
+        <div className="flex justify-between items-center flex-wrap gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="text-sm text-gray-600">
+              {searchTerm && (
+                <span>
+                  Searching for "{searchTerm}" in{" "}
+                  {searchType === "enrollee"
+                    ? "Enrollee ID/Name"
+                    : searchType === "pharmacy"
+                      ? "Pharmacy Name"
+                      : "Delivery Address"}
+                  {filteredRows.length > 0 &&
+                    ` - Found ${filteredRows.length} result(s)`}
+                </span>
+              )}
+            </div>
           </div>
+
           <Button
             color="success"
             radius="sm"
@@ -494,20 +515,39 @@ export default function PackTable({
             // disabledKeys={disabledKeys}
             color="primary"
             topContent={
-              <div className="mt-4 text-sm text-gray-500">
-                <p>Total deliveries: {rows.length}</p>
-                {searchTerm && <p>Filtered results: {filteredRows.length}</p>}
-                <p>Selected for packing: {selectedCount}</p>
-                {selectedCount > 0 && (
-                  <p className="text-blue-600">
-                    {isCurrentPageFullySelected &&
-                    paginatedRows.filter(
-                      (row) =>
-                        !row.actions.isDelivered && row.status !== "Delivered"
-                    ).length > 0
-                      ? `All items on page ${currentPage} are selected`
-                      : `${selectedCount} items selected across all pages`}
-                  </p>
+              <div className="flex justify-between items-center">
+                <div className="mt-4 text-sm text-gray-500">
+                  <p>Total deliveries: {rows.length}</p>
+                  {searchTerm && <p>Filtered results: {filteredRows.length}</p>}
+                  <p>Selected for packing: {selectedCount}</p>
+                  {selectedCount > 0 && (
+                    <p className="text-blue-600">
+                      {isGloballySelected
+                        ? `All ${totalSelectableItems} items across all pages are selected`
+                        : isCurrentPageFullySelected &&
+                            paginatedRows.filter(
+                              (row) =>
+                                !row.actions.isDelivered &&
+                                row.status !== "Delivered"
+                            ).length > 0
+                          ? `All items on page ${currentPage} are selected`
+                          : `${selectedCount} items selected across all pages`}
+                    </p>
+                  )}
+                </div>
+                {totalPages > 1 && totalSelectableItems > 0 && (
+                  <Button
+                    color={isGloballySelected ? "warning" : "default"}
+                    radius="md"
+                    size="sm"
+                    variant="flat"
+                    onPress={handleGlobalSelectAll}
+                    isDisabled={isLoading}
+                  >
+                    {isGloballySelected
+                      ? `Deselect All (${totalSelectableItems})`
+                      : `Select All Pages (${totalSelectableItems})`}
+                  </Button>
                 )}
               </div>
             }
