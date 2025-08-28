@@ -246,9 +246,11 @@ export const transformApiResponse = (apiResponse: any): Delivery => {
         ProcedureName: apiResponse.procedurename,
         ProcedureId: apiResponse.procdeureid,
         ProcedureQuantity: apiResponse.procedurequantity,
-        cost: apiResponse.cost
+        cost: apiResponse.cost,
+        DosageDescription: apiResponse.DosageDescription,
       },
     ],
+    DosageDescription: apiResponse.DosageDescription,
     Username: apiResponse.username,
     AdditionalInformation: apiResponse.additionalinformation,
     IsDelivered: apiResponse.isdelivered,
@@ -269,6 +271,7 @@ export const transformApiResponse = (apiResponse: any): Delivery => {
     phonenumber: apiResponse.phonenumber,
     cost: apiResponse.cost,
     recipientcode: apiResponse.recipientcode,
+    // nextpackdate: apiResponse.nextpackdate,
   };
 
 };
@@ -343,7 +346,9 @@ type DeliveryItem = {
   OriginalQuantity: number;
   cost: string;
   duration: string;
+  DosageDescription: string
 }
+
 type DeliveryNoteData = {
   deliveryNoteNo: string;
   issueDate: string;
@@ -353,11 +358,14 @@ type DeliveryNoteData = {
   address: string;
   phone: string;
   selectedMonths: number;
+  nextpackdate: string;
+
   items: DeliveryItem[];
 }
 
-// Modified generateDeliveryNotePDF function to handle multiple enrollees in one PDF
-export const generateDeliveryNotePDF = async (deliveryData: DeliveryNoteData[], selectedMonths: number) => {
+export const generateDeliveryNotePDF = async (deliveryData: DeliveryNoteData[], selectedMonths: number, nextpackdate: string) => {
+  console.log("Data that will show in PDF", deliveryData)
+  console.log("Date that will show in PDF", nextpackdate)
   const doc = new jsPDF();
 
   // Group deliveries by EnrolleeID
@@ -377,8 +385,8 @@ export const generateDeliveryNotePDF = async (deliveryData: DeliveryNoteData[], 
   const deliveryNoteNo = Math.floor(Math.random() * 9000) + 1000;
 
   // Format current date
-  const currentDate = new Date();
-  const issueDate = `${(currentDate.getMonth() + 1).toString().padStart(2, "0")}/${currentDate.getDate().toString().padStart(2, "0")}/${currentDate.getFullYear()}`;
+  // const currentDate = new Date();
+  // const issueDate = `${(currentDate.getMonth() + 1).toString().padStart(2, "0")}/${currentDate.getDate().toString().padStart(2, "0")}/${currentDate.getFullYear()}`;
 
   // Loop through each enrollee and create a page
   for (let i = 0; i < enrolleeIds.length; i++) {
@@ -425,7 +433,7 @@ export const generateDeliveryNotePDF = async (deliveryData: DeliveryNoteData[], 
     doc.setFont('helvetica', 'normal');
     doc.text(`Issue date:`, doc.internal.pageSize.width - 60, 97, { align: 'left' });
     doc.setFont('helvetica', 'bold');
-    doc.text(issueDate, doc.internal.pageSize.width - 20, 97, { align: 'right' });
+    doc.text(nextpackdate, doc.internal.pageSize.width - 20, 97, { align: 'right' });
 
     // Patient details
     doc.setFontSize(12);
@@ -454,6 +462,7 @@ export const generateDeliveryNotePDF = async (deliveryData: DeliveryNoteData[], 
     enrolleeDeliveries.forEach((delivery: any) => {
       const procedures = delivery.procedureLines || delivery.ProcedureLines || [];
       procedures.forEach((procedure: any) => {
+        console.log(allProcedures)
         allProcedures.push({
           ProcedureName: procedure.procedurename || procedure.ProcedureName || 'Unknown Procedure',
           ProcedureId: procedure.procedureid || procedure.ProcedureId || '',
@@ -461,6 +470,7 @@ export const generateDeliveryNotePDF = async (deliveryData: DeliveryNoteData[], 
           OriginalQuantity: procedure.procedurequantity || procedure.ProcedureQuantity || 1,
           cost: procedure.cost || '0',
           duration: procedure.duration || '',
+          DosageDescription: procedure.DosageDescription || "",
         });
       });
     });
@@ -468,7 +478,8 @@ export const generateDeliveryNotePDF = async (deliveryData: DeliveryNoteData[], 
     // Items table
     const tableData = allProcedures.map(item => [
       item.ProcedureName,
-      `${item.ProcedureQuantity} ${getQuantityUnit(item.ProcedureName)}`
+      `${item.ProcedureQuantity} ${getQuantityUnit(item.ProcedureName)}`,
+      item.DosageDescription
     ]);
 
     // Add duration information
@@ -482,11 +493,11 @@ export const generateDeliveryNotePDF = async (deliveryData: DeliveryNoteData[], 
     // Generate table using autoTable
     autoTable(doc, {
       startY: 145,
-      head: [['DESCRIPTION', 'QUANTITY']],
+      head: [['DESCRIPTION', 'QUANTITY', 'Dosage Description']],
       body: tableData,
       theme: 'grid',
       headStyles: {
-        fillColor: [173, 216, 230], // Light blue
+        fillColor: [173, 216, 230],
         textColor: [0, 0, 0],
         fontStyle: 'bold',
         fontSize: 10,
@@ -496,8 +507,9 @@ export const generateDeliveryNotePDF = async (deliveryData: DeliveryNoteData[], 
         textColor: [0, 0, 0],
       },
       columnStyles: {
-        0: { cellWidth: 120 },
-        1: { cellWidth: 50, halign: 'right' }
+        0: { cellWidth: 100 },
+        1: { cellWidth: 30, halign: 'right' },
+        2: { cellWidth: 50, halign: 'right' }
       },
       margin: { left: 20, right: 20 },
     });
@@ -529,7 +541,7 @@ At your convenience, we have a team of expert Doctors ready to be of support to 
 
   // Download the PDF with updated filename
   const enrolleeCount = enrolleeIds.length;
-  const fileName = `Delivery_Notes_${deliveryNoteNo}_${enrolleeCount}_Enrollees_${selectedMonths}M_${issueDate.replace(/\//g, '-')}.pdf`;
+  const fileName = `Delivery_Notes_${deliveryNoteNo}_${enrolleeCount}_Enrollees_${selectedMonths}M_${nextpackdate.replace(/\//g, '-')}.pdf`;
   doc.save(fileName);
 };
 

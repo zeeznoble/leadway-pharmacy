@@ -31,6 +31,7 @@ export const initialFormState = {
   procedureLines: [] as Procedure[],
 
   additionalInformation: "",
+  dosageDescription: "",
 
   currentStep: 1,
   totalSteps: 5,
@@ -252,6 +253,7 @@ export const deliveryActions = {
       procedureLines: procedureLines,
 
       additionalInformation: safeGet(data.AdditionalInformation, ""),
+      dosageDescription: safeGet(data.DosageDescription, ""),
 
       currentStep: 1,
       totalSteps: 5,
@@ -286,6 +288,7 @@ export const deliveryActions = {
         DiagnosisLines: formData.diagnosisLines,
         ProcedureLines: formData.procedureLines,
         AdditionalInformation: formData.additionalInformation,
+        DosageDescription: formData.dosageDescription,
         IsDelivered: false,
         Username: user ? user.UserName : "Unknown",
         deliveryaddress: formData.deliveryaddress,
@@ -314,6 +317,7 @@ export const deliveryActions = {
         ProcedureQuantity: formData.procedureLines.length > 0 ? formData.procedureLines[0].ProcedureQuantity : 1,
         cost: formData.procedureLines.length > 0 ? (formData.procedureLines[0].cost || formData.cost || "0") : (formData.cost || "0"),
         AdditionalInformation: formData.additionalInformation,
+        DosageDescription: formData.dosageDescription,
         IsDelivered: false,
         Username: user ? user.UserName : "Unknown",
         deliveryaddress: formData.deliveryaddress,

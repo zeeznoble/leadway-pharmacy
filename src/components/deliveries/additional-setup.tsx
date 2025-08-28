@@ -1,7 +1,7 @@
 import { useChunkValue } from "stunk/react";
+import { Input } from "@heroui/input";
 
 import { deliveryActions, deliveryFormState } from "@/lib/store/delivery-store";
-import { Input } from "@heroui/input";
 
 export default function AdditionalInfoStep() {
   const formState = useChunkValue(deliveryFormState);

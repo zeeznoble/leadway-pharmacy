@@ -79,6 +79,7 @@ export type Procedure = {
   ProcedureName: string;
   ProcedureQuantity: number;
   cost: string;
+  DosageDescription?: string
 };
 
 export type Delivery = {
@@ -89,6 +90,7 @@ export type Delivery = {
   ProcedureLines: Procedure[];
   Username: string;
   AdditionalInformation: string;
+  DosageDescription: string;
   IsDelivered: boolean;
   EnrolleeId: string;
   EnrolleeName: string;

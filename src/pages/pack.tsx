@@ -236,6 +236,7 @@ export default function PackPage() {
     deliveryAdjustments: DeliveryAdjustment[]
   ) => {
     try {
+      let nextPackDate = "";
       // Create a map for quick lookup of adjustments by enrollee ID
       const adjustmentMap = new Map<string, DeliveryAdjustment>();
       deliveryAdjustments.forEach((adj) => {
@@ -281,9 +282,10 @@ export default function PackPage() {
           const apiPayload = {
             DeliveryEntryNo: delivery.EntryNo,
             PackedBy: user?.UserName || "",
-            Notes: `${finalMonths}`, // Use individually calculated months
-            nextpackdate: finalDate, // Use individually calculated date
+            Notes: `${finalMonths}`,
+            nextpackdate: finalDate,
           };
+          nextPackDate = apiPayload.nextpackdate;
 
           return apiPayload;
         }
@@ -323,7 +325,8 @@ export default function PackPage() {
 
           await generateDeliveryNotePDF(
             selectedDeliveriesWithEnrolleeData,
-            mostCommonMonths
+            mostCommonMonths,
+            nextPackDate
           );
 
           // Show success message with adjustment info

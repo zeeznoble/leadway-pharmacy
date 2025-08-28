@@ -104,6 +104,8 @@ export default function PackTable({
           diagnosis_id: transformedDelivery.DiagnosisLines[0]?.DiagnosisId,
           procedurename: transformedDelivery.ProcedureLines[0]?.ProcedureName,
           procedureid: transformedDelivery.ProcedureLines[0]?.ProcedureId,
+          dosageDescription:
+            transformedDelivery.ProcedureLines[0]?.DosageDescription || "",
           cost: transformedDelivery.cost || "",
           actions: {
             isDelivered: transformedDelivery.IsDelivered ?? false,
