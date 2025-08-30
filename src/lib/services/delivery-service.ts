@@ -7,7 +7,7 @@ import { authStore } from "@/lib/store/app-store";
 import { API_URL, programmaticNavigate } from "../helpers";
 import { DeliveredPackResponse, Delivery, Diagnosis, PackResponse } from "@/types";
 
-export const createDelivery = async (deliveryData: { Deliveries: Delivery[] }): Promise<any> => {
+export const createDelivery = async (deliveryData: { Deliveries: Delivery[] }, skipNavigation: boolean = false): Promise<any> => {
   try {
     deliveryStore.set((state) => ({
       ...state,
@@ -40,12 +40,10 @@ export const createDelivery = async (deliveryData: { Deliveries: Delivery[] }): 
       };
     }
 
-    const { user } = authStore.get();
-    if (user?.UserName) {
-      fetchDeliveries(user.UserName, deliveryData.Deliveries[0].EnrolleeId);
+    if (!skipNavigation) {
+      fetchDeliveries("", deliveryData.Deliveries[0].EnrolleeId);
+      programmaticNavigate('/enrollees');
     }
-
-    programmaticNavigate('/enrollees');
 
 
     return {
