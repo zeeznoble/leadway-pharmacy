@@ -15,9 +15,7 @@ import { Provider } from "@/types";
 export default function ProviderSetup() {
   const formState = useChunkValue(deliveryFormState);
 
-  const [selectedProvider, setSelectedProvider] = useState<Provider | null>(
-    null
-  );
+  const [_, setSelectedProvider] = useState<Provider | null>(null);
 
   // Local pharmacy type state - not stored globally
   const [pharmacyType, setPharmacyType] = useState<Set<string>>(new Set());
@@ -38,11 +36,13 @@ export default function ProviderSetup() {
     }
   }, [formState.pharmacyId, formState.pharmacyName]);
 
-  const handleAddProvider = () => {
-    if (selectedProvider) {
-      deliveryActions.setProvider(selectedProvider);
-      // Keep the selected provider in the autocomplete for editing
-      // setSelectedProvider(null);
+  const handleProviderSelect = (provider: Provider | null) => {
+    if (provider) {
+      setSelectedProvider(provider);
+      // Automatically add the provider to the form state
+      deliveryActions.setProvider(provider);
+    } else {
+      setSelectedProvider(null);
     }
   };
 
@@ -84,38 +84,20 @@ export default function ProviderSetup() {
 
           {selectedPharmacyType && (
             <>
-              <div className="flex items-center flex-wrap gap-3">
-                <div className="flex-1">
+              {!formState.pharmacyId ? (
+                <div>
                   <ProviderAutocomplete
-                    onSelect={(provider) => {
-                      setSelectedProvider(provider);
-                    }}
+                    onSelect={handleProviderSelect}
                     enrolleeId={formState.enrolleeId}
-                    isDisabled={!!formState.pharmacyId}
-                    selectedProvider={
-                      formState.pharmacyId && formState.pharmacyName
-                        ? {
-                            Pharmacyid: formState.pharmacyId,
-                            PharmacyName: formState.pharmacyName,
-                          }
-                        : null
-                    }
+                    isDisabled={false}
+                    selectedProvider={null}
                     pharmacyType={selectedPharmacyType}
                   />
+                  <p className="text-gray-500 text-sm mt-2">
+                    Select a pharmacy from the list above
+                  </p>
                 </div>
-
-                <div>
-                  <Button
-                    color="primary"
-                    onPress={handleAddProvider}
-                    isDisabled={!selectedProvider || !!formState.pharmacyId}
-                  >
-                    Add Pharmacy
-                  </Button>
-                </div>
-              </div>
-
-              {formState.pharmacyId ? (
+              ) : (
                 <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
                   <div>
                     <p className="font-medium text-gray-800">
@@ -137,8 +119,6 @@ export default function ProviderSetup() {
                     Remove
                   </Button>
                 </div>
-              ) : (
-                <p className="text-gray-500 text-sm">No provider selected</p>
               )}
             </>
           )}
