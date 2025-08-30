@@ -18,7 +18,7 @@ export const initialFormState = {
   phonenumber: "",
   cost: "",
 
-  pharmacyId: 0,
+  pharmacyId: 8520,
   pharmacyName: "",
 
   deliveryFrequency: "",
@@ -32,6 +32,8 @@ export const initialFormState = {
 
   additionalInformation: "",
   dosageDescription: "",
+  comment: "",
+
 
   currentStep: 1,
   totalSteps: 5,
@@ -102,6 +104,15 @@ export const deliveryActions = {
 
   setNextDeliveryDate: (date: string | null) => {
     deliveryStore.set(state => ({ ...state, nextDeliveryDate: date }));
+  },
+
+  updateProcedureDosage: (procedureId: string, dosageDescription: string) => {
+    deliveryFormState.set(state => ({
+      ...state,
+      procedureLines: state.procedureLines.map(p =>
+        p.ProcedureId === procedureId ? { ...p, DosageDescription: dosageDescription } : p
+      )
+    }));
   },
 
   nextStep: () => {
@@ -254,6 +265,8 @@ export const deliveryActions = {
 
       additionalInformation: safeGet(data.AdditionalInformation, ""),
       dosageDescription: safeGet(data.DosageDescription, ""),
+      comment: safeGet(data.comment, ""),
+
 
       currentStep: 1,
       totalSteps: 5,
@@ -289,6 +302,7 @@ export const deliveryActions = {
         ProcedureLines: formData.procedureLines,
         AdditionalInformation: formData.additionalInformation,
         DosageDescription: formData.dosageDescription,
+        Comment: formData.comment,
         IsDelivered: false,
         Username: user ? user.UserName : "Unknown",
         deliveryaddress: formData.deliveryaddress,
@@ -318,6 +332,7 @@ export const deliveryActions = {
         cost: formData.procedureLines.length > 0 ? (formData.procedureLines[0].cost || formData.cost || "0") : (formData.cost || "0"),
         AdditionalInformation: formData.additionalInformation,
         DosageDescription: formData.dosageDescription,
+        Comment: formData.comment,
         IsDelivered: false,
         Username: user ? user.UserName : "Unknown",
         deliveryaddress: formData.deliveryaddress,
@@ -338,7 +353,8 @@ export const deliveryActions = {
           Deliveries: [delivery],
           ConfirmDuplicates: confirmDuplicates
         };
-        response = await createDelivery(formattedData);
+        const shouldSkipNavigation = !confirmDuplicates;
+        response = await createDelivery(formattedData, shouldSkipNavigation);
       }
 
 
