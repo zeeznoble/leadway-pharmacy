@@ -90,7 +90,7 @@ export default function DeliveryTable({
   const [isClaiming, setIsClaiming] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10);
+  const [pageSize] = useState(50);
 
   const [searchTerm, setSearchTerm] = useState(currentSearchTerm);
   const [searchType, setSearchType] = useState<
