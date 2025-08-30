@@ -50,7 +50,7 @@ export async function fetchProcedures(
 
     // Use the search term in the API URL, empty string if no search term
     const searchParam = searchTerm ? encodeURIComponent(searchTerm) : '';
-    const apiUrl = `${API_URL}/ProviderNetwork/GetProceduresByFilter?filtertype=3&providerid=${pharmacyId}&searchbyname=${searchParam}`;
+    const apiUrl = `${API_URL}/ProviderNetwork/GetProceduresByFilter?filtertype=3&providerid=8520&searchbyname=${searchParam}`;
 
     const response = await fetch(apiUrl);
 
@@ -66,6 +66,8 @@ export async function fetchProcedures(
       ProcedureQuantity: 1,
       cost: item.Cost
     }));
+
+    console.log(procedures)
 
     proceduresCache = page === 0 ? procedures : [...proceduresCache, ...procedures];
     isInitialFetchDone = true;
