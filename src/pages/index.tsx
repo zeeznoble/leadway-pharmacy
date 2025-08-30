@@ -42,7 +42,6 @@ export default function IndexPage() {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
-    // Convert Set to array, get the first selected status key, and map to label
     const selectedStatusKey = Array.from(status)[0] || "";
     const selectedStatusLabel =
       statuses.find((s) => s.key === selectedStatusKey)?.label || "";
