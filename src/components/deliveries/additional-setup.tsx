@@ -21,10 +21,11 @@ export default function AdditionalInfoStep() {
 
   return (
     <div>
-      <h3 className="text-lg font-medium mb-4">Alternative Phone Number</h3>
+      <h3 className="text-lg font-medium mb-4">Additional Information</h3>
 
       <Input
         label="Alternative Phone Number"
+        className="mb-4"
         placeholder="Enter Alt Phone Number"
         value={formState.additionalInformation}
         onChange={(e) =>
@@ -32,6 +33,15 @@ export default function AdditionalInfoStep() {
             "additionalInformation",
             e.target.value
           )
+        }
+      />
+
+      <Input
+        label="Comment"
+        placeholder="Enter Comment"
+        value={formState.comment}
+        onChange={(e) =>
+          deliveryActions.updateFormField("comment", e.target.value)
         }
       />
 
@@ -47,6 +57,12 @@ export default function AdditionalInfoStep() {
             <strong>Scheme:</strong> {formState.schemeName}
           </p>
           <p>
+            <strong>Address:</strong> {formState.deliveryaddress}
+          </p>
+          <p>
+            <strong>Phone Number:</strong> {formState.phonenumber}
+          </p>
+          <p>
             <strong>Frequency:</strong> {formState.deliveryFrequency}
           </p>
           <p>
@@ -54,10 +70,10 @@ export default function AdditionalInfoStep() {
           </p>
 
           <p>
-            <strong>Diagnoses:</strong> {formState.diagnosisLines.length}
+            <strong>Diagnosis:</strong> {formState.diagnosisLines.length}
           </p>
           <p>
-            <strong>Procedures:</strong> {formState.procedureLines.length}
+            <strong>Medication:</strong> {formState.procedureLines.length}
           </p>
           {/* <p>
             <strong>Cost:</strong> {calculateTotalCost()}
