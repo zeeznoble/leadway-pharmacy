@@ -91,6 +91,7 @@ export type Delivery = {
   Username: string;
   AdditionalInformation: string;
   DosageDescription: string;
+  Comment: string;
   IsDelivered: boolean;
   EnrolleeId: string;
   EnrolleeName: string;
