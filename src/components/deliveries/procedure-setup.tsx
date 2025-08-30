@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { useChunkValue } from "stunk/react";
 
@@ -19,9 +19,8 @@ import { SearchIcon } from "../icons/icons";
 
 export default function DiagnosisProcedureStep() {
   const formState = useChunkValue(deliveryFormState);
-  const [selectedDiagnosis, setSelectedDiagnosis] = useState<Diagnosis | null>(
-    null
-  );
+  const [isOpen, setIsOpen] = useState(false);
+  const [_, setSelectedDiagnosis] = useState<Diagnosis | null>(null);
 
   const [originalCosts, setOriginalCosts] = useState<Map<string, string>>(
     new Map()
@@ -40,6 +39,21 @@ export default function DiagnosisProcedureStep() {
       fetchDelay: 300,
     });
 
+  console.log(
+    "Procedure Items: ",
+    items.map((item) => item.cost)
+  );
+
+  // Auto-open select when search results are available
+  useEffect(() => {
+    if (hasSearched && items.length > 0 && !isLoading) {
+      // Small delay to ensure the Select component is rendered
+      setTimeout(() => {
+        setIsOpen(true);
+      }, 100);
+    }
+  }, [hasSearched, items.length, isLoading]);
+
   const [, scrollerRef] = useInfiniteScroll({
     hasMore,
     isEnabled: items.length > 0,
@@ -47,10 +61,18 @@ export default function DiagnosisProcedureStep() {
     onLoadMore,
   });
 
-  const handleAddDiagnosis = () => {
-    if (selectedDiagnosis) {
-      deliveryActions.addDiagnosis(selectedDiagnosis);
+  const handleDiagnosisSelect = (diagnosis: Diagnosis | null) => {
+    if (diagnosis) {
+      // Clear any existing diagnosis first, then add the new one
+      if (formState.diagnosisLines.length > 0) {
+        deliveryActions.removeDiagnosis(
+          formState.diagnosisLines[0].DiagnosisId
+        );
+      }
+      deliveryActions.addDiagnosis(diagnosis);
       setSelectedDiagnosis(null);
+    } else {
+      setSelectedDiagnosis(diagnosis);
     }
   };
 
@@ -64,15 +86,17 @@ export default function DiagnosisProcedureStep() {
         )
       );
 
-      // Add procedure with cost set to empty string initially (since it's unchanged)
+      // Add procedure with cost set to empty string to indicate it's unmodified
       const procedureToAdd = {
         ...selectedProcedureObj,
-        cost: "0", // Set as empty since it hasn't been modified by user
+        cost: "", // Empty string indicates unmodified cost
+        dosageDescription: "", // Initialize with empty dosage description
       };
 
       deliveryActions.addProcedure(procedureToAdd);
       setSelectedProcedureObj(null);
       setSelectedProcedure(new Set());
+      setIsOpen(false); // Close the select after adding
     }
   };
 
@@ -81,7 +105,11 @@ export default function DiagnosisProcedureStep() {
     newQuantity: number,
     currentCost: string
   ) => {
-    const numericCost = parseFloat(currentCost) || 0;
+    // Get the original cost for calculation
+    const originalCost = originalCosts.get(procedureId) || "0";
+    const costToUse = currentCost === "" ? originalCost : currentCost;
+    const numericCost = parseFloat(costToUse) || 0;
+
     const currentQuantity =
       formState.procedureLines.find((p) => p.ProcedureId === procedureId)
         ?.ProcedureQuantity || 1;
@@ -93,9 +121,19 @@ export default function DiagnosisProcedureStep() {
     // Calculate new total cost
     const newTotalCost = Math.round(unitCost * newQuantity).toString();
 
+    // Check if this new cost equals the original scaled cost
+    const originalUnitCost = parseFloat(originalCost) || 0;
+    const originalScaledCost = Math.round(
+      originalUnitCost * newQuantity
+    ).toString();
+
+    // If the new total cost equals what the original would be at this quantity,
+    // store empty string to indicate unmodified
+    const costToSave = newTotalCost === originalScaledCost ? "" : newTotalCost;
+
     // Update both quantity and cost
     deliveryActions.updateProcedureQuantity(procedureId, newQuantity);
-    deliveryActions.updateProcedureCost(procedureId, newTotalCost);
+    deliveryActions.updateProcedureCost(procedureId, costToSave);
   };
 
   const handleSearchClick = () => {
@@ -114,6 +152,13 @@ export default function DiagnosisProcedureStep() {
     }
   };
 
+  const handleDosageChange = (
+    procedureId: string,
+    dosageDescription: string
+  ) => {
+    deliveryActions.updateProcedureDosage(procedureId, dosageDescription);
+  };
+
   const handleSelectionChange = (selection: SharedSelection) => {
     setSelectedProcedure(selection as Set<string>);
 
@@ -129,6 +174,25 @@ export default function DiagnosisProcedureStep() {
     }
   };
 
+  // Helper function to get display cost
+  const getDisplayCost = (procedure: any) => {
+    if (
+      procedure.cost === "" ||
+      procedure.cost === null ||
+      procedure.cost === undefined
+    ) {
+      // Show original cost if current cost is empty (unmodified)
+      return originalCosts.get(procedure.ProcedureId) || "0";
+    }
+    return procedure.cost;
+  };
+
+  // Helper function to get total cost for display
+  const getTotalCost = (procedure: any) => {
+    const displayCost = getDisplayCost(procedure);
+    return Math.round(parseFloat(displayCost) * procedure.ProcedureQuantity);
+  };
+
   return (
     <div className="space-y-6">
       {/* Diagnosis Section */}
@@ -139,57 +203,51 @@ export default function DiagnosisProcedureStep() {
           </h3>
 
           <div className="space-y-4">
-            <div className="flex items-center flex-wrap gap-3">
-              <div className="flex-1">
-                <DiagnosisAutocomplete
-                  onSelect={setSelectedDiagnosis}
-                  isDisabled={formState.diagnosisLines.length >= 5}
-                />
-              </div>
-
-              <div>
-                <Button
-                  color="primary"
-                  onPress={handleAddDiagnosis}
-                  isDisabled={
-                    !selectedDiagnosis || formState.diagnosisLines.length >= 5
-                  }
-                >
-                  Add Diagnosis
-                </Button>
-              </div>
-            </div>
-
             {formState.diagnosisLines.length === 0 ? (
-              <p className="text-gray-500 text-sm">No diagnoses added yet</p>
+              <div>
+                <DiagnosisAutocomplete
+                  onSelect={handleDiagnosisSelect}
+                  isDisabled={false}
+                />
+                <p className="text-gray-500 text-sm mt-2">
+                  Select a diagnosis from the list above
+                </p>
+              </div>
             ) : (
-              <ul className="space-y-2 mt-4">
-                {formState.diagnosisLines.map((diagnosis) => (
-                  <li
-                    key={diagnosis.DiagnosisId}
-                    className="flex justify-between items-center p-3 bg-gray-50 rounded-md"
+              <div className="space-y-3">
+                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+                  <div>
+                    <p className="font-medium text-gray-800">
+                      {formState.diagnosisLines[0].DiagnosisName}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      ID: {formState.diagnosisLines[0].DiagnosisId}
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    color="danger"
+                    variant="light"
+                    onPress={() =>
+                      deliveryActions.removeDiagnosis(
+                        formState.diagnosisLines[0].DiagnosisId
+                      )
+                    }
                   >
-                    <div>
-                      <p className="font-medium text-gray-800">
-                        {diagnosis.DiagnosisName}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        ID: {diagnosis.DiagnosisId}
-                      </p>
-                    </div>
-                    <Button
-                      size="sm"
-                      color="danger"
-                      variant="light"
-                      onPress={() =>
-                        deliveryActions.removeDiagnosis(diagnosis.DiagnosisId)
-                      }
-                    >
-                      Remove
-                    </Button>
-                  </li>
-                ))}
-              </ul>
+                    Remove
+                  </Button>
+                </div>
+
+                <div>
+                  <DiagnosisAutocomplete
+                    onSelect={handleDiagnosisSelect}
+                    isDisabled={false}
+                  />
+                  <p className="text-gray-500 text-sm mt-2">
+                    Select a different diagnosis to replace the current one
+                  </p>
+                </div>
+              </div>
             )}
           </div>
         </CardBody>
@@ -241,6 +299,8 @@ export default function DiagnosisProcedureStep() {
                     onSelectionChange={handleSelectionChange}
                     isDisabled={formState.procedureLines.length >= 5}
                     scrollRef={scrollerRef}
+                    isOpen={isOpen}
+                    onOpenChange={setIsOpen}
                   >
                     {items.map((item: Procedure) => (
                       <SelectItem
@@ -304,6 +364,9 @@ export default function DiagnosisProcedureStep() {
             ) : (
               <div className="max-h-80 overflow-y-auto space-y-3">
                 {formState.procedureLines.map((procedure) => {
+                  const displayCost = getDisplayCost(procedure);
+                  const totalCost = getTotalCost(procedure);
+
                   return (
                     <div
                       key={procedure.ProcedureId}
@@ -320,11 +383,7 @@ export default function DiagnosisProcedureStep() {
                               ID: {procedure.ProcedureId}
                             </p>
                             <p className="text-sm font-medium text-gray-700">
-                              ₦
-                              {Math.round(
-                                parseFloat(procedure.cost || "0") *
-                                  procedure.ProcedureQuantity
-                              ).toLocaleString()}
+                              ₦{totalCost.toLocaleString()}
                             </p>
                           </div>
                         </div>
@@ -335,20 +394,14 @@ export default function DiagnosisProcedureStep() {
                             type="text"
                             size="sm"
                             label="Unit Cost"
-                            value={
-                              // Show original cost if current cost is empty (unchanged)
-                              procedure.cost === ""
-                                ? originalCosts.get(procedure.ProcedureId) ||
-                                  "0"
-                                : procedure.cost
-                            }
+                            value={displayCost}
                             onChange={(e) => {
                               const newValue = e.target.value;
                               const originalCost =
                                 originalCosts.get(procedure.ProcedureId) || "0";
 
-                              // If the new value equals original cost, send empty string
-                              // Otherwise, send the actual new value
+                              // If the new value equals original cost, store empty string to indicate unmodified
+                              // Otherwise, store the actual new value
                               const costToSave =
                                 newValue === originalCost ? "" : newValue;
 
@@ -370,13 +423,27 @@ export default function DiagnosisProcedureStep() {
                               handleQuantityChange(
                                 procedure.ProcedureId,
                                 parseInt(e.target.value) || 1,
-                                procedure.cost || "0"
+                                procedure.cost || ""
                               )
                             }
                             placeholder="1"
                             className="w-20"
                           />
                         </div>
+                        <Input
+                          className="w-full mt-3"
+                          label="Dosage Description"
+                          placeholder="e.g., Take 1 tablet twice daily with food"
+                          size="sm"
+                          type="text"
+                          value={procedure.DosageDescription || ""}
+                          onChange={(e) =>
+                            handleDosageChange(
+                              procedure.ProcedureId,
+                              e.target.value
+                            )
+                          }
+                        />
                       </div>
 
                       {/* Right side - Remove button */}
@@ -389,7 +456,7 @@ export default function DiagnosisProcedureStep() {
                           deliveryActions.removeProcedure(procedure.ProcedureId)
                         }
                       >
-                        Remove
+                        {formState.isEditing ? "Edit" : "Delete"}
                       </Button>
                     </div>
                   );
