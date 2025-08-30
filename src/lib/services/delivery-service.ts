@@ -69,7 +69,7 @@ export const createDelivery = async (deliveryData: { Deliveries: Delivery[] }): 
   }
 };
 
-export const fetchDeliveries = async (username: string, enrolleeId: string, actionType?: string, fromDate?: string, toDate?: string
+export const fetchDeliveries = async (username: string, enrolleeId: string, actionType?: string, fromDate?: string, toDate?: string, status?: string
 ): Promise<any> => {
   try {
     deliveryStore.set((state) => ({
@@ -77,7 +77,7 @@ export const fetchDeliveries = async (username: string, enrolleeId: string, acti
       isLoading: true,
     }));
 
-    const apiUrl = `${API_URL}/PharmacyDelivery/GetTracking?username=${encodeURIComponent(username || "")}&enrolleeId=${encodeURIComponent(enrolleeId || "")}&ACTIONTYPE=${actionType || ""}&FromDate=${fromDate || ""}&Todate=${toDate || ""}`;
+    const apiUrl = `${API_URL}/PharmacyDelivery/GetTracking?username=${encodeURIComponent(username || "")}&enrolleeId=${encodeURIComponent(enrolleeId || "")}&ACTIONTYPE=${actionType || ""}&FromDate=${fromDate || ""}&Todate=${toDate || ""}&DeliveryStatus=${encodeURIComponent(status || "")}`;
 
     console.log("Fetching deliveries from:", apiUrl);
 
