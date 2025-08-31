@@ -26,7 +26,7 @@ export default function DeliveryDetailsStep() {
 
   const frequencyOptions = [
     { key: "One-off", label: "One-off" },
-    { key: "Routine", label: "Routine" },
+    { key: "Routine", label: "Routine Refill" },
   ];
 
   const isRoutine = formState.deliveryFrequency === "Routine";
