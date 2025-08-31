@@ -11,7 +11,9 @@ import {
 import { Pagination } from "@heroui/pagination";
 import { Badge } from "@heroui/badge";
 import { Input } from "@heroui/input";
+import { Button } from "@heroui/button";
 import { Key } from "@react-types/shared";
+import * as XLSX from "xlsx";
 
 import { DELIVERY_COLUMNS } from "@/lib/constants";
 import { formatDate, transformApiResponse } from "@/lib/helpers";
@@ -36,6 +38,7 @@ interface RowItem {
   diagnosis_id: string;
   procedurename: string;
   procedureid: string;
+  procedureqty: number;
   pharmacyid: number;
   pharmacyname: string;
   original: any;
@@ -45,8 +48,9 @@ export default function StaticDeliveryTable({
   deliveries,
 }: DeliveryTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10);
+  const [pageSize] = useState(50);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
@@ -78,6 +82,8 @@ export default function StaticDeliveryTable({
           diagnosis_id: transformedDelivery.DiagnosisLines[0]?.DiagnosisId,
           procedurename: transformedDelivery.ProcedureLines[0]?.ProcedureName,
           procedureid: transformedDelivery.ProcedureLines[0]?.ProcedureId,
+          procedureqty:
+            transformedDelivery.ProcedureLines[0]?.ProcedureQuantity,
           pharmacyid: transformedDelivery.Pharmacyid || 0,
           pharmacyname: transformedDelivery.PharmacyName || "",
           original: transformedDelivery,
@@ -112,6 +118,61 @@ export default function StaticDeliveryTable({
 
     return filteredRows.slice(startIndex, endIndex);
   }, [filteredRows, currentPage, pageSize]);
+
+  const handleDownloadExcel = async () => {
+    try {
+      setIsDownloading(true);
+
+      // Prepare data for Excel export
+      const excelData = filteredRows.map((row) => ({
+        "Enrollee Name": row.enrollee.name,
+        Scheme: row.enrollee.scheme,
+        "Start Date": row.startDate,
+        "Next Delivery": row.nextDelivery,
+        Frequency: row.frequency,
+        "Delivery Address": row.deliveryaddress || "",
+        Status: row.status,
+        Diagnosis: row.diagnosisname || "",
+        "Diagnosis ID": row.diagnosis_id || "",
+        Procedure: row.procedurename || "",
+        "Procedure ID": row.procedureid || "",
+        "Procedure Quantity": row.procedureqty || "",
+        Pharmacy: row.pharmacyname || "",
+        "Pharmacy ID": row.pharmacyid || "",
+      }));
+
+      // Create workbook and worksheet
+      const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+      // Auto-size columns
+      const columnWidths = Object.keys(excelData[0] || {}).map((key) => {
+        const maxLength = Math.max(
+          key.length,
+          ...excelData.map(
+            (row) => String(row[key as keyof typeof row] || "").length
+          )
+        );
+        return { wch: Math.min(maxLength + 2, 50) }; // Cap at 50 characters
+      });
+      worksheet["!cols"] = columnWidths;
+
+      // Add worksheet to workbook
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Deliveries");
+
+      // Generate filename with current date
+      const currentDate = new Date().toISOString().split("T")[0];
+      const filename = `deliveries_${currentDate}.xlsx`;
+
+      // Write and download file
+      XLSX.writeFile(workbook, filename);
+    } catch (error) {
+      console.error("Error downloading Excel file:", error);
+      // You might want to show a toast notification here
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const renderCell = (item: RowItem, columnKey: Key): React.ReactNode => {
     switch (columnKey) {
@@ -186,6 +247,15 @@ export default function StaticDeliveryTable({
               value={searchQuery}
               onChange={handleSearchChange}
             />
+            <Button
+              color="primary"
+              isLoading={isDownloading}
+              onClick={handleDownloadExcel}
+              size="lg"
+              variant="solid"
+            >
+              {isDownloading ? "Downloading..." : "Download Excel"}
+            </Button>
           </div>
         </div>
       }
