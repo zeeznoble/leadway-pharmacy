@@ -14,6 +14,7 @@ import ToBeDeliveredPage from "@/pages/to-be-delivered";
 import ReportsPage from "@/pages/reports";
 import RiderPage from "@/pages/rider";
 import SentDeliveryPage from "@/pages/sent-delivery";
+import ThirdPartyAssignRider from "@/pages/third-party-assign";
 
 import DeliveryDetailsPage from "@/pages/delivery-details";
 import { setNavigateFunction } from "./lib/helpers";
@@ -36,6 +37,7 @@ function App() {
         <Route path="/provider-pendings" element={<ProviderPendingsPage />} />
         <Route path="/pack" element={<PackPage />} />
         <Route path="/to-be-delivered" element={<ToBeDeliveredPage />} />
+        <Route path="/third-party-assign" element={<ThirdPartyAssignRider />} />
         <Route path="/sent-for-delivery" element={<SentDeliveryPage />} />
         <Route path="/reports" element={<ReportsPage />} />
         <Route path="/rider" element={<RiderPage />} />
