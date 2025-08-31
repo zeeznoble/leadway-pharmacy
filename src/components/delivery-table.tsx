@@ -376,6 +376,7 @@ export default function DeliveryTable({
           status: transformedDelivery.Status || "Pending",
           diagnosisname: transformedDelivery.DiagnosisLines[0]?.DiagnosisName,
           procedurename: transformedDelivery.ProcedureLines[0]?.ProcedureName,
+          memberstatus: transformedDelivery.memberstatus,
           actions: {
             isDelivered: transformedDelivery.IsDelivered ?? false,
           },
