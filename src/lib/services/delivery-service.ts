@@ -198,6 +198,48 @@ export const fetchPacked = async (username: string, enrolleeId: string, fromDate
   }
 };
 
+export const fetchPackThirdParty = async (username: string, enrolleeId: string, fromDate?: string, toDate?: string): Promise<any> => {
+  try {
+    deliveryStore.set((state) => ({
+      ...state,
+      isLoading: true,
+    }));
+
+    const apiUrl = `${API_URL}/PharmacyDelivery/GetPackedDrugs_thirdparty?username=${encodeURIComponent(username || "")}&enrolleeId=${encodeURIComponent(enrolleeId || "")}&FromDate=${fromDate}&Todate=${toDate}&ACTIONTYPE=2`;
+
+
+    const response = await fetch(apiUrl);
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+
+    if (data.result) {
+      deliveryStore.set((state) => ({
+        ...state,
+        deliveries: data.result,
+        isLoading: false,
+        error: null,
+        nextPackDate: data.result.nextpackdate || null,
+      }));
+      return data;
+    } else {
+      throw new Error(data.ReturnMessage || "Failed to fetch deliveries");
+    }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Failed to connect to the server";
+    deliveryStore.set((state) => ({
+      ...state,
+      isLoading: false,
+      error: errorMessage,
+    }));
+    throw error;
+  }
+};
+
 export const fetchDiagnoses = async (): Promise<Diagnosis[]> => {
   try {
     const apiUrl = `${API_URL}/api/ListValues/GetAllDiagnosis`;
