@@ -263,6 +263,7 @@ export const transformApiResponse = (apiResponse: any): Delivery => {
     FrequencyDuration: apiResponse.frequencyduration,
     EndDate: apiResponse.enddate,
     Status: apiResponse.Status,
+    memberstatus: apiResponse.memberstatus,
     // Additional fields from API response
     EntryNo: apiResponse.entryno,
     DeliveryId: apiResponse.deliveryid,
@@ -468,6 +469,195 @@ export const generateDeliveryNotePDF = async (deliveryData: DeliveryNoteData[], 
           ProcedureId: procedure.procedureid || procedure.ProcedureId || '',
           ProcedureQuantity: (procedure.procedurequantity || procedure.ProcedureQuantity || 1) * selectedMonths,
           OriginalQuantity: procedure.procedurequantity || procedure.ProcedureQuantity || 1,
+          cost: procedure.cost || '0',
+          duration: procedure.duration || '',
+          DosageDescription: procedure.DosageDescription || "",
+        });
+      });
+    });
+
+    // Items table
+    const tableData = allProcedures.map(item => [
+      item.ProcedureName,
+      `${item.ProcedureQuantity} ${getQuantityUnit(item.ProcedureName)}`,
+      item.DosageDescription
+    ]);
+
+    // Add duration information
+    if (allProcedures.length > 0 && allProcedures[0].duration) {
+      const durationText = `${allProcedures[0].duration.replace(/\d+\s*months?/i, `${selectedMonths} month${selectedMonths !== 1 ? 's' : ''}`)}`;
+      tableData.push([durationText, '']);
+    } else if (selectedMonths > 0) {
+      tableData.push([`Supply for ${selectedMonths} month${selectedMonths !== 1 ? 's' : ''}`, '']);
+    }
+
+    // Generate table using autoTable
+    autoTable(doc, {
+      startY: 145,
+      head: [['DESCRIPTION', 'QUANTITY', 'Dosage Description']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [173, 216, 230],
+        textColor: [0, 0, 0],
+        fontStyle: 'bold',
+        fontSize: 10,
+      },
+      bodyStyles: {
+        fontSize: 9,
+        textColor: [0, 0, 0],
+      },
+      columnStyles: {
+        0: { cellWidth: 100 },
+        1: { cellWidth: 30, halign: 'right' },
+        2: { cellWidth: 50, halign: 'right' }
+      },
+      margin: { left: 20, right: 20 },
+    });
+
+    // Health advice section
+    const finalY = (doc as any).lastAutoTable.finalY + 20;
+
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'italic');
+
+    const healthAdvice = `Maintaining consistent medication adherence and adopting healthy lifestyle changes are essential for effectively managing your health. Remember your healthcare team is available to provide support and guidance throughout your journey. Make your health a priority by staying dedicated to your treatment plan.
+
+Reach out to your health care team today, to get the support you need.
+Contact Centre Number: 07080627051, 02-012801051
+* WhatsApp: 09165629569
+* Email: Healthcare@leadway.com
+* Web chat - leadwayhealth.com
+
+At your convenience, we have a team of expert Doctors ready to be of support to you, connect with them through our telemedicine platform on our Mobile app.`;
+
+    const splitText = doc.splitTextToSize(healthAdvice, 170);
+    doc.text(splitText, 20, finalY);
+
+    // Add page number at the bottom
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Page ${i + 1} of ${enrolleeIds.length}`, doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 10, { align: 'center' });
+  }
+
+  // Download the PDF with updated filename
+  const enrolleeCount = enrolleeIds.length;
+  const fileName = `Delivery_Notes_${deliveryNoteNo}_${enrolleeCount}_Enrollees_${selectedMonths}M_${nextpackdate.replace(/\//g, '-')}.pdf`;
+  doc.save(fileName);
+};
+
+export const generateDeliveryNotePDFNew = async (deliveryData: DeliveryNoteData[], selectedMonths: number, nextpackdate: string) => {
+
+  const doc = new jsPDF();
+
+  // Group deliveries by EnrolleeID
+  const groupedByEnrollee = deliveryData.reduce((groups: any, delivery: any) => {
+    const enrolleeId = delivery.enrolleeid || delivery.EnrolleeId || 'Unknown';
+    if (!groups[enrolleeId]) {
+      groups[enrolleeId] = [];
+    }
+    groups[enrolleeId].push(delivery);
+    return groups;
+  }, {});
+
+  const enrolleeIds = Object.keys(groupedByEnrollee);
+  let isFirstPage = true;
+
+  // Generate a single delivery note number for the entire PDF
+  const deliveryNoteNo = Math.floor(Math.random() * 9000) + 1000;
+
+  // Loop through each enrollee and create a page
+  for (let i = 0; i < enrolleeIds.length; i++) {
+    const enrolleeId = enrolleeIds[i];
+    const enrolleeDeliveries = groupedByEnrollee[enrolleeId];
+
+    // Get the first delivery to extract enrollee information
+    const primaryDelivery = enrolleeDeliveries[0];
+
+    // Add new page for each enrollee (except the first one)
+    if (!isFirstPage) {
+      doc.addPage();
+    }
+    isFirstPage = false;
+
+    // Add logo from local file
+    try {
+      doc.addImage('/logo-leadway.png', 'PNG', 20, 15, 60, 25);
+    } catch (error) {
+      console.warn('Could not load logo:', error);
+    }
+
+    // Company header
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('DELIVERY NOTE', doc.internal.pageSize.width - 20, 25, { align: 'right' });
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text('LEADWAY HEALTH LTD', doc.internal.pageSize.width - 20, 35, { align: 'right' });
+    doc.text('121-123, Funso Williams Avenue, Iponri, Surulere,', doc.internal.pageSize.width - 20, 42, { align: 'right' });
+    doc.text('Lagos, Nigeria', doc.internal.pageSize.width - 20, 49, { align: 'right' });
+
+    // Delivery note details
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Delivery note No.:`, doc.internal.pageSize.width - 60, 90, { align: 'left' });
+    doc.setFont('helvetica', 'bold');
+    doc.text(`${deliveryNoteNo}-${i + 1}`, doc.internal.pageSize.width - 20, 90, { align: 'right' });
+
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Issue date:`, doc.internal.pageSize.width - 60, 97, { align: 'left' });
+    doc.setFont('helvetica', 'bold');
+    doc.text(nextpackdate, doc.internal.pageSize.width - 20, 97, { align: 'right' });
+
+    // Patient details - FIXED FIELD MAPPING
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('FOR', 20, 90);
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+
+    // Use correct field mappings based on your data structure
+    const patientName = primaryDelivery.EnrolleeName || primaryDelivery.enrollee?.name || 'N/A';
+    const patientId = primaryDelivery.EnrolleeId || primaryDelivery.enrollee?.id || 'N/A';
+
+    // Get scheme from correct locations
+    const schemeName = primaryDelivery.original?.SchemeName ||
+      primaryDelivery.enrollee?.scheme ||
+      primaryDelivery.enrolleeData?.Member_Plan || 'N/A';
+
+    // Get address from correct locations (try multiple fields)
+    const address = primaryDelivery.deliveryaddress ||
+      primaryDelivery.enrolleeData?.Member_Address ||
+      primaryDelivery.original?.deliveryaddress ||
+      'Address not available';
+
+    // Get phone from correct locations
+    const phone = primaryDelivery.original?.phonenumber ||
+      primaryDelivery.enrolleeData?.Member_Phone_One ||
+      primaryDelivery.enrolleeData?.Member_Phone_Two ||
+      'Phone not available';
+
+    doc.text(patientName.toUpperCase(), 20, 100);
+    doc.text(`ID: ${patientId}`, 20, 107);
+    doc.text(`Scheme: ${schemeName}`, 20, 114);
+    doc.text(address, 20, 121);
+    doc.text(phone, 20, 128);
+    doc.text('Nigeria', 20, 135);
+
+    // Collect all procedures for this enrollee - FIXED PROCEDURE MAPPING
+    const allProcedures: any[] = [];
+    enrolleeDeliveries.forEach((delivery: any) => {
+      // Use correct field mapping for procedures
+      const procedures = delivery.original?.ProcedureLines || [];
+      procedures.forEach((procedure: any) => {
+        console.log('Processing procedure:', procedure);
+        allProcedures.push({
+          ProcedureName: procedure.ProcedureName || 'Unknown Procedure',
+          ProcedureId: procedure.ProcedureId || '',
+          ProcedureQuantity: (procedure.ProcedureQuantity || 1) * selectedMonths,
+          OriginalQuantity: procedure.ProcedureQuantity || 1,
           cost: procedure.cost || '0',
           duration: procedure.duration || '',
           DosageDescription: procedure.DosageDescription || "",
