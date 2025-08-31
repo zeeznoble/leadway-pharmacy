@@ -120,6 +120,24 @@ export default function SideNav() {
       text: "Pending Approval",
     },
     {
+      link: "/third-party-assign",
+      icon: (
+        <TasksIcon
+          strokeWidth={
+            router.pathname.startsWith("/third-party-assign") ? "1.5" : "1"
+          }
+          stroke={
+            router.pathname.startsWith("/third-party-assign")
+              ? "#ffffff"
+              : "#475467"
+          }
+          width={23}
+          height={20}
+        />
+      ),
+      text: "Third Party Assign Rider",
+    },
+    {
       link: "/pack",
       icon: (
         <StockIcon
