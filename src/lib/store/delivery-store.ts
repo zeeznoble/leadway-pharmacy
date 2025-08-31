@@ -43,13 +43,25 @@ export const initialFormState = {
 
 export const deliveryFormState = chunk(initialFormState);
 
+export type PendingApproval = {
+  enrolleeid: string;
+  enrolleename: string;
+  enrollee_age: string;
+  schemename: string;
+  LastEditedDate: string;
+  consolidated_diagnosis: string;
+}
+
 export const deliveryStore = chunk({
   deliveries: [] as Delivery[],
+  pendingApprovalList: [] as PendingApproval[],
+  showDetailView: false,
   isLoading: false,
   isSubmitting: false,
   isPackingLoading: false,
   error: null as string | null,
   packingError: null as string | null,
+  selectedEnrolleeId: null as string | null,
   packingSuccess: false,
   lastSearchedEnrolleeId: null as string | null,
   showModal: false,
@@ -131,6 +143,23 @@ export const deliveryActions = {
       }
       return state;
     });
+  },
+
+  selectEnrolleeForDetails: (enrolleeId: string) => {
+    deliveryStore.set((state) => ({
+      ...state,
+      selectedEnrolleeId: enrolleeId,
+      showDetailView: true,
+    }));
+  },
+
+  backToListView: () => {
+    deliveryStore.set((state) => ({
+      ...state,
+      selectedEnrolleeId: null,
+      showDetailView: false,
+      deliveries: [],
+    }));
   },
 
   goToStep: (step: number) => {
