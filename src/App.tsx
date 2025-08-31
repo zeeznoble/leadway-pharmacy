@@ -8,7 +8,7 @@ import IndexPage from "@/pages/index";
 import PharmacyPage from "@/pages/pharmacy";
 import EnrolleesPage from "@/pages/enrollees";
 import DeliveriesPage from "@/pages/deliveries";
-import ProviderPendingsPage from "@/pages/provider-pendings";
+import PendingApprovalPage from "@/pages/pending-approval";
 import PackPage from "@/pages/pack";
 import ToBeDeliveredPage from "@/pages/to-be-delivered";
 import ReportsPage from "@/pages/reports";
@@ -34,7 +34,7 @@ function App() {
         <Route path="/pharmacy" element={<PharmacyPage />} />
         <Route path="/enrollees" element={<EnrolleesPage />} />
         <Route path="/create-delivery" element={<DeliveriesPage />} />
-        <Route path="/provider-pendings" element={<ProviderPendingsPage />} />
+        <Route path="/provider-pendings" element={<PendingApprovalPage />} />
         <Route path="/pack" element={<PackPage />} />
         <Route path="/to-be-delivered" element={<ToBeDeliveredPage />} />
         <Route path="/third-party-assign" element={<ThirdPartyAssignRider />} />
