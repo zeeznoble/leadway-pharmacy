@@ -41,6 +41,7 @@ import type { Delivery } from "@/types";
 import { packDeliveriesThirdParty } from "@/lib/services/approval-service";
 import { fetchEnrolleeById } from "@/lib/services/fetch-enrolee";
 import PharmacySelectionModal from "./pharmacy-selection-modal";
+import { sendMedicationRefillEmails } from "@/lib/services/medication-email";
 
 interface DeliveryTableProps {
   deliveries: Delivery[];
@@ -465,6 +466,21 @@ export default function ProviderPendingsDeliveryTable({
           const nextPackDate = new Date(deliveriesForAPI[0]?.nextpackdate)
             .toISOString()
             .split("T")[0];
+
+          // 🎯 SEND EMAILS FIRST - Before PDF generation
+          console.log("Starting email sending process...");
+          try {
+            await sendMedicationRefillEmails(
+              selectedDeliveriesWithEnrolleeData,
+              mostCommonMonths,
+              nextPackDate
+            );
+          } catch (emailError) {
+            console.error("Email sending failed:", emailError);
+            toast.error(
+              "Failed to send medication confirmation emails, but packing was successful"
+            );
+          }
 
           await generateDeliveryNotePDFNew(
             selectedDeliveriesWithEnrolleeData,
