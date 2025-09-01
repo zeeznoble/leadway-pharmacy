@@ -198,6 +198,38 @@ export const fetchPacked = async (username: string, enrolleeId: string, fromDate
   }
 };
 
+export const returnPackedDrugs = async (enrolleeIds: string[]): Promise<any> => {
+  try {
+    const payload = enrolleeIds.map(id => ({
+      Enrolleeid: id
+    }));
+    console.log(payload)
+
+    const response = await fetch(`${API_URL}/PharmacyDelivery/ReturnPackedDrugs`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.status === 200) {
+      return data;
+    } else {
+      throw new Error(data.ReturnMessage || data.message || "Failed to return packed drugs");
+    }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Failed to connect to the server";
+    throw new Error(errorMessage);
+  }
+};
+
 export const fetchPackThirdParty = async (username: string, enrolleeId: string, fromDate?: string, toDate?: string): Promise<any> => {
   try {
     deliveryStore.set((state) => ({
