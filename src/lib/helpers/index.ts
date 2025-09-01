@@ -14,6 +14,7 @@ import { appChunk, authStore } from "../store/app-store";
 import { BenefitsResponse } from "../services/fetch-benefit";
 import { BENEFITS_COLUMNS, PROVIDERS_COLUMNS } from "../constants";
 import { Delivery } from "@/types";
+import { DeliveryAdjustment } from "@/pages/pack";
 
 
 export const exportToExcel = (allData: ProviderData | null, setError?: Dispatch<SetStateAction<string>>) => {
@@ -365,7 +366,7 @@ type DeliveryNoteData = {
   items: DeliveryItem[];
 }
 
-export const generateDeliveryNotePDF = async (deliveryData: DeliveryNoteData[], selectedMonths: number, nextpackdate: string) => {
+export const generateDeliveryNotePDF = async (deliveryData: DeliveryNoteData[], selectedMonths: number, nextpackdate: string, deliveryAdjustments: DeliveryAdjustment[]) => {
 
   const doc = new jsPDF();
 
@@ -379,20 +380,33 @@ export const generateDeliveryNotePDF = async (deliveryData: DeliveryNoteData[], 
     return groups;
   }, {});
 
+  // Create a map for quick lookup of adjustments by enrollee ID
+  const adjustmentMap = new Map<string, DeliveryAdjustment>();
+  deliveryAdjustments.forEach((adj) => {
+    adjustmentMap.set(adj.enrolleeId, adj);
+  });
+
   const enrolleeIds = Object.keys(groupedByEnrollee);
   let isFirstPage = true;
 
   // Generate a single delivery note number for the entire PDF
   const deliveryNoteNo = Math.floor(Math.random() * 9000) + 1000;
 
-  // Format current date
-  // const currentDate = new Date();
-  // const issueDate = `${(currentDate.getMonth() + 1).toString().padStart(2, "0")}/${currentDate.getDate().toString().padStart(2, "0")}/${currentDate.getFullYear()}`;
-
   // Loop through each enrollee and create a page
   for (let i = 0; i < enrolleeIds.length; i++) {
     const enrolleeId = enrolleeIds[i];
     const enrolleeDeliveries = groupedByEnrollee[enrolleeId];
+
+    // Get the adjustment for this specific enrollee
+    const enrolleeAdjustment = adjustmentMap.get(enrolleeId);
+    const enrolleeMonths = enrolleeAdjustment ? enrolleeAdjustment.adjustedMonths : selectedMonths;
+
+    console.log(`Generating PDF for enrollee ${enrolleeId}:`, {
+      originalMonths: selectedMonths,
+      adjustedMonths: enrolleeMonths,
+      hasAdjustment: !!enrolleeAdjustment,
+      isAdjusted: enrolleeAdjustment?.isAdjusted || false
+    });
 
     // Get the first delivery to extract enrollee information
     const primaryDelivery = enrolleeDeliveries[0];
@@ -420,9 +434,6 @@ export const generateDeliveryNotePDF = async (deliveryData: DeliveryNoteData[], 
     doc.text('LEADWAY HEALTH LTD', doc.internal.pageSize.width - 20, 35, { align: 'right' });
     doc.text('121-123, Funso Williams Avenue, Iponri, Surulere,', doc.internal.pageSize.width - 20, 42, { align: 'right' });
     doc.text('Lagos, Nigeria', doc.internal.pageSize.width - 20, 49, { align: 'right' });
-    // doc.text('101241 Surulere', doc.internal.pageSize.width - 20, 56, { align: 'right' });
-    // doc.text('Nigeria', doc.internal.pageSize.width - 20, 63, { align: 'right' });
-    // doc.text('healthcare@leadway.com', doc.internal.pageSize.width - 20, 77, { align: 'right' });
 
     // Delivery note details
     doc.setFontSize(10);
@@ -458,16 +469,16 @@ export const generateDeliveryNotePDF = async (deliveryData: DeliveryNoteData[], 
     doc.text(phone, 20, 128);
     doc.text('Nigeria', 20, 135);
 
-    // Collect all procedures for this enrollee
+    // Collect all procedures for this enrollee using the enrollee-specific months
     const allProcedures: any[] = [];
     enrolleeDeliveries.forEach((delivery: any) => {
       const procedures = delivery.procedureLines || delivery.ProcedureLines || [];
       procedures.forEach((procedure: any) => {
-        console.log(allProcedures)
         allProcedures.push({
           ProcedureName: procedure.procedurename || procedure.ProcedureName || 'Unknown Procedure',
           ProcedureId: procedure.procedureid || procedure.ProcedureId || '',
-          ProcedureQuantity: (procedure.procedurequantity || procedure.ProcedureQuantity || 1) * selectedMonths,
+          // Use enrollee-specific months here instead of selectedMonths
+          ProcedureQuantity: (procedure.procedurequantity || procedure.ProcedureQuantity || 1) * enrolleeMonths,
           OriginalQuantity: procedure.procedurequantity || procedure.ProcedureQuantity || 1,
           cost: procedure.cost || '0',
           duration: procedure.duration || '',
@@ -483,12 +494,12 @@ export const generateDeliveryNotePDF = async (deliveryData: DeliveryNoteData[], 
       item.DosageDescription
     ]);
 
-    // Add duration information
+    // Add duration information using enrollee-specific months
     if (allProcedures.length > 0 && allProcedures[0].duration) {
-      const durationText = `${allProcedures[0].duration.replace(/\d+\s*months?/i, `${selectedMonths} month${selectedMonths !== 1 ? 's' : ''}`)}`;
+      const durationText = `${allProcedures[0].duration.replace(/\d+\s*months?/i, `${enrolleeMonths} month${enrolleeMonths !== 1 ? 's' : ''}`)}`;
       tableData.push([durationText, '']);
-    } else if (selectedMonths > 0) {
-      tableData.push([`Supply for ${selectedMonths} month${selectedMonths !== 1 ? 's' : ''}`, '']);
+    } else if (enrolleeMonths > 0) {
+      tableData.push([`Supply for ${enrolleeMonths} month${enrolleeMonths !== 1 ? 's' : ''}`, '']);
     }
 
     // Generate table using autoTable
@@ -546,7 +557,7 @@ At your convenience, we have a team of expert Doctors ready to be of support to 
   doc.save(fileName);
 };
 
-export const generateDeliveryNotePDFNew = async (deliveryData: DeliveryNoteData[], selectedMonths: number, nextpackdate: string) => {
+export const generateDeliveryNotePDFNew = async (deliveryData: DeliveryNoteData[], selectedMonths: number, nextpackdate: string, deliveryAdjustments: DeliveryAdjustment[]) => {
 
   const doc = new jsPDF();
 
@@ -560,6 +571,12 @@ export const generateDeliveryNotePDFNew = async (deliveryData: DeliveryNoteData[
     return groups;
   }, {});
 
+  // Create a map for quick lookup of adjustments by enrollee ID
+  const adjustmentMap = new Map<string, DeliveryAdjustment>();
+  deliveryAdjustments.forEach((adj) => {
+    adjustmentMap.set(adj.enrolleeId, adj);
+  });
+
   const enrolleeIds = Object.keys(groupedByEnrollee);
   let isFirstPage = true;
 
@@ -570,6 +587,17 @@ export const generateDeliveryNotePDFNew = async (deliveryData: DeliveryNoteData[
   for (let i = 0; i < enrolleeIds.length; i++) {
     const enrolleeId = enrolleeIds[i];
     const enrolleeDeliveries = groupedByEnrollee[enrolleeId];
+
+    // Get the adjustment for this specific enrollee
+    const enrolleeAdjustment = adjustmentMap.get(enrolleeId);
+    const enrolleeMonths = enrolleeAdjustment ? enrolleeAdjustment.adjustedMonths : selectedMonths;
+
+    console.log(`Generating PDF for enrollee ${enrolleeId}:`, {
+      originalMonths: selectedMonths,
+      adjustedMonths: enrolleeMonths,
+      hasAdjustment: !!enrolleeAdjustment,
+      isAdjusted: enrolleeAdjustment?.isAdjusted || false
+    });
 
     // Get the first delivery to extract enrollee information
     const primaryDelivery = enrolleeDeliveries[0];
@@ -656,7 +684,8 @@ export const generateDeliveryNotePDFNew = async (deliveryData: DeliveryNoteData[
         allProcedures.push({
           ProcedureName: procedure.ProcedureName || 'Unknown Procedure',
           ProcedureId: procedure.ProcedureId || '',
-          ProcedureQuantity: (procedure.ProcedureQuantity || 1) * selectedMonths,
+          // Use enrollee-specific months here instead of selectedMonths
+          ProcedureQuantity: (procedure.ProcedureQuantity || 1) * enrolleeMonths,
           OriginalQuantity: procedure.ProcedureQuantity || 1,
           cost: procedure.cost || '0',
           duration: procedure.duration || '',
