@@ -12,6 +12,7 @@ import PackDateModal from "@/components/pack-date-modal";
 import { Button } from "@heroui/button";
 import { formatDateForAPI, generateDeliveryNotePDF } from "@/lib/helpers";
 import { EnrolleeData, fetchEnrolleeById } from "@/lib/services/fetch-enrolee";
+import { sendMedicationRefillEmails } from "@/lib/services/medication-email";
 
 interface DeliveryAdjustment {
   enrolleeId: string;
@@ -317,6 +318,23 @@ export default function PackPage() {
             }
           }
 
+          console.log(selectedDeliveriesWithEnrolleeData);
+
+          // 🎯 SEND EMAILS FIRST - Before PDF generation
+          console.log("Starting email sending process...");
+          try {
+            await sendMedicationRefillEmails(
+              selectedDeliveriesWithEnrolleeData,
+              mostCommonMonths,
+              nextPackDate
+            );
+          } catch (emailError) {
+            console.error("Email sending failed:", emailError);
+            toast.error(
+              "Failed to send medication confirmation emails, but packing was successful"
+            );
+          }
+
           // Generate single PDF with all selected deliveries
           console.log(
             "Selected Deliveries for PDF (full data):",
@@ -339,7 +357,8 @@ export default function PackPage() {
               : "";
 
           toast.success(
-            `Delivery note PDF with ${selectedDeliveriesWithEnrolleeData.length} deliveries downloaded successfully!${adjustmentInfo}`
+            `🎉 Packing completed! Delivery note PDF with ${selectedDeliveriesWithEnrolleeData.length} deliveries downloaded successfully!${adjustmentInfo}`,
+            { duration: 6000 }
           );
         } catch (pdfError) {
           console.error("PDF generation error:", pdfError);
