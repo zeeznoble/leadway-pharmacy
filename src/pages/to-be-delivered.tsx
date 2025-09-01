@@ -176,7 +176,7 @@ export default function ToBeDeliveredPage() {
         Message: getRiderSmsMessage(
           `${rider.first_name} ${rider.last_name}`,
           riderCode,
-          formattedDisplayDate,
+          rider.phone_number,
           fullDeliveryData.EnrolleeName || "Patient"
         ),
         Source: "Drug Delivery",
