@@ -223,7 +223,6 @@ export default function PackPage() {
 
       // Dismiss loading toast
       toast.dismiss("loading-enrollees");
-
       setShowDateModal(true);
     } catch (error) {
       toast.dismiss("loading-enrollees");
@@ -325,8 +324,7 @@ export default function PackPage() {
           try {
             await sendMedicationRefillEmails(
               selectedDeliveriesWithEnrolleeData,
-              mostCommonMonths,
-              nextPackDate
+              mostCommonMonths
             );
           } catch (emailError) {
             console.error("Email sending failed:", emailError);
