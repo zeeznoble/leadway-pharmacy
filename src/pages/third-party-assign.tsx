@@ -192,7 +192,7 @@ export default function ThirdPartyAssignRider() {
         Message: getEnrolleeSmsMessage(
           fullDeliveryData.EnrolleeName || "Patient",
           enrolleeCode,
-          formattedDisplayDate,
+          rider.phone_number,
           `${rider.first_name} ${rider.last_name}`
         ),
         Source: "Drug Delivery",
