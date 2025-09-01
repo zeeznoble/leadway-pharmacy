@@ -134,43 +134,48 @@ export default function DistinctDeliveryTable({
       </div>
 
       {/* Table Section */}
-      <Table aria-label="Pending Approval List">
-        <TableHeader columns={columns}>
-          {(column) => (
-            <TableColumn key={column.key}>{column.label}</TableColumn>
-          )}
-        </TableHeader>
-        <TableBody
-          items={filteredRows}
-          emptyContent="No pending approvals found"
-        >
-          {(item) => (
-            <TableRow
-              key={item.key}
-              className="hover:bg-gray-50 cursor-pointer"
-              onClick={() => onRowClick(item.enrolleeid)}
-            >
-              <TableCell>{item.enrolleeid}</TableCell>
-              <TableCell>{item.enrolleename}</TableCell>
-              <TableCell>{item.enrollee_age}</TableCell>
-              <TableCell className="max-w-xs truncate" title={item.schemename}>
-                {item.schemename}
-              </TableCell>
-              <TableCell
-                className="max-w-md truncate"
-                title={item.consolidated_diagnosis}
+      {filteredRows.length > 0 && (
+        <Table aria-label="Pending Approval List">
+          <TableHeader columns={columns}>
+            {(column) => (
+              <TableColumn key={column.key}>{column.label}</TableColumn>
+            )}
+          </TableHeader>
+          <TableBody
+            items={filteredRows}
+            emptyContent="No pending approvals found"
+          >
+            {(item) => (
+              <TableRow
+                key={item.key}
+                className="hover:bg-gray-50 cursor-pointer"
+                onClick={() => onRowClick(item.enrolleeid)}
               >
-                {item.consolidated_diagnosis}
-              </TableCell>
-              <TableCell>
-                {item.LastEditedDate
-                  ? new Date(item.LastEditedDate).toLocaleDateString()
-                  : "N/A"}
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+                <TableCell>{item.enrolleeid}</TableCell>
+                <TableCell>{item.enrolleename}</TableCell>
+                <TableCell>{item.enrollee_age}</TableCell>
+                <TableCell
+                  className="max-w-xs truncate"
+                  title={item.schemename}
+                >
+                  {item.schemename}
+                </TableCell>
+                <TableCell
+                  className="max-w-md truncate"
+                  title={item.consolidated_diagnosis}
+                >
+                  {item.consolidated_diagnosis}
+                </TableCell>
+                <TableCell>
+                  {item.LastEditedDate
+                    ? new Date(item.LastEditedDate).toLocaleDateString()
+                    : "N/A"}
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      )}
 
       {filteredRows.length === 0 && !isLoading && (
         <div className="text-center py-8 text-gray-500">
