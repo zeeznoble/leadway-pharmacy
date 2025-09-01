@@ -35,6 +35,7 @@ interface RowItem {
   frequency: string;
   status: string;
   diagnosisname: string;
+  memberstatus?: string;
   diagnosis_id: string;
   procedurename: string;
   procedureid: string;
@@ -82,6 +83,7 @@ export default function StaticDeliveryTable({
           diagnosis_id: transformedDelivery.DiagnosisLines[0]?.DiagnosisId,
           procedurename: transformedDelivery.ProcedureLines[0]?.ProcedureName,
           procedureid: transformedDelivery.ProcedureLines[0]?.ProcedureId,
+          memberstatus: transformedDelivery.memberstatus,
           procedureqty:
             transformedDelivery.ProcedureLines[0]?.ProcedureQuantity,
           pharmacyid: transformedDelivery.Pharmacyid || 0,
