@@ -35,6 +35,7 @@ interface PackTableProps {
     searchType?: "enrollee" | "pharmacy" | "address"
   ) => void;
   onPackDelivery: (selectedDeliveries: any[]) => void;
+  onReturnToPack?: (enrolleeIds: string[]) => void; // New prop for return to pack
 }
 
 interface RowItem {
@@ -68,6 +69,7 @@ export default function PackTable({
   error,
   onSearch,
   onPackDelivery,
+  onReturnToPack,
 }: PackTableProps) {
   const router = useLocation();
 
@@ -78,6 +80,7 @@ export default function PackTable({
   const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set([]));
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(50);
+  const [isReturning] = useState(false); // New state for return loading
 
   const { user } = useChunkValue(authStore);
   const { enrolleeData } = useChunkValue(appChunk);
@@ -351,6 +354,29 @@ export default function PackTable({
     enrolleeData,
   ]);
 
+  // NEW: Handle return to pack
+  const handleReturnToPack = useCallback(() => {
+    if (!onReturnToPack) return;
+
+    const currentSelection = selectedKeys as Set<string>;
+    const selectedCount = getSelectedCount(selectedKeys);
+
+    if (selectedCount === 0) {
+      return;
+    }
+
+    const enrolleeIds = Array.from(currentSelection)
+      .map((key: string) => {
+        const selectedRow = filteredRows.find((row) => row.key === key);
+        return selectedRow?.enrollee.id;
+      })
+      .filter(Boolean) as string[];
+
+    console.log("Enrollee IDs to return to pack:", enrolleeIds);
+    onReturnToPack(enrolleeIds);
+    setSelectedKeys(new Set([]));
+  }, [selectedKeys, filteredRows, onReturnToPack]);
+
   const renderCell = (item: RowItem, columnKey: Key): React.ReactNode => {
     switch (columnKey) {
       case "enrollee":
@@ -481,17 +507,36 @@ export default function PackTable({
             </div>
           </div>
 
-          <Button
-            color="success"
-            radius="sm"
-            isDisabled={selectedCount === 0 || isLoading}
-            onPress={handlePackDelivery}
-          >
-            {router.pathname === "/pack"
-              ? "Pack Selected"
-              : "Send for Delivery"}
-            ({selectedCount})
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              color="success"
+              radius="sm"
+              isDisabled={selectedCount === 0 || isLoading}
+              onPress={handlePackDelivery}
+            >
+              {router.pathname === "/pack"
+                ? "Pack Selected"
+                : "Send for Delivery"}
+              ({selectedCount})
+            </Button>
+
+            {/* NEW: Return to Pack button - only show on to-be-delivered page */}
+            {router.pathname === "/to-be-delivered" && onReturnToPack && (
+              <Button
+                color="warning"
+                className="text-white"
+                radius="sm"
+                isDisabled={selectedCount === 0 || isLoading || isReturning}
+                onPress={handleReturnToPack}
+              >
+                {isReturning ? (
+                  <Spinner size="sm" color="white" />
+                ) : (
+                  `Return to Pack (${selectedCount})`
+                )}
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
