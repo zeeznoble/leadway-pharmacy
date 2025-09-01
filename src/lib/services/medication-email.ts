@@ -77,15 +77,15 @@ const getMedicationsForEnrollee = (deliveries: any[], enrolleeId: string, select
   return medications;
 };
 
-// Email template generator
-const getEmailTemplate = (templateData: EmailTemplateData): string => {
+// Template for Routine deliveries
+const getRoutineEmailTemplate = (templateData: EmailTemplateData): string => {
   const medicationRows = templateData.medications.map(med =>
     `<tr style="border: 1px solid #ddd;">
-      <td style="padding: 8px; border: 1px solid #ddd; text-align: center; background-color: #fff3cd;">${med.sn}</td>
-      <td style="padding: 8px; border: 1px solid #ddd; background-color: #fff3cd;">${med.medication}</td>
-      <td style="padding: 8px; border: 1px solid #ddd; background-color: #fff3cd;">${med.dosage}</td>
-      <td style="padding: 8px; border: 1px solid #ddd; text-align: center; background-color: #fff3cd;">${med.quantity}</td>
-      <td style="padding: 8px; border: 1px solid #ddd; text-align: center; background-color: #fff3cd;">${med.type}</td>
+      <td style="padding: 8px; border: 1px solid #ddd; text-align: center; background-color: #fef7f3;">${med.sn}</td>
+      <td style="padding: 8px; border: 1px solid #ddd; background-color: #fef7f3;">${med.medication}</td>
+      <td style="padding: 8px; border: 1px solid #ddd; background-color: #fef7f3;">${med.dosage}</td>
+      <td style="padding: 8px; border: 1px solid #ddd; text-align: center; background-color: #fef7f3;">${med.quantity}</td>
+      <td style="padding: 8px; border: 1px solid #ddd; text-align: center; background-color: #fef7f3;">${med.type}</td>
     </tr>`
   ).join('');
 
@@ -93,48 +93,48 @@ const getEmailTemplate = (templateData: EmailTemplateData): string => {
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
 
       <!-- Header -->
-      <div style="text-align: center; margin-bottom: 30px;">
-        <h2 style="color: #2c5530; font-size: 24px; font-weight: bold; margin: 0; text-transform: uppercase;">
+      <div style="text-align: center; margin-bottom: 30px; background: linear-gradient(135deg, #f15A24 0%, #C61531 100%); padding: 20px; border-radius: 8px;">
+        <h2 style="color: white; font-size: 24px; font-weight: bold; margin: 0; text-transform: uppercase; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">
           MEDICATION REFILL CONFIRMATION
         </h2>
       </div>
 
       <!-- Main Content -->
-      <div style="background-color: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+      <div style="background-color: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-top: 4px solid #f15A24;">
 
         <!-- Greeting -->
         <div style="margin-bottom: 20px;">
-          <p style="margin: 0; font-size: 16px; color: #333;">
-            Dear <strong>${templateData.enrolleeName}</strong>, <strong>[${templateData.enrolleeId}]</strong>,
+          <p style="margin: 0; font-size: 16px; color: #262626;">
+            Dear <strong style="color: #f15A24;">${templateData.enrolleeName}</strong>, <strong style="color: #C61531;">[${templateData.enrolleeId}]</strong>,
           </p>
         </div>
 
         <!-- Introduction -->
         <div style="margin-bottom: 25px;">
-          <p style="line-height: 1.6; color: #555; margin: 0 0 15px 0;">
+          <p style="line-height: 1.6; color: #262626; margin: 0 0 15px 0;">
             We would like to express our heartfelt gratitude for trusting us with your health needs.
             Your confidence in our pharmacy benefit scheme inspires us to serve you even better.
           </p>
 
-          <p style="line-height: 1.6; color: #555; margin: 0;">
-            As we prepare for your next refill (<strong>${templateData.packingPeriod}</strong>),
+          <p style="line-height: 1.6; color: #262626; margin: 0;">
+            As we prepare for your next refill (<strong style="color: #f15A24;">${templateData.packingPeriod}</strong>),
             we kindly ask for your assistance in ensuring a seamless service:
           </p>
         </div>
 
         <!-- Medication Section -->
         <div style="margin-bottom: 25px;">
-          <h3 style="color: #2c5530; font-size: 18px; margin: 0 0 15px 0; font-weight: bold;">
+          <h3 style="color: #f15A24; font-size: 18px; margin: 0 0 15px 0; font-weight: bold; border-bottom: 2px solid #f15A24; padding-bottom: 5px;">
             Medication Refills
           </h3>
-          <p style="margin: 0 0 15px 0; color: #555;">
+          <p style="margin: 0 0 15px 0; color: #262626;">
             Please review the information we have on file for your medication refills.
           </p>
 
           <!-- Medication Table -->
-          <table style="width: 100%; border-collapse: collapse; margin: 15px 0; background-color: white;">
+          <table style="width: 100%; border-collapse: collapse; margin: 15px 0; background-color: white; border-radius: 6px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
             <thead>
-              <tr style="background-color: #2c5530;">
+              <tr style="background: linear-gradient(135deg, #f15A24 0%, #C61531 100%);">
                 <th style="padding: 12px 8px; border: 1px solid #ddd; color: white; text-align: center; font-weight: bold;">SN</th>
                 <th style="padding: 12px 8px; border: 1px solid #ddd; color: white; font-weight: bold;">Medication</th>
                 <th style="padding: 12px 8px; border: 1px solid #ddd; color: white; font-weight: bold;">Dosage</th>
@@ -150,25 +150,25 @@ const getEmailTemplate = (templateData: EmailTemplateData): string => {
 
         <!-- Contact & Delivery Details -->
         <div style="margin-bottom: 25px;">
-          <h3 style="color: #2c5530; font-size: 18px; margin: 0 0 15px 0; font-weight: bold;">
+          <h3 style="color: #f15A24; font-size: 18px; margin: 0 0 15px 0; font-weight: bold; border-bottom: 2px solid #f15A24; padding-bottom: 5px;">
             Contact & Delivery Details
           </h3>
-          <p style="margin: 0 0 10px 0; color: #555;">
+          <p style="margin: 0 0 10px 0; color: #262626;">
             Confirm that your phone number and delivery address are accurate.
           </p>
-          <p style="margin: 0 0 5px 0; color: #333;">
-            <strong>Phone Number</strong> - ${templateData.enrolleePhone}
+          <p style="margin: 0 0 5px 0; color: #262626;">
+            <strong style="color: #C61531;">Phone Number</strong> - ${templateData.enrolleePhone}
           </p>
-          <p style="margin: 0; color: #333;">
-            <strong>Address</strong> - ${templateData.enrolleeAddress}
+          <p style="margin: 0; color: #262626;">
+            <strong style="color: #C61531;">Address</strong> - ${templateData.enrolleeAddress}
           </p>
         </div>
 
         <!-- Update Instructions -->
-        <div style="margin-bottom: 25px; padding: 15px; background-color: #e8f4fd; border-left: 4px solid #2c5530; border-radius: 4px;">
-          <p style="margin: 0; color: #555; line-height: 1.5;">
+        <div style="margin-bottom: 25px; padding: 15px; background: linear-gradient(135deg, rgba(241, 90, 36, 0.1) 0%, rgba(198, 21, 49, 0.1) 100%); border-left: 4px solid #f15A24; border-radius: 4px;">
+          <p style="margin: 0; color: #262626; line-height: 1.5;">
             If you would like to update any details, please send an email to
-            <a href="mailto:Pharmacybenefitmgt@leadway.com" style="color: #2c5530; text-decoration: none; font-weight: bold;">
+            <a href="mailto:Pharmacybenefitmgt@leadway.com" style="color: #C61531; text-decoration: none; font-weight: bold;">
               Pharmacybenefitmgt@leadway.com
             </a>
           </p>
@@ -176,29 +176,29 @@ const getEmailTemplate = (templateData: EmailTemplateData): string => {
 
         <!-- Service Message -->
         <div style="margin-bottom: 20px;">
-          <p style="line-height: 1.6; color: #555; margin: 0;">
+          <p style="line-height: 1.6; color: #262626; margin: 0;">
             Your prompt response will help us continue to deliver the excellent service you deserve.
           </p>
         </div>
 
         <!-- Thank You -->
         <div style="margin-bottom: 25px;">
-          <p style="line-height: 1.6; color: #555; margin: 0;">
+          <p style="line-height: 1.6; color: #262626; margin: 0;">
             Thank you for being a valued part of our community.
           </p>
         </div>
 
         <!-- Signature -->
-        <div style="margin-top: 30px;">
-          <p style="margin: 0 0 5px 0; color: #333; font-weight: bold;">Warm regards,</p>
-          <p style="margin: 0 0 5px 0; color: #2c5530; font-weight: bold; font-size: 16px;">Leadway HMO</p>
-          <p style="margin: 0; color: #666;">Pharmacy Benefit Team</p>
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #f15A24;">
+          <p style="margin: 0 0 5px 0; color: #262626; font-weight: bold;">Warm regards,</p>
+          <p style="margin: 0 0 5px 0; color: #f15A24; font-weight: bold; font-size: 16px;">Leadway HMO</p>
+          <p style="margin: 0; color: #C61531; font-weight: 600;">Pharmacy Benefit Team</p>
         </div>
 
       </div>
 
       <!-- Footer -->
-      <div style="text-align: center; margin-top: 20px; padding: 15px; color: #888; font-size: 12px;">
+      <div style="text-align: center; margin-top: 20px; padding: 15px; color: #262626; font-size: 12px; background-color: rgba(241, 90, 36, 0.05); border-radius: 6px;">
         <p style="margin: 0;">
           This is an automated message from Leadway HMO Pharmacy Benefit Management System
         </p>
@@ -208,15 +208,149 @@ const getEmailTemplate = (templateData: EmailTemplateData): string => {
   `;
 };
 
+// Template for One-off deliveries
+const getOneOffEmailTemplate = (templateData: EmailTemplateData): string => {
+  const medicationRows = templateData.medications.map(med =>
+    `<tr style="border: 1px solid #ddd;">
+      <td style="padding: 8px; border: 1px solid #ddd; text-align: center; background-color: #fef7f3;">${med.sn}</td>
+      <td style="padding: 8px; border: 1px solid #ddd; background-color: #fef7f3;">${med.medication}</td>
+      <td style="padding: 8px; border: 1px solid #ddd; background-color: #fef7f3;">${med.dosage}</td>
+      <td style="padding: 8px; border: 1px solid #ddd; text-align: center; background-color: #fef7f3;">${med.quantity}</td>
+      <td style="padding: 8px; border: 1px solid #ddd; text-align: center; background-color: #fef7f3;">${med.type}</td>
+    </tr>`
+  ).join('');
+
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+
+      <!-- Header -->
+      <div style="text-align: center; margin-bottom: 30px; background: linear-gradient(135deg, #f15A24 0%, #C61531 100%); padding: 20px; border-radius: 8px;">
+        <h2 style="color: white; font-size: 24px; font-weight: bold; margin: 0; text-transform: uppercase; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">
+          MEDICATION SUPPLY CONFIRMATION
+        </h2>
+      </div>
+
+      <!-- Main Content -->
+      <div style="background-color: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-top: 4px solid #f15A24;">
+
+        <!-- Greeting -->
+        <div style="margin-bottom: 20px;">
+          <p style="margin: 0; font-size: 16px; color: #262626;">
+            Dear <strong style="color: #f15A24;">${templateData.enrolleeName}</strong>, <strong style="color: #C61531;">[${templateData.enrolleeId}]</strong>,
+          </p>
+        </div>
+
+        <!-- Introduction -->
+        <div style="margin-bottom: 25px;">
+          <p style="line-height: 1.6; color: #262626; margin: 0 0 15px 0;">
+            We sincerely appreciate your trust in us to support your health needs.
+          </p>
+
+          <p style="line-height: 1.6; color: #262626; margin: 0;">
+            We have received your medication supply request, and to ensure smooth processing, we kindly ask for your assistance with the following:
+          </p>
+        </div>
+
+        <!-- Medication Section -->
+        <div style="margin-bottom: 25px;">
+          <h3 style="color: #f15A24; font-size: 18px; margin: 0 0 15px 0; font-weight: bold; border-bottom: 2px solid #f15A24; padding-bottom: 5px;">
+            Medication Supply
+          </h3>
+          <p style="margin: 0 0 15px 0; color: #262626;">
+            Please take a moment to review and confirm the information we have on record for your medication.
+          </p>
+
+          <!-- Medication Table -->
+          <table style="width: 100%; border-collapse: collapse; margin: 15px 0; background-color: white; border-radius: 6px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <thead>
+              <tr style="background: linear-gradient(135deg, #f15A24 0%, #C61531 100%);">
+                <th style="padding: 12px 8px; border: 1px solid #ddd; color: white; text-align: center; font-weight: bold;">SN</th>
+                <th style="padding: 12px 8px; border: 1px solid #ddd; color: white; font-weight: bold;">Medication</th>
+                <th style="padding: 12px 8px; border: 1px solid #ddd; color: white; font-weight: bold;">Dosage</th>
+                <th style="padding: 12px 8px; border: 1px solid #ddd; color: white; text-align: center; font-weight: bold;">Quantity</th>
+                <th style="padding: 12px 8px; border: 1px solid #ddd; color: white; text-align: center; font-weight: bold;">Type</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${medicationRows}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Contact & Delivery Details -->
+        <div style="margin-bottom: 25px;">
+          <h3 style="color: #f15A24; font-size: 18px; margin: 0 0 15px 0; font-weight: bold; border-bottom: 2px solid #f15A24; padding-bottom: 5px;">
+            Contact & Delivery Details
+          </h3>
+          <p style="margin: 0 0 10px 0; color: #262626;">
+            Confirm that your phone number and delivery address are accurate.
+          </p>
+          <p style="margin: 0 0 5px 0; color: #262626;">
+            <strong style="color: #C61531;">Phone Number</strong> - ${templateData.enrolleePhone}
+          </p>
+          <p style="margin: 0; color: #262626;">
+            <strong style="color: #C61531;">Address</strong> - ${templateData.enrolleeAddress}
+          </p>
+        </div>
+
+        <!-- Update Instructions -->
+        <div style="margin-bottom: 25px; padding: 15px; background: linear-gradient(135deg, rgba(241, 90, 36, 0.1) 0%, rgba(198, 21, 49, 0.1) 100%); border-left: 4px solid #f15A24; border-radius: 4px;">
+          <p style="margin: 0; color: #262626; line-height: 1.5;">
+            If you would like to update any details, please send an email to
+            <a href="mailto:Pharmacybenefitmgt@leadway.com" style="color: #C61531; text-decoration: none; font-weight: bold;">
+              Pharmacybenefitmgt@leadway.com
+            </a>
+          </p>
+        </div>
+
+        <!-- Service Message -->
+        <div style="margin-bottom: 20px;">
+          <p style="line-height: 1.6; color: #262626; margin: 0;">
+            Your prompt response will help us continue to deliver the excellent service you deserve.
+          </p>
+        </div>
+
+        <!-- Thank You -->
+        <div style="margin-bottom: 25px;">
+          <p style="line-height: 1.6; color: #262626; margin: 0;">
+            Thank you for being a valued part of our community.
+          </p>
+        </div>
+
+        <!-- Signature -->
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #f15A24;">
+          <p style="margin: 0 0 5px 0; color: #262626; font-weight: bold;">Warm regards,</p>
+          <p style="margin: 0 0 5px 0; color: #f15A24; font-weight: bold; font-size: 16px;">Leadway HMO</p>
+          <p style="margin: 0; color: #C61531; font-weight: 600;">Pharmacy Benefit Team</p>
+        </div>
+
+      </div>
+
+      <!-- Footer -->
+      <div style="text-align: center; margin-top: 20px; padding: 15px; color: #262626; font-size: 12px; background-color: rgba(241, 90, 36, 0.05); border-radius: 6px;">
+        <p style="margin: 0;">
+          This is an automated message from Leadway HMO Pharmacy Benefit Management System
+        </p>
+      </div>
+
+    </div>
+  `;
+};
+
+// Main template selector function
+const getEmailTemplate = (templateData: EmailTemplateData, deliveryFrequency: string = 'Routine'): string => {
+  if (deliveryFrequency === 'One-off') {
+    return getOneOffEmailTemplate(templateData);
+  }
+  return getRoutineEmailTemplate(templateData);
+};
+
 // Main email sending function
-// Export the helper functions as well for testing
 export { getMedicationsForEnrollee, getQuantityUnit };
 
 export const sendMedicationRefillEmails = async (
   deliveriesWithEnrolleeData: any[],
-  selectedMonths: number,
-  nextPackDate: string
-) => {
+  selectedMonths: number) => {
   const { user } = authStore.get();
   // Group deliveries by enrollee
   const groupedByEnrollee = deliveriesWithEnrolleeData.reduce((groups: any, delivery: any) => {
@@ -234,12 +368,15 @@ export const sendMedicationRefillEmails = async (
   let failureCount = 0;
 
   // Show initial loading toast
-  const loadingToastId = toast.loading(`Sending medication refill emails to ${enrolleeIds.length} enrollees...`);
+  const loadingToastId = toast.loading(`Sending medication emails to ${enrolleeIds.length} enrollees...`);
 
   try {
     for (const enrolleeId of enrolleeIds) {
       const enrolleeDeliveries = groupedByEnrollee[enrolleeId];
       const primaryDelivery = enrolleeDeliveries[0];
+
+      // Get delivery frequency from the primary delivery
+      const deliveryFrequency = primaryDelivery.DeliveryFrequency || primaryDelivery.deliveryfrequency || 'Routine';
 
       // Extract enrollee information
       const enrolleeName = primaryDelivery.enrolleename || primaryDelivery.EnrolleeName || 'Valued Member';
@@ -266,16 +403,22 @@ export const sendMedicationRefillEmails = async (
         enrolleePhone,
         enrolleeAddress,
         medications,
-        packingPeriod: `${selectedMonths} month${selectedMonths !== 1 ? 's' : ''} supply ending ${nextPackDate}`
+        packingPeriod: `${selectedMonths} month${selectedMonths !== 1 ? 's' : ''}`
       };
+
+      // Determine email subject based on delivery frequency
+      const isOneOff = deliveryFrequency === 'One-off';
+      const emailSubject = isOneOff
+        ? `Medication Supply Confirmation - ${enrolleeName} (ID: ${enrolleeId})`
+        : `Medication Refill Confirmation - ${enrolleeName} (ID: ${enrolleeId})`;
 
       // Prepare email payload
       const emailPayload: EmailPayload = {
         EmailAddress: enrolleeEmail,
         CC: `healthpartnerships@leadway.com, ${user?.Email || ''}`,
         BCC: "",
-        Subject: `Medication Refill Confirmation - ${enrolleeName} (ID: ${enrolleeId})`,
-        MessageBody: getEmailTemplate(templateData),
+        Subject: emailSubject,
+        MessageBody: getEmailTemplate(templateData, deliveryFrequency),
         Attachments: null,
         Category: "PHARMACY_DELIVERY",
         UserId: user?.User_id || 0,
@@ -299,13 +442,13 @@ export const sendMedicationRefillEmails = async (
           }
           const result = await response.json();
           successCount++;
-          console.log(`Email sent successfully to ${enrolleeName} (${enrolleeEmail})`);
-          return { success: true, enrolleeName, enrolleeEmail, result };
+          console.log(`Email sent successfully to ${enrolleeName} (${enrolleeEmail}) - ${deliveryFrequency}`);
+          return { success: true, enrolleeName, enrolleeEmail, deliveryFrequency, result };
         })
         .catch((error) => {
           failureCount++;
           console.error(`Failed to send email to ${enrolleeName} (${enrolleeEmail}):`, error);
-          return { success: false, enrolleeName, enrolleeEmail, error: error.message };
+          return { success: false, enrolleeName, enrolleeEmail, deliveryFrequency, error: error.message };
         });
 
       emailPromises.push(emailPromise);
@@ -319,7 +462,7 @@ export const sendMedicationRefillEmails = async (
 
     // Show results
     if (successCount > 0 && failureCount === 0) {
-      toast.success(`🎉 All ${successCount} medication refill confirmation emails sent successfully!`);
+      toast.success(`🎉 All ${successCount} medication confirmation emails sent successfully!`);
     } else if (successCount > 0 && failureCount > 0) {
       toast.success(`📧 ${successCount} emails sent successfully, ${failureCount} failed. Check console for details.`);
     } else if (failureCount > 0 && successCount === 0) {
@@ -342,7 +485,7 @@ export const sendMedicationRefillEmails = async (
 
   } catch (error) {
     toast.dismiss(loadingToastId);
-    toast.error(`Failed to send medication refill emails: ${(error as Error).message}`);
+    toast.error(`Failed to send medication emails: ${(error as Error).message}`);
     throw error;
   }
 };
