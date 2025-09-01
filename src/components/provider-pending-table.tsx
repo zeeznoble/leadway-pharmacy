@@ -472,8 +472,7 @@ export default function ProviderPendingsDeliveryTable({
           try {
             await sendMedicationRefillEmails(
               selectedDeliveriesWithEnrolleeData,
-              mostCommonMonths,
-              nextPackDate
+              mostCommonMonths
             );
           } catch (emailError) {
             console.error("Email sending failed:", emailError);
@@ -485,7 +484,8 @@ export default function ProviderPendingsDeliveryTable({
           await generateDeliveryNotePDFNew(
             selectedDeliveriesWithEnrolleeData,
             mostCommonMonths,
-            nextPackDate
+            nextPackDate,
+            deliveryAdjustments
           );
 
           // Show success message with adjustment info
