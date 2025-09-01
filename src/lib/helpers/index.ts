@@ -319,10 +319,10 @@ export const getRiderSmsMessage = (
 export const getEnrolleeSmsMessage = (
   enrolleeName: string,
   verificationCode: string,
-  deliveryDate: string,
+  riderPhone: string,
   riderName: string
 ): string => {
-  return `Dear ${enrolleeName}, your medication delivery is scheduled for ${deliveryDate} with rider ${riderName}. Your verification code is ${verificationCode}. Only share this code with the authorized rider upon delivery. - Health Partnerships`;
+  return `Dear ${enrolleeName}, rider ${riderName} ${riderPhone} will deliver your meds. OTP: ${verificationCode}. Share OTP with rider on delivery.`;
 };
 
 export const safeGet = (value: any, fallback: any) => {
