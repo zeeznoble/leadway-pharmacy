@@ -405,7 +405,7 @@ export const generateDeliveryNotePDF = async (deliveryData: DeliveryNoteData[], 
 
     // Add logo from local file
     try {
-      doc.addImage('/logo-leadway.png', 'PNG', 20, 15, 60, 25);
+      doc.addImage('/leadway-logo.png', 'PNG', 20, 15, 60, 25);
     } catch (error) {
       console.warn('Could not load logo:', error);
     }
@@ -582,7 +582,7 @@ export const generateDeliveryNotePDFNew = async (deliveryData: DeliveryNoteData[
 
     // Add logo from local file
     try {
-      doc.addImage('/logo-leadway.png', 'PNG', 20, 15, 60, 25);
+      doc.addImage('/leadway-logo.png', 'PNG', 20, 15, 60, 25);
     } catch (error) {
       console.warn('Could not load logo:', error);
     }
