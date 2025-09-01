@@ -11,6 +11,7 @@ import { authStore } from "@/lib/store/app-store";
 import {
   deliverPackDeliveries,
   fetchPacked,
+  returnPackedDrugs,
 } from "@/lib/services/delivery-service";
 import {
   formatDateForAPI,
@@ -55,6 +56,7 @@ export default function ToBeDeliveredPage() {
   const [selectedDeliveriesToPack, setSelectedDeliveriesToPack] = useState<
     Delivery[]
   >([]);
+  const [isReturningToPack, setIsReturningToPack] = useState(false); // New state for return loading
 
   console.log("Deliveries to be Delivered State:", state.deliveries);
 
@@ -139,6 +141,40 @@ export default function ToBeDeliveredPage() {
     setSelectedDeliveriesToPack(selectedDeliveries);
 
     setShowRiderModal(true);
+  };
+
+  const handleReturnToPack = async (enrolleeIds: string[]): Promise<void> => {
+    if (enrolleeIds.length === 0) {
+      toast.error("Please select at least one item to return to pack");
+      return;
+    }
+
+    setIsReturningToPack(true);
+
+    try {
+      console.log("Returning enrollee IDs to pack:", enrolleeIds);
+
+      const result = await returnPackedDrugs(enrolleeIds);
+
+      if (result) {
+        toast.success(
+          `Successfully returned ${enrolleeIds.length} item(s) to pack`
+        );
+        // Reload the data to reflect the changes
+        loadPackedDeliveries();
+      } else {
+        throw new Error("Failed to return items to pack");
+      }
+    } catch (error) {
+      console.error("Return to pack error:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to return items to pack";
+      toast.error(errorMessage);
+    } finally {
+      setIsReturningToPack(false);
+    }
   };
 
   const sendDeliverySms = async (
@@ -334,10 +370,13 @@ export default function ToBeDeliveredPage() {
       </div>
       <PackTable
         deliveries={state.deliveries}
-        isLoading={state.isLoading || state.isPackingLoading}
+        isLoading={
+          state.isLoading || state.isPackingLoading || isReturningToPack
+        }
         error={state.error}
         onSearch={handleSearch}
         onPackDelivery={handlePackDelivery}
+        onReturnToPack={handleReturnToPack}
       />
       <RiderSelectionModal
         isOpen={showRiderModal}
