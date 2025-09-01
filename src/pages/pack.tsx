@@ -14,7 +14,7 @@ import { formatDateForAPI, generateDeliveryNotePDF } from "@/lib/helpers";
 import { EnrolleeData, fetchEnrolleeById } from "@/lib/services/fetch-enrolee";
 import { sendMedicationRefillEmails } from "@/lib/services/medication-email";
 
-interface DeliveryAdjustment {
+export interface DeliveryAdjustment {
   enrolleeId: string;
   enrolleeName: string;
   memberExpiryDate: string;
@@ -342,7 +342,8 @@ export default function PackPage() {
           await generateDeliveryNotePDF(
             selectedDeliveriesWithEnrolleeData,
             mostCommonMonths,
-            nextPackDate
+            nextPackDate,
+            deliveryAdjustments
           );
 
           // Show success message with adjustment info
