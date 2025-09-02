@@ -526,7 +526,7 @@ export const sendMedicationRefillEmails = async (
 
       // Prepare email payload
       const emailPayload: EmailPayload = {
-        EmailAddress: "oabdulazeez70@gmail.com",
+        EmailAddress: enrolleeEmail,
         CC: `${user?.Email || ''}`,
         BCC: "",
         Subject: emailSubject,
