@@ -99,6 +99,19 @@ export default function ProviderPendingsPage() {
     }
   }, [fromDate, toDate]);
 
+  // 👇 NEW: Cleanup effect when component unmounts
+  useEffect(() => {
+    return () => {
+      deliveryActions.clearDeliveries();
+      deliveryActions.backToListView();
+      setFromDate(null);
+      setToDate(null);
+      setHasInitialLoad(false);
+      setLastSearchedTerm("");
+      setLastSearchType("enrollee");
+    };
+  }, []);
+
   // Handle search in the distinct table
   const handleDistinctSearch = async (
     searchTerm: string,
