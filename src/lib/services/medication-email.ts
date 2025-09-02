@@ -47,33 +47,97 @@ const getQuantityUnit = (medicationName: string): string => {
   return 'Pack';
 };
 
-// Helper function to extract medications for a specific enrollee
 const getMedicationsForEnrollee = (deliveries: any[], enrolleeId: string, selectedMonths: number): MedicationItem[] => {
-  const enrolleeDeliveries = deliveries.filter(delivery =>
-    (delivery.enrolleeid || delivery.EnrolleeId) === enrolleeId
-  );
+  console.log('getMedicationsForEnrollee called with:', {
+    deliveriesCount: deliveries.length,
+    enrolleeId,
+    selectedMonths,
+    sampleDelivery: deliveries[0] // Log first delivery to see structure
+  });
+
+  const enrolleeDeliveries = deliveries.filter(delivery => {
+    const deliveryEnrolleeId = delivery.enrolleeid ||
+      delivery.EnrolleeId ||
+      delivery.original?.EnrolleeId ||
+      delivery.enrollee?.id;
+    return deliveryEnrolleeId === enrolleeId;
+  });
+
+  console.log('Filtered enrollee deliveries:', enrolleeDeliveries);
 
   const medications: MedicationItem[] = [];
   let serialNumber = 1;
 
   enrolleeDeliveries.forEach(delivery => {
-    const procedures = delivery.procedureLines || delivery.ProcedureLines || [];
+    console.log('Processing delivery:', delivery);
+
+    let procedures: any[] = [];
+
+    if (delivery.procedureLines) {
+      procedures = delivery.procedureLines;
+    } else if (delivery.ProcedureLines) {
+      procedures = delivery.ProcedureLines;
+    } else if (delivery.original?.ProcedureLines) {
+      procedures = delivery.original.ProcedureLines;
+    } else if (delivery.original?.procedureLines) {
+      procedures = delivery.original.procedureLines;
+    }
+
+    if (procedures.length === 0) {
+      const singleProcedure = {
+        procedurename: delivery.procedurename || delivery.ProcedureName || delivery.original?.ProcedureName,
+        procedurequantity: delivery.procedurequantity || delivery.ProcedureQuantity || delivery.original?.ProcedureQuantity || 1,
+        DosageDescription: delivery.DosageDescription || delivery.dosageDescription || delivery.original?.DosageDescription || 'As directed'
+      };
+
+      if (singleProcedure.procedurename) {
+        procedures = [singleProcedure];
+      }
+    }
+
+    console.log('Found procedures:', procedures);
+
     procedures.forEach((procedure: any) => {
-      const medicationName = procedure.procedurename || procedure.ProcedureName || 'Unknown';
-      const originalQuantity = procedure.procedurequantity || procedure.ProcedureQuantity || 1;
+      console.log('Processing procedure:', procedure);
+
+      const medicationName = procedure.procedurename ||
+        procedure.ProcedureName ||
+        procedure.name ||
+        'Unknown Medication';
+
+      const originalQuantity = Number(procedure.procedurequantity ||
+        procedure.ProcedureQuantity ||
+        procedure.quantity ||
+        1);
+
+      const dosage = procedure.DosageDescription ||
+        procedure.dosageDescription ||
+        procedure.dosage ||
+        'As directed';
+
+      // Skip if medication name is empty or undefined
+      if (!medicationName || medicationName === 'Unknown Medication') {
+        console.log('Skipping procedure with no valid medication name');
+        return;
+      }
+
       const totalQuantity = originalQuantity * selectedMonths;
       const unit = getQuantityUnit(medicationName);
 
-      medications.push({
+      const medication = {
         sn: serialNumber++,
         medication: medicationName,
-        dosage: procedure.DosageDescription || 'As directed',
+        dosage: dosage,
         quantity: `${totalQuantity} ${unit}`,
         type: unit
-      });
+      };
+
+      console.log('Created medication:', medication);
+      medications.push(medication);
     });
   });
 
+  console.log('Final medications array:', medications);
   return medications;
 };
 
@@ -208,7 +272,6 @@ const getRoutineEmailTemplate = (templateData: EmailTemplateData): string => {
   `;
 };
 
-// Template for One-off deliveries
 const getOneOffEmailTemplate = (templateData: EmailTemplateData): string => {
   const medicationRows = templateData.medications.map(med =>
     `<tr style="border: 1px solid #ddd;">
@@ -352,15 +415,24 @@ export const sendMedicationRefillEmails = async (
   deliveriesWithEnrolleeData: any[],
   selectedMonths: number) => {
   const { user } = authStore.get();
+
+  console.log('sendMedicationRefillEmails called with:', {
+    deliveriesCount: deliveriesWithEnrolleeData.length,
+    selectedMonths,
+    sampleDelivery: deliveriesWithEnrolleeData[0]
+  });
+
   // Group deliveries by enrollee
   const groupedByEnrollee = deliveriesWithEnrolleeData.reduce((groups: any, delivery: any) => {
-    const enrolleeId = delivery.EnrolleeId || delivery.enrolleeid || 'Unknown';
+    const enrolleeId = delivery.EnrolleeId || delivery.enrolleeid || delivery.original?.EnrolleeId || delivery.enrollee?.id || 'Unknown';
     if (!groups[enrolleeId]) {
       groups[enrolleeId] = [];
     }
     groups[enrolleeId].push(delivery);
     return groups;
   }, {});
+
+  console.log('Grouped by enrollee:', groupedByEnrollee);
 
   const enrolleeIds = Object.keys(groupedByEnrollee);
   const emailPromises: Promise<any>[] = [];
@@ -375,16 +447,47 @@ export const sendMedicationRefillEmails = async (
       const enrolleeDeliveries = groupedByEnrollee[enrolleeId];
       const primaryDelivery = enrolleeDeliveries[0];
 
-      // Get delivery frequency from the primary delivery
-      const deliveryFrequency = primaryDelivery.DeliveryFrequency || primaryDelivery.deliveryfrequency || 'Routine';
+      console.log('Processing enrollee:', enrolleeId, 'with deliveries:', enrolleeDeliveries);
 
-      // Extract enrollee information
-      const enrolleeName = primaryDelivery.enrolleename || primaryDelivery.EnrolleeName || 'Valued Member';
-      const enrolleeEmail = primaryDelivery.enrolleeData?.Member_EmailAddress_One || primaryDelivery.enrolleeData?.Member_Email || primaryDelivery.Member_Email;
-      const enrolleePhone = primaryDelivery.phonenumber || primaryDelivery.enrolleephone ||
-        primaryDelivery.PhoneNumber || primaryDelivery.EnrolleePhone || 'Phone not available';
-      const enrolleeAddress = primaryDelivery.deliveryaddress || primaryDelivery.enrolleeaddress ||
-        primaryDelivery.DeliveryAddress || primaryDelivery.EnrolleeAddress || 'Address not available';
+      // Get delivery frequency from the primary delivery
+      const deliveryFrequency = primaryDelivery.DeliveryFrequency ||
+        primaryDelivery.deliveryfrequency ||
+        primaryDelivery.original?.DeliveryFrequency ||
+        primaryDelivery.frequency ||
+        'Routine';
+
+      // Extract enrollee information with more fallback options
+      const enrolleeName = primaryDelivery.enrolleename ||
+        primaryDelivery.EnrolleeName ||
+        primaryDelivery.original?.EnrolleeName ||
+        primaryDelivery.enrollee?.name ||
+        'Valued Member';
+
+      const enrolleeEmail = primaryDelivery.enrolleeData?.Member_EmailAddress_One ||
+        primaryDelivery.enrolleeData?.Member_Email ||
+        primaryDelivery.Member_Email;
+
+      const enrolleePhone = primaryDelivery.phonenumber ||
+        primaryDelivery.enrolleephone ||
+        primaryDelivery.PhoneNumber ||
+        primaryDelivery.EnrolleePhone ||
+        primaryDelivery.original?.phonenumber ||
+        'Phone not available';
+
+      const enrolleeAddress = primaryDelivery.deliveryaddress ||
+        primaryDelivery.enrolleeaddress ||
+        primaryDelivery.DeliveryAddress ||
+        primaryDelivery.EnrolleeAddress ||
+        primaryDelivery.original?.deliveryaddress ||
+        'Address not available';
+
+      console.log('Enrollee info extracted:', {
+        enrolleeName,
+        enrolleeEmail,
+        enrolleePhone,
+        enrolleeAddress,
+        deliveryFrequency
+      });
 
       // Skip if no email address
       if (!enrolleeEmail) {
@@ -395,6 +498,15 @@ export const sendMedicationRefillEmails = async (
 
       // Get medications for this enrollee
       const medications = getMedicationsForEnrollee(enrolleeDeliveries, enrolleeId, selectedMonths);
+
+      console.log('Medications extracted for', enrolleeId, ':', medications);
+
+      // Skip if no medications found
+      if (medications.length === 0) {
+        console.warn(`No medications found for enrollee ${enrolleeId} (${enrolleeName})`);
+        failureCount++;
+        continue;
+      }
 
       // Prepare template data
       const templateData: EmailTemplateData = {
@@ -414,7 +526,7 @@ export const sendMedicationRefillEmails = async (
 
       // Prepare email payload
       const emailPayload: EmailPayload = {
-        EmailAddress: enrolleeEmail,
+        EmailAddress: "oabdulazeez70@gmail.com",
         CC: `${user?.Email || ''}`,
         BCC: "",
         Subject: emailSubject,
@@ -462,11 +574,11 @@ export const sendMedicationRefillEmails = async (
 
     // Show results
     if (successCount > 0 && failureCount === 0) {
-      toast.success(`🎉 All ${successCount} medication confirmation emails sent successfully!`);
+      toast.success(`All ${successCount} medication confirmation emails sent successfully!`);
     } else if (successCount > 0 && failureCount > 0) {
-      toast.success(`📧 ${successCount} emails sent successfully, ${failureCount} failed. Check console for details.`);
+      toast.success(`${successCount} emails sent successfully, ${failureCount} failed. Check console for details.`);
     } else if (failureCount > 0 && successCount === 0) {
-      toast.error(`❌ Failed to send all ${failureCount} emails. Check console for details.`);
+      toast.error(`Failed to send all ${failureCount} emails. Check console for details.`);
     }
 
     console.log('Email sending results:', {
