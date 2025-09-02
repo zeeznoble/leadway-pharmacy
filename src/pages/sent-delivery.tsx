@@ -6,10 +6,11 @@ import { DatePicker } from "@heroui/date-picker";
 import { Button } from "@heroui/button";
 
 import DeliveryTable from "@/components/delivery-table";
-import { deliveryStore } from "@/lib/store/delivery-store";
+import { deliveryStore, deliveryActions } from "@/lib/store/delivery-store";
 import { fetchSentForDelivery } from "@/lib/services/delivery-service";
 import { formatDateForAPI } from "@/lib/helpers";
 import { authStore, appChunk } from "@/lib/store/app-store";
+
 export default function SentDeliveryPage() {
   const { deliveries, isLoading, error } = useChunkValue(deliveryStore);
   const { user } = useChunkValue(authStore);
@@ -83,14 +84,19 @@ export default function SentDeliveryPage() {
       loadSentForDelivery();
       setHasInitialLoad(true);
     }
-  }, [user?.UserName, hasInitialLoad]); // Added user?.UserName dependency
+
+    return () => {
+      console.log("SentDeliveryPage cleanup: Clearing deliveries data");
+      deliveryActions.clearDeliveries();
+    };
+  }, [user?.UserName, hasInitialLoad]);
 
   // Effect for date changes (only after initial load)
   useEffect(() => {
     if (user?.UserName && hasInitialLoad) {
       loadSentForDelivery(lastSearchedEnrolleeId, lastSearchType);
     }
-  }, [fromDate, toDate]); // This should also include user?.UserName dependency if needed
+  }, [fromDate, toDate]);
 
   const handleClearDates = () => {
     setFromDate(null);
