@@ -310,6 +310,18 @@ export const deliveryActions = {
     deliveryFormState.reset();
   },
 
+  clearDeliveries: () => {
+    deliveryStore.set(state => ({
+      ...state,
+      deliveries: [],
+      isLoading: false,
+      error: null,
+      selectedEnrolleeId: null,
+      lastSearchedEnrolleeId: null,
+      showDetailView: false
+    }));
+  },
+
   submitForm: async (confirmDuplicates: boolean = false) => {
     try {
       deliveryStore.set(state => ({ ...state, isSubmitting: true }));
