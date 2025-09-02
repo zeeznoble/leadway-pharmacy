@@ -53,6 +53,8 @@ interface DeliveryTableProps {
   currentSearchTerm?: string;
   currentSearchType?: "enrollee" | "pharmacy" | "address";
   user?: any;
+  onViewAllMedications?: () => void;
+  selectedEnrolleeId?: string;
 }
 
 interface RowItem {
@@ -97,6 +99,8 @@ export default function ProviderPendingsDeliveryTable({
   currentSearchTerm = "",
   currentSearchType = "enrollee",
   user,
+  onViewAllMedications,
+  selectedEnrolleeId,
 }: DeliveryTableProps) {
   const [isDeleting, setIsDeleting] = useState<Record<string, boolean>>({});
   const [isEditing, setIsEditing] = useState<Record<string, boolean>>({});
@@ -947,6 +951,18 @@ export default function ProviderPendingsDeliveryTable({
                     )}
                   </p>
                 </div>
+
+                {onViewAllMedications && selectedEnrolleeId && (
+                  <Button
+                    color="secondary"
+                    radius="sm"
+                    size="md"
+                    onPress={onViewAllMedications}
+                    isDisabled={isLoading}
+                  >
+                    View All Medications
+                  </Button>
+                )}
               </div>
 
               {selectedCount > 0 && (
