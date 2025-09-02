@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { Button } from "@heroui/button";
 import {
   Modal,
@@ -37,19 +37,63 @@ export default function DeliveriesPage() {
     pendingSubmission,
   } = useChunkValue(deliveryStore);
   const formState = useChunkValue(deliveryFormState);
-  // const { user } = useChunkValue(authStore);
   const { searchCriteria } = useChunkValue(appChunk);
 
+  const lastSearchRef = useRef<string>("");
+  const isFetchingRef = useRef<boolean>(false);
+
+  const fetchDeliveriesWithDebounce = useCallback(
+    async (searchTerm: string = "", enrolleeId: string = "") => {
+      const searchKey = `${searchTerm}-${enrolleeId}`;
+
+      if (lastSearchRef.current === searchKey || isFetchingRef.current) {
+        return;
+      }
+
+      isFetchingRef.current = true;
+      lastSearchRef.current = searchKey;
+
+      console.log("Fetching deliveries with:", {
+        searchTerm,
+        enrolleeId,
+        searchKey,
+      });
+
+      try {
+        const effectiveSearchTerm =
+          enrolleeId && enrolleeId.trim() !== "" ? "" : searchTerm;
+        const effectiveEnrolleeId =
+          enrolleeId && enrolleeId.trim() !== "" ? enrolleeId : "";
+
+        await fetchDeliveries(effectiveSearchTerm, effectiveEnrolleeId);
+      } catch (error) {
+        console.error("Error fetching deliveries:", error);
+      } finally {
+        isFetchingRef.current = false;
+      }
+    },
+    []
+  );
+
   useEffect(() => {
-    fetchDeliveries("", searchCriteria.enrolleeId);
-  }, []);
+    const enrolleeId = searchCriteria.enrolleeId || "";
+    // Only fetch if we have a meaningful change
+    fetchDeliveriesWithDebounce("", enrolleeId);
+
+    // 👇 THIS IS WHERE IT GETS CALLED AUTOMATICALLY
+    return () => {
+      console.log("DeliveriesPage cleanup: Clearing deliveries data");
+      deliveryActions.clearDeliveries();
+      lastSearchRef.current = "";
+      isFetchingRef.current = false;
+    };
+  }, [searchCriteria.enrolleeId, fetchDeliveriesWithDebounce]);
 
   const handleOpenChange = (isOpen: boolean) => {
     if (isOpen) {
       deliveryActions.openModal();
     } else {
       deliveryActions.closeModal();
-      // Only reset form if not editing
       if (!formState.isEditing) {
         deliveryFormState.reset();
       }
