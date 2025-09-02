@@ -94,6 +94,16 @@ export default function ThirdPartyAssignRider() {
     };
   }, [user?.UserName, fromDate, toDate]);
 
+  // 👇 NEW: Cleanup effect when component unmounts
+  useEffect(() => {
+    return () => {
+      deliveryActions.clearDeliveries();
+      deliveryActions.resetDeliveryErrors();
+      deliveryActions.setPackingSuccess(false);
+      deliveryActions.updateLastSearchedEnrolleeId("");
+    };
+  }, []);
+
   useEffect(() => {
     if (state.packingSuccess) {
       if (user?.UserName) {
