@@ -527,7 +527,7 @@ export const sendMedicationRefillEmails = async (
       // Prepare email payload
       const emailPayload: EmailPayload = {
         EmailAddress: enrolleeEmail,
-        CC: `${user?.Email || ''}`,
+        CC: `Pharmacybenefitmgt@leadway.com`,
         BCC: "",
         Subject: emailSubject,
         MessageBody: getEmailTemplate(templateData, deliveryFrequency),
