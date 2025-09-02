@@ -254,7 +254,7 @@ export const transformApiResponse = (apiResponse: any): Delivery => {
     DosageDescription: apiResponse.DosageDescription,
     Username: apiResponse.username,
     AdditionalInformation: apiResponse.additionalinformation,
-    Comment: apiResponse.comments,
+    Comment: apiResponse.comment,
     IsDelivered: apiResponse.isdelivered,
     EnrolleeId: apiResponse.enrolleeid,
     EnrolleeName: apiResponse.enrolleename,

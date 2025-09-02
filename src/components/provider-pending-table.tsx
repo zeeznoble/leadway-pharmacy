@@ -74,6 +74,8 @@ interface RowItem {
   actions: {
     isDelivered: boolean;
   };
+  username?: string;
+  comment?: string;
   original: any;
   cost: string;
 }
@@ -600,6 +602,8 @@ export default function ProviderPendingsDeliveryTable({
           actions: {
             isDelivered: transformedDelivery.IsDelivered ?? false,
           },
+          comment: transformedDelivery.Comment,
+          username: transformedDelivery.Username,
           pharmacyname: transformedDelivery.PharmacyName || "",
           cost: transformedDelivery.cost || "",
           original: transformedDelivery,
@@ -663,6 +667,8 @@ export default function ProviderPendingsDeliveryTable({
     () => [
       ...DELIVERY_COLUMNS,
       { key: "cost", label: "Cost" },
+      { key: "comment", label: "Comment" },
+      { key: "username", label: "Inputted By" },
       {
         key: "actions",
         label: "Actions",
