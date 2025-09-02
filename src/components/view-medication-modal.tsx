@@ -15,11 +15,9 @@ import {
   TableCell,
 } from "@heroui/table";
 import { Button } from "@heroui/button";
-import { Badge } from "@heroui/badge";
 import { Spinner } from "@heroui/spinner";
 import toast from "react-hot-toast";
 
-// Import the API service directly, not through the store
 import { API_URL, formatDate, transformApiResponse } from "@/lib/helpers";
 import type { Delivery } from "@/types";
 
@@ -38,6 +36,7 @@ interface MedicationRow {
   procedureName: string;
   diagnosisName: string;
   frequency: string;
+  delStartdate: string;
   original: any;
 }
 
@@ -46,6 +45,7 @@ const columns = [
   { key: "status", label: "Delivery Status" },
   { key: "procedureName", label: "Procedure Name" },
   { key: "diagnosisName", label: "Diagnosis Name" },
+  { key: "delStartdate", label: "Delivery Start Date" },
   { key: "frequency", label: "Frequency" },
 ];
 
@@ -120,35 +120,19 @@ export default function ViewAllMedicationsModal({
     const transformedDelivery = transformApiResponse(delivery);
     const uniqueKey = `${transformedDelivery.EntryNo || index}-${Date.now()}-${Math.random()}`;
 
+    console.log("Transformed: ", transformedDelivery.DelStartDate);
+
     return {
       key: uniqueKey,
       nextDeliveryDate: formatDate(transformedDelivery.NextDeliveryDate),
-      status: transformedDelivery.Status || "Pending",
-      procedureName:
-        transformedDelivery.ProcedureLines[0]?.ProcedureName || "N/A",
-      diagnosisName:
-        transformedDelivery.DiagnosisLines[0]?.DiagnosisName || "N/A",
-      frequency: transformedDelivery.DeliveryFrequency || "N/A",
+      status: transformedDelivery.Status || "",
+      procedureName: transformedDelivery.ProcedureLines[0]?.ProcedureName,
+      diagnosisName: transformedDelivery.DiagnosisLines[0]?.DiagnosisName,
+      frequency: transformedDelivery.DeliveryFrequency,
+      delStartdate: formatDate(transformedDelivery.DelStartDate),
       original: transformedDelivery,
     };
   });
-
-  const getStatusColor = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case "delivered":
-        return "success";
-      case "packed":
-        return "primary";
-      case "pending":
-      case "approved":
-        return "warning";
-      case "cancelled":
-      case "failed":
-        return "danger";
-      default:
-        return "default";
-    }
-  };
 
   const renderCell = (
     item: MedicationRow,
@@ -158,11 +142,13 @@ export default function ViewAllMedicationsModal({
       case "nextDeliveryDate":
         return <span className="text-sm">{item.nextDeliveryDate}</span>;
       case "status":
-        return <Badge color={getStatusColor(item.status)}>{item.status}</Badge>;
+        return <p>{item.status}</p>;
       case "procedureName":
         return <span className="text-sm">{item.procedureName}</span>;
       case "diagnosisName":
         return <span className="text-sm">{item.diagnosisName}</span>;
+      case "delStartdate":
+        return <span className="text-sm">{item.delStartdate}</span>;
       case "frequency":
         return <span className="text-sm">{item.frequency}</span>;
       default:
