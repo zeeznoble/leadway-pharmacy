@@ -482,7 +482,7 @@ export const generateDeliveryNotePDF = async (deliveryData: DeliveryNoteData[], 
           OriginalQuantity: procedure.procedurequantity || procedure.ProcedureQuantity || 1,
           cost: procedure.cost || '0',
           duration: procedure.duration || '',
-          DosageDescription: procedure.DosageDescription || "",
+          DosageDescription: procedure.DosageDescription || procedure.dosageDescription || "",
         });
       });
     });
@@ -689,7 +689,7 @@ export const generateDeliveryNotePDFNew = async (deliveryData: DeliveryNoteData[
           OriginalQuantity: procedure.ProcedureQuantity || 1,
           cost: procedure.cost || '0',
           duration: procedure.duration || '',
-          DosageDescription: procedure.DosageDescription || "",
+          DosageDescription: procedure.DosageDescription || procedure.dosageDescription || "",
         });
       });
     });
