@@ -33,6 +33,7 @@ import { fetchPendingApprovalList } from "@/lib/services/approval-service";
 import { ArrowLeft } from "@/components/icons/icons";
 import ProviderPendingsDeliveryTable from "@/components/provider-pending-table";
 import DistinctDeliveryTable from "@/components/distinct-delivery";
+import ViewAllMedicationsModal from "@/components/view-medication-modal";
 
 export default function ProviderPendingsPage() {
   const {
@@ -52,6 +53,8 @@ export default function ProviderPendingsPage() {
   const [fromDate, setFromDate] = useState<CalendarDate | null>(null);
   const [toDate, setToDate] = useState<CalendarDate | null>(null);
   const [hasInitialLoad, setHasInitialLoad] = useState(false);
+
+  const [showMedicationsModal, setShowMedicationsModal] = useState(false);
 
   const [lastSearchedTerm, setLastSearchedTerm] = useState("");
   const [lastSearchType, setLastSearchType] = useState<
@@ -111,6 +114,14 @@ export default function ProviderPendingsPage() {
       setLastSearchType("enrollee");
     };
   }, []);
+
+  const handleViewAllMedications = () => {
+    setShowMedicationsModal(true);
+  };
+
+  const handleCloseMedicationsModal = () => {
+    setShowMedicationsModal(false);
+  };
 
   // Handle search in the distinct table
   const handleDistinctSearch = async (
@@ -294,6 +305,8 @@ export default function ProviderPendingsPage() {
               currentSearchTerm={lastSearchedTerm}
               currentSearchType={lastSearchType}
               user={user}
+              onViewAllMedications={handleViewAllMedications}
+              selectedEnrolleeId={String(selectedEnrolleeId)}
             />
           ) : (
             // Show distinct delivery table (pending approval list)
@@ -357,6 +370,16 @@ export default function ProviderPendingsPage() {
       </Modal>
 
       <DuplicateModal />
+
+      {showDetailView && selectedEnrolleeId && (
+        <ViewAllMedicationsModal
+          isOpen={showMedicationsModal}
+          onClose={handleCloseMedicationsModal}
+          enrolleeId={selectedEnrolleeId}
+          enrolleeName={`Enrollee ${selectedEnrolleeId}`}
+          user={user}
+        />
+      )}
     </section>
   );
 }
