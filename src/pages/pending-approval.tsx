@@ -123,7 +123,6 @@ export default function ProviderPendingsPage() {
     setShowMedicationsModal(false);
   };
 
-  // Handle search in the distinct table
   const handleDistinctSearch = async (
     searchTerm: string,
     searchType: "enrollee" | "pharmacy" | "address" = "enrollee"
@@ -146,7 +145,6 @@ export default function ProviderPendingsPage() {
     }
   };
 
-  // Handle search in the detail table
   const handleDetailSearch = async (
     searchTerm: string,
     searchType: "enrollee" | "pharmacy" | "address" = "enrollee"
@@ -168,13 +166,11 @@ export default function ProviderPendingsPage() {
     }
   };
 
-  // Handle row click in distinct table
   const handleRowClick = (enrolleeId: string) => {
     deliveryActions.selectEnrolleeForDetails(enrolleeId);
     loadDeliveriesForEnrollee(enrolleeId);
   };
 
-  // Handle back button
   const handleBackToList = () => {
     deliveryActions.backToListView();
     setLastSearchedTerm("");
@@ -228,13 +224,13 @@ export default function ProviderPendingsPage() {
         <div className="flex items-center gap-4">
           {showDetailView && (
             <Button
+              isIconOnly
               onPress={handleBackToList}
               color="default"
               radius="sm"
               size="sm"
-              startContent={<ArrowLeft size={16} />}
             >
-              Back to List
+              <ArrowLeft size={16} />
             </Button>
           )}
           <p className="text-xl">
