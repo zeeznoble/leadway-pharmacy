@@ -66,6 +66,15 @@ export default function PackPage() {
     };
   }, [user?.UserName, hasInitialLoad]);
 
+  useEffect(() => {
+    return () => {
+      deliveryActions.clearDeliveries();
+      deliveryActions.resetDeliveryErrors();
+      deliveryActions.setPackingSuccess(false);
+      deliveryActions.updateLastSearchedEnrolleeId("");
+    };
+  }, []);
+
   // Separate effect for date changes (only after initial load)
   useEffect(() => {
     if (user?.UserName && hasInitialLoad) {
