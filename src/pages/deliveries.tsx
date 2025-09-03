@@ -43,8 +43,33 @@ export default function DeliveriesPage() {
   const isFetchingRef = useRef<boolean>(false);
 
   const fetchDeliveriesWithDebounce = useCallback(
-    async (searchTerm: string = "", enrolleeId: string = "") => {
-      const searchKey = `${searchTerm}-${enrolleeId}`;
+    async (
+      searchTermOrEnrolleeId: string = "",
+      searchTypeOrEnrolleeId: string = ""
+    ) => {
+      // Detect if this is the old calling pattern (searchTerm, enrolleeId)
+      // or new pattern (searchTerm, searchType)
+      const isNewPattern = ["enrollee", "pharmacy", "address"].includes(
+        searchTypeOrEnrolleeId
+      );
+
+      let searchTerm = "";
+      let enrolleeId = "";
+      let searchType = "enrollee";
+
+      if (isNewPattern) {
+        // New pattern: (searchTerm, searchType)
+        searchTerm = searchTermOrEnrolleeId;
+        searchType = searchTypeOrEnrolleeId;
+      } else {
+        // Old pattern: (searchTerm, enrolleeId)
+        searchTerm = searchTermOrEnrolleeId;
+        enrolleeId = searchTypeOrEnrolleeId;
+      }
+
+      const searchKey = isNewPattern
+        ? `${searchTerm}-${searchType}`
+        : `${searchTerm}-${enrolleeId}`;
 
       if (lastSearchRef.current === searchKey || isFetchingRef.current) {
         return;
@@ -56,23 +81,37 @@ export default function DeliveriesPage() {
       console.log("Fetching deliveries with:", {
         searchTerm,
         enrolleeId,
+        searchType,
         searchKey,
+        isNewPattern,
       });
 
       try {
-        const effectiveSearchTerm =
-          enrolleeId && enrolleeId.trim() !== "" ? "" : searchTerm;
-        const effectiveEnrolleeId =
-          enrolleeId && enrolleeId.trim() !== "" ? enrolleeId : "";
+        if (isNewPattern && searchType === "enrollee") {
+          // New enrollee search - pass searchTerm for API to handle ID or name
+          await fetchDeliveries(searchTerm, "");
+        } else {
+          // Old pattern or non-enrollee search - use original logic
+          const effectiveEnrolleeId =
+            enrolleeId || searchCriteria.enrolleeId || "";
+          const effectiveSearchTerm =
+            effectiveEnrolleeId && effectiveEnrolleeId.trim() !== ""
+              ? ""
+              : searchTerm;
+          const finalEnrolleeId =
+            effectiveEnrolleeId && effectiveEnrolleeId.trim() !== ""
+              ? effectiveEnrolleeId
+              : "";
 
-        await fetchDeliveries(effectiveSearchTerm, effectiveEnrolleeId);
+          await fetchDeliveries(effectiveSearchTerm, finalEnrolleeId);
+        }
       } catch (error) {
         console.error("Error fetching deliveries:", error);
       } finally {
         isFetchingRef.current = false;
       }
     },
-    []
+    [searchCriteria.enrolleeId]
   );
 
   useEffect(() => {
@@ -82,7 +121,6 @@ export default function DeliveriesPage() {
 
     // 👇 THIS IS WHERE IT GETS CALLED AUTOMATICALLY
     return () => {
-      console.log("DeliveriesPage cleanup: Clearing deliveries data");
       deliveryActions.clearDeliveries();
       lastSearchRef.current = "";
       isFetchingRef.current = false;
