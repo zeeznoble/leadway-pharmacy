@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useChunkValue } from "stunk/react";
 import toast from "react-hot-toast";
-import { CalendarDate } from "@internationalized/date";
+import { CalendarDate, getLocalTimeZone, today } from "@internationalized/date";
 import { DatePicker } from "@heroui/date-picker";
 
 import { deliveryStore, deliveryActions } from "@/lib/store/delivery-store";
@@ -39,8 +39,12 @@ export default function PackPage() {
 
   console.log(selectedDeliveriesToPack);
   // Date picker states
-  const [fromDate, setFromDate] = useState<CalendarDate | null>(null);
-  const [toDate, setToDate] = useState<CalendarDate | null>(null);
+  const [fromDate, setFromDate] = useState<CalendarDate | null>(
+    today(getLocalTimeZone())
+  );
+  const [toDate, setToDate] = useState<CalendarDate | null>(
+    today(getLocalTimeZone()).add({ months: 1 })
+  );
 
   // Add state to track if initial load has been done
   const [hasInitialLoad, setHasInitialLoad] = useState(false);
