@@ -10,8 +10,8 @@ import {
 } from "@/components/icons/main-icons";
 import StaticDeliveryTable from "@/components/static-del-table";
 import { deliveryStore } from "@/lib/store/delivery-store";
-import { CalendarDate } from "@internationalized/date";
-import { formatDateForAPI } from "@/lib/helpers";
+import { CalendarDate, getLocalTimeZone, today } from "@internationalized/date";
+import { formatDateForAPI, formatDateForDisplay } from "@/lib/helpers";
 import { fetchDeliveries } from "@/lib/services/delivery-service";
 import { DatePicker } from "@heroui/date-picker";
 import { Button } from "@heroui/button";
@@ -34,8 +34,12 @@ export default function IndexPage() {
   const { deliveries, isLoading, error } = useChunkValue(deliveryStore);
 
   // Date picker states
-  const [fromDate, setFromDate] = useState<CalendarDate | null>(null);
-  const [toDate, setToDate] = useState<CalendarDate | null>(null);
+  const [fromDate, setFromDate] = useState<CalendarDate | null>(
+    today(getLocalTimeZone())
+  );
+  const [toDate, setToDate] = useState<CalendarDate | null>(
+    today(getLocalTimeZone()).add({ months: 1 })
+  );
   const [status, setStatus] = useState<Set<string>>(new Set());
 
   const loadDeliveries = () => {
@@ -127,6 +131,7 @@ export default function IndexPage() {
             <Select
               disableSelectorIconRotation
               className="max-w-xs"
+              size="sm"
               label="Delivery Status"
               placeholder="Select a status"
               selectorIcon={<SelectorIcon />}
@@ -153,8 +158,8 @@ export default function IndexPage() {
         {(fromDate || toDate || status.size > 0) && (
           <div className="mt-2 text-sm text-gray-600">
             Filtering deliveries
-            {fromDate && ` from ${formatDateForAPI(fromDate)}`}
-            {toDate && ` to ${formatDateForAPI(toDate)}`}
+            {fromDate && ` from ${formatDateForDisplay(fromDate)}`}
+            {toDate && ` to ${formatDateForDisplay(toDate)}`}
             {status.size > 0 &&
               ` with status: ${Array.from(status)
                 .map((key) => statuses.find((s) => s.key === key)?.label)
