@@ -116,7 +116,7 @@ export default function RiderTable({ riders }: RiderTableProps) {
   console.log(riders);
 
   return (
-    <Table aria-label="Riders table">
+    <Table isStriped aria-label="Riders table">
       <TableHeader columns={RiderColumn}>
         {(column) => (
           <TableColumn
