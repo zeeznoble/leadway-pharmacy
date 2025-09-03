@@ -922,6 +922,7 @@ export default function ProviderPendingsDeliveryTable({
       ) : filteredRows.length > 0 ? (
         <Table
           aria-label="Deliveries Table"
+          isStriped
           bottomContent={
             totalPages > 1 ? (
               <div className="flex w-full justify-center">
