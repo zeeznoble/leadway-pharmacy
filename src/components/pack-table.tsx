@@ -35,7 +35,7 @@ interface PackTableProps {
     searchType?: "enrollee" | "pharmacy" | "address"
   ) => void;
   onPackDelivery: (selectedDeliveries: any[]) => void;
-  onReturnToPack?: (enrolleeIds: string[]) => void; // New prop for return to pack
+  onReturnToPack?: (enrolleeIds: string[]) => void;
 }
 
 interface RowItem {
@@ -77,6 +77,7 @@ export default function PackTable({
   const [searchType, setSearchType] = useState<
     "enrollee" | "pharmacy" | "address"
   >("enrollee");
+
   const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set([]));
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(50);
@@ -84,8 +85,6 @@ export default function PackTable({
 
   const { user } = useChunkValue(authStore);
   const { enrolleeData } = useChunkValue(appChunk);
-
-  console.log("PackTable Deliveries:", deliveries);
 
   const rows = useMemo(
     () =>
@@ -132,7 +131,6 @@ export default function PackTable({
 
   const handleSearchTypeChange = (value: string) => {
     setSearchType(value as "enrollee" | "pharmacy" | "address");
-    // Clear search term when switching search types
     setSearchTerm("");
   };
 
@@ -455,7 +453,7 @@ export default function PackTable({
               }}
               radius="sm"
             >
-              <SelectItem key="enrollee">Enrollee ID</SelectItem>
+              <SelectItem key="enrollee">Enrollee</SelectItem>
               <SelectItem key="pharmacy">Pharmacy</SelectItem>
               <SelectItem key="address">Region</SelectItem>
             </Select>
@@ -502,6 +500,8 @@ export default function PackTable({
                       : "Delivery Address"}
                   {filteredRows.length > 0 &&
                     ` - Found ${filteredRows.length} result(s)`}
+                  {searchType === "enrollee"}
+                  {searchType !== "enrollee"}
                 </span>
               )}
             </div>
@@ -573,6 +573,7 @@ export default function PackTable({
             aria-label="Deliveries Table"
             className="min-w-full"
             selectionMode="multiple"
+            isStriped
             selectedKeys={selectedKeys}
             onSelectionChange={handleSelectionChange}
             // disabledKeys={disabledKeys}
