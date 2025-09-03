@@ -36,14 +36,14 @@ interface EmailPayload {
 }
 
 // Helper function to get quantity unit from medication name
-const getQuantityUnit = (medicationName: string): string => {
+const getQuantityUnit = (medicationName: string) => {
   const name = medicationName.toLowerCase();
-  if (name.includes('tablet') || name.includes('tab')) return 'Tab';
-  if (name.includes('capsule') || name.includes('cap')) return 'Cap';
-  if (name.includes('syrup') || name.includes('suspension')) return 'Bottle';
-  if (name.includes('injection') || name.includes('vial')) return 'Vial';
-  if (name.includes('cream') || name.includes('ointment')) return 'Tube';
-  if (name.includes('drops') || name.includes('solution')) return 'Bottle';
+  if (name.includes('packs')) return 'Pack';
+  // if (name.includes('capsule') || name.includes('cap')) return 'Cap';
+  // if (name.includes('syrup') || name.includes('suspension')) return 'Bottle';
+  // if (name.includes('injection') || name.includes('vial')) return 'Vial';
+  // if (name.includes('cream') || name.includes('ointment')) return 'Tube';
+  // if (name.includes('drops') || name.includes('solution')) return 'Bottle';
   return 'Pack';
 };
 
