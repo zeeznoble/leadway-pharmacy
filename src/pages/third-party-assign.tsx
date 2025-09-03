@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAsyncChunk, useChunkValue } from "stunk/react";
 import toast from "react-hot-toast";
-import { CalendarDate } from "@internationalized/date";
+import { CalendarDate, getLocalTimeZone, today } from "@internationalized/date";
 import { DatePicker } from "@heroui/date-picker";
 
 import PackTable from "@/components/pack-table";
@@ -14,6 +14,7 @@ import {
 } from "@/lib/services/delivery-service";
 import {
   formatDateForAPI,
+  formatDateForDisplay,
   generateDeliveryCode,
   generateVerificationCode,
   getEnrolleeSmsMessage,
@@ -59,8 +60,12 @@ export default function ThirdPartyAssignRider() {
   console.log("Deliveries to be Delivered State:", state.deliveries);
 
   // Date picker states
-  const [fromDate, setFromDate] = useState<CalendarDate | null>(null);
-  const [toDate, setToDate] = useState<CalendarDate | null>(null);
+  const [fromDate, setFromDate] = useState<CalendarDate | null>(
+    today(getLocalTimeZone())
+  );
+  const [toDate, setToDate] = useState<CalendarDate | null>(
+    today(getLocalTimeZone()).add({ months: 1 })
+  );
 
   const [showRiderModal, setShowRiderModal] = useState<boolean>(false);
   const [_, setSelectedRider] = useState<Rider | null>(null);
@@ -119,25 +124,38 @@ export default function ThirdPartyAssignRider() {
     }
   }, [state.packingError]);
 
-  const handleSearch = async (enrolleeId: string): Promise<void> => {
+  const handleSearch = async (
+    searchTerm: string,
+    searchType: string = "enrollee"
+  ): Promise<void> => {
     if (!user?.UserName) {
       toast.error("User information not available");
       return;
     }
 
     try {
-      deliveryActions.updateLastSearchedEnrolleeId(enrolleeId);
+      if (searchType === "enrollee") {
+        deliveryActions.updateLastSearchedEnrolleeId(searchTerm);
 
-      const fromDateStr = formatDateForAPI(fromDate);
-      const toDateStr = formatDateForAPI(toDate);
+        const fromDateStr = formatDateForAPI(fromDate);
+        const toDateStr = formatDateForAPI(toDate);
 
-      await fetchPackThirdParty("", enrolleeId, fromDateStr, toDateStr);
+        await fetchPackThirdParty("", searchTerm, fromDateStr, toDateStr);
+      } else {
+        // For non-enrollee searches, keep existing functionality
+        const enrolleeId = searchTerm || "";
+        deliveryActions.updateLastSearchedEnrolleeId(enrolleeId);
+
+        const fromDateStr = formatDateForAPI(fromDate);
+        const toDateStr = formatDateForAPI(toDate);
+
+        await fetchPackThirdParty("", enrolleeId, fromDateStr, toDateStr);
+      }
     } catch (error) {
       const err = error as Error;
       toast.error(err.message);
     }
   };
-
   const handlePackDelivery = async (
     selectedDeliveries: Delivery[]
   ): Promise<void> => {
@@ -334,8 +352,8 @@ export default function ThirdPartyAssignRider() {
         {(fromDate || toDate) && (
           <div className="mt-2 text-sm text-gray-600">
             Filtering packed deliveries
-            {fromDate && ` from ${formatDateForAPI(fromDate)}`}
-            {toDate && ` to ${formatDateForAPI(toDate)}`}
+            {fromDate && ` from ${formatDateForDisplay(fromDate)}`}
+            {toDate && ` to ${formatDateForDisplay(toDate)}`}
           </div>
         )}
       </div>
