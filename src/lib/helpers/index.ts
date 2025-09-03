@@ -300,6 +300,17 @@ export const formatDateForAPI = (date: CalendarDate | null): string => {
   return `${String(date.day).padStart(2, "0")}-${String(date.month).padStart(2, "0")}-${date.year}`;
 };
 
+export const formatDateForDisplay = (date: CalendarDate) => {
+  if (!date) return '';
+
+  const months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  ];
+
+  return `${months[date.month - 1]} ${date.day}, ${date.year}`;
+};
+
 export const generateVerificationCode = (): string => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
