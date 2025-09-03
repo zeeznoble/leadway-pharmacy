@@ -94,20 +94,12 @@ export default function DeliveryTable({
 
   const [searchTerm, setSearchTerm] = useState(currentSearchTerm);
   const [searchType, setSearchType] = useState<
-    "enrolleeId" | "enrolleeName" | "pharmacy" | "address"
-  >(
-    currentSearchType === "enrollee"
-      ? "enrolleeId"
-      : (currentSearchType as "pharmacy" | "address")
-  );
+    "enrollee" | "pharmacy" | "address"
+  >(currentSearchType);
 
   useEffect(() => {
     setSearchTerm(currentSearchTerm);
-    if (currentSearchType === "enrollee") {
-      setSearchType("enrolleeName");
-    } else {
-      setSearchType(currentSearchType as "pharmacy" | "address");
-    }
+    setSearchType(currentSearchType as "enrollee" | "pharmacy" | "address");
   }, [currentSearchTerm, currentSearchType]);
 
   const isProviderPendingsPage = location.pathname === "/provider-pendings";
@@ -315,14 +307,12 @@ export default function DeliveryTable({
   };
 
   const handleSearchTypeChange = (value: string) => {
-    setSearchType(
-      value as "enrolleeId" | "enrolleeName" | "pharmacy" | "address"
-    );
+    setSearchType(value as "enrollee" | "pharmacy" | "address");
     setSearchTerm("");
   };
 
   const shouldUseApiSearch = (searchType: string): boolean => {
-    return searchType === "enrolleeId";
+    return searchType === "enrollee";
   };
 
   const handleSearch = () => {
@@ -344,7 +334,7 @@ export default function DeliveryTable({
     setSearchTerm("");
     setCurrentPage(1);
     setSelectedKeys(new Set([]));
-    setSearchType("enrolleeName");
+    setSearchType("enrollee");
     if (onSearch) {
       onSearch("", "enrollee");
     }
@@ -389,8 +379,8 @@ export default function DeliveryTable({
   );
 
   const filteredRows = useMemo(() => {
-    if (onSearch && searchType === "enrolleeId") {
-      return rows;
+    if (onSearch && searchType === "enrollee") {
+      return rows; // API search handles filtering
     }
 
     if (!searchTerm.trim()) return rows;
@@ -399,13 +389,12 @@ export default function DeliveryTable({
 
     return rows.filter((row) => {
       switch (searchType) {
-        case "enrolleeName":
+        case "enrollee":
+          // This case shouldn't be reached when API search is used
           return (
             row.enrollee.name.toLowerCase().includes(searchTermLower) ||
-            row.key.toLowerCase().includes(searchTermLower)
+            row.enrollee.id.toLowerCase().includes(searchTermLower)
           );
-        case "enrolleeId":
-          return row.key.toLowerCase().includes(searchTermLower);
         case "pharmacy":
           return row.pharmacyname.toLowerCase().includes(searchTermLower);
         case "address":
@@ -553,10 +542,8 @@ export default function DeliveryTable({
 
   const getSearchPlaceholder = (searchType: string): string => {
     switch (searchType) {
-      case "enrolleeId":
-        return "Search by Enrollee ID";
-      case "enrolleeName":
-        return "Search by Enrollee Name";
+      case "enrollee":
+        return "Search by Enrollee ID or Name";
       case "pharmacy":
         return "Search by Pharmacy Name";
       case "address":
@@ -603,8 +590,7 @@ export default function DeliveryTable({
                 }}
                 radius="sm"
               >
-                <SelectItem key="enrolleeName">Enrollee Name</SelectItem>
-                <SelectItem key="enrolleeId">Enrollee ID</SelectItem>
+                <SelectItem key="enrollee">Enrollee (ID/Name)</SelectItem>
                 <SelectItem key="pharmacy">Pharmacy</SelectItem>
                 <SelectItem key="address">Region</SelectItem>
               </Select>
@@ -643,17 +629,15 @@ export default function DeliveryTable({
               {(searchTerm || currentSearchTerm) && (
                 <span>
                   Searching for "{searchTerm || currentSearchTerm}" in{" "}
-                  {searchType === "enrolleeId"
-                    ? "Enrollee ID"
-                    : searchType === "enrolleeName"
-                      ? "Enrollee Name"
-                      : searchType === "pharmacy"
-                        ? "Pharmacy Name"
-                        : "Delivery Address"}
+                  {searchType === "enrollee"
+                    ? "Enrollee ID/Name"
+                    : searchType === "pharmacy"
+                      ? "Pharmacy Name"
+                      : "Delivery Address"}
                   {filteredRows.length > 0 &&
                     ` - Found ${filteredRows.length} result(s)`}
-                  {searchType === "enrolleeId" && onSearch && " (API Search)"}
-                  {searchType !== "enrolleeId" && " (Local Filter)"}
+                  {searchType === "enrollee"}
+                  {searchType !== "enrollee"}
                 </span>
               )}
             </div>
@@ -678,6 +662,7 @@ export default function DeliveryTable({
       ) : filteredRows.length > 0 ? (
         <Table
           aria-label="Deliveries Table"
+          isStriped
           bottomContent={
             totalPages > 1 ? (
               <div className="flex w-full justify-center">
