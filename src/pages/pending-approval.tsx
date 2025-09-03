@@ -26,7 +26,7 @@ import {
   deliveryStore,
 } from "@/lib/store/delivery-store";
 import { fetchDeliveries } from "@/lib/services/delivery-service";
-import { formatDateForAPI } from "@/lib/helpers";
+import { formatDateForAPI, formatDateForDisplay } from "@/lib/helpers";
 import { CalendarDate } from "@internationalized/date";
 import { DatePicker } from "@heroui/date-picker";
 import { fetchPendingApprovalList } from "@/lib/services/approval-service";
@@ -281,8 +281,8 @@ export default function ProviderPendingsPage() {
           {(fromDate || toDate) && (
             <div className="mt-2 text-sm text-gray-600">
               Filtering deliveries
-              {fromDate && ` from ${formatDateForAPI(fromDate)}`}
-              {toDate && ` to ${formatDateForAPI(toDate)}`}
+              {fromDate && ` from ${formatDateForDisplay(fromDate)}`}
+              {toDate && ` to ${formatDateForDisplay(toDate)}`}
             </div>
           )}
         </div>
