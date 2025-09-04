@@ -57,7 +57,6 @@ export const useInactivityModal = ({
         });
       }, 1000);
 
-      // Set logout timer
       logoutTimerRef.current = setTimeout(() => {
         onLogoutRef.current();
       }, logoutTimeout);
@@ -83,24 +82,30 @@ export const useInactivityModal = ({
       "click",
     ];
 
-    events.forEach((event) => {
-      document.addEventListener(event, handleActivity, { passive: true });
-    });
-
-    resetTimers();
-
-    return () => {
-      console.log("🧹 Cleanup");
+    if (!showWarning) {
+      events.forEach((event) => {
+        document.addEventListener(event, handleActivity, { passive: true });
+      });
+    } else {
       events.forEach((event) => {
         document.removeEventListener(event, handleActivity);
       });
-      clearAllTimers();
+    }
+
+    return () => {
+      events.forEach((event) => {
+        document.removeEventListener(event, handleActivity);
+      });
     };
-  }, []);
+  }, [showWarning, handleActivity]);
 
   useEffect(() => {
-    onLogoutRef.current = onLogout;
-  }, [onLogout]);
+    resetTimers();
+
+    return () => {
+      clearAllTimers();
+    };
+  }, [resetTimers, clearAllTimers]);
 
   return {
     showWarning,
