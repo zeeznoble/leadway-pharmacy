@@ -24,6 +24,7 @@ export default function Header() {
     if (path === "/provider-pendings") return "Provider Pendings";
     if (path === "/sent-for-delivery") return "Sent for Delivery";
     if (path === "/create-delivery") return "Create Delivery";
+    if (path === "/rider") return "Riders";
     return path.substring(1).charAt(0).toUpperCase() + path.substring(2);
   };
 
