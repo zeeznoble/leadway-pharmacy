@@ -1,20 +1,20 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Overpass:ital,wght@0,100..900;1,100..900&display=swap");
 
 @import "tailwindcss";
 @config "../../tailwind.config.js";
 
 html {
   scroll-behavior: smooth;
-  @apply font-inter;
+  @apply font-overpass;
 }
 
 .left-image {
   background-image: linear-gradient(
       to bottom,
-      rgba(0, 0, 0, 0.1),
+      rgba(190, 0, 0, 0.1),
       rgba(198, 21, 41, 0.7)
     ),
-    url(/landing.jpg);
+    url(/landing-2.jpg);
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
