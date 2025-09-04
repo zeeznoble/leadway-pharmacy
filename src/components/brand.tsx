@@ -8,7 +8,7 @@ export default function Brand({ className }: BrandProps) {
       <img
         src={"/leadway-logo.png"}
         alt="leadway-logo"
-        className={className ? className : "w-44"}
+        className={className ? className : "w-36"}
       />
     </div>
   );
