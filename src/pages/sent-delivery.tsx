@@ -106,13 +106,8 @@ export default function SentDeliveryPage() {
   console.log("Deliveries in SentDeliveryPage:", deliveries);
 
   return (
-    <section className="px-2">
-      <div className="flex justify-between mb-4">
-        <p className="text-xl">Sent for Delivery</p>
-      </div>
-
-      {/* Date Filter Section */}
-      <div className="mb-4 py-4 bg-gray-50 rounded-lg">
+    <section>
+      <div className="mb-4 pb-4 bg-gray-50 rounded-lg">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1">
             <DatePicker
