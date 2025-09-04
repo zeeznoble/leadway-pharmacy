@@ -13,6 +13,7 @@ import { Badge } from "@heroui/badge";
 import { Input } from "@heroui/input";
 import { Button } from "@heroui/button";
 import { Key } from "@react-types/shared";
+import toast from "react-hot-toast";
 import * as XLSX from "xlsx";
 
 import { DELIVERY_COLUMNS } from "@/lib/constants";
@@ -110,10 +111,8 @@ export default function StaticDeliveryTable({
     );
   }, [rows, searchQuery]);
 
-  // Calculate pagination values
   const totalPages = Math.ceil(filteredRows.length / pageSize);
 
-  // Get items for current page
   const paginatedRows = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
     const endIndex = Math.min(startIndex + pageSize, filteredRows.length);
@@ -143,11 +142,9 @@ export default function StaticDeliveryTable({
         "Pharmacy ID": row.pharmacyid || "",
       }));
 
-      // Create workbook and worksheet
       const workbook = XLSX.utils.book_new();
       const worksheet = XLSX.utils.json_to_sheet(excelData);
 
-      // Auto-size columns
       const columnWidths = Object.keys(excelData[0] || {}).map((key) => {
         const maxLength = Math.max(
           key.length,
@@ -155,22 +152,19 @@ export default function StaticDeliveryTable({
             (row) => String(row[key as keyof typeof row] || "").length
           )
         );
-        return { wch: Math.min(maxLength + 2, 50) }; // Cap at 50 characters
+        return { wch: Math.min(maxLength + 2, 50) };
       });
       worksheet["!cols"] = columnWidths;
 
-      // Add worksheet to workbook
       XLSX.utils.book_append_sheet(workbook, worksheet, "Deliveries");
 
-      // Generate filename with current date
       const currentDate = new Date().toISOString().split("T")[0];
       const filename = `deliveries_${currentDate}.xlsx`;
 
       // Write and download file
       XLSX.writeFile(workbook, filename);
     } catch (error) {
-      console.error("Error downloading Excel file:", error);
-      // You might want to show a toast notification here
+      toast.error(`Error downloading Excel file: ${error}`);
     } finally {
       setIsDownloading(false);
     }
@@ -182,7 +176,6 @@ export default function StaticDeliveryTable({
         return (
           <div className="flex flex-col">
             <div className="text-md font-medium">{item.enrollee.name}</div>
-            {/* <div className="text-sm text-gray-500">{item.enrollee.scheme}</div> */}
           </div>
         );
       case "status":
@@ -214,9 +207,14 @@ export default function StaticDeliveryTable({
     <Table
       aria-label="Static Deliveries Table"
       isStriped
+      isCompact
       bottomContent={
         totalPages > 1 && (
-          <div className="flex w-full justify-center">
+          <div className="flex w-full justify-between items-center">
+            <p className="text-xs text-gray-500">
+              Total: {filteredRows.length} deliveries
+              {searchQuery && <span> (filtered from {rows.length})</span>}
+            </p>
             <Pagination
               isCompact
               showControls
@@ -224,6 +222,9 @@ export default function StaticDeliveryTable({
               total={totalPages}
               onChange={handlePageChange}
             />
+            <div className="text-small text-default-400">
+              Page {currentPage} of {totalPages}
+            </div>
           </div>
         )
       }
@@ -234,10 +235,6 @@ export default function StaticDeliveryTable({
             <h3 className="text-lg font-semibold">Deliveries</h3>
             <p className="text-sm text-gray-600">
               View delivery records and status
-            </p>
-            <p className="text-xs text-gray-500">
-              Total: {filteredRows.length} deliveries
-              {searchQuery && <span> (filtered from {rows.length})</span>}
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center w-full sm:w-auto">
