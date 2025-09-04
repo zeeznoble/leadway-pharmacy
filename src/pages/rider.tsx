@@ -7,6 +7,7 @@ import {
   ModalFooter,
   ModalHeader,
 } from "@heroui/modal";
+import { Spinner } from "@heroui/spinner";
 import { useAsyncChunk, useChunkValue } from "stunk/react";
 
 import RiderTable from "@/components/riders/rider-table";
@@ -107,16 +108,18 @@ export default function RidersPage() {
   }, []);
 
   return (
-    <section className="py-3 px-2">
-      <div className="flex justify-between mb-4">
-        <p className="text-xl">List of Riders</p>
+    <section>
+      <div className="flex justify-end mb-4">
         <Button radius="sm" color="primary" onPress={riderActions.openModal}>
           Add Rider
         </Button>
       </div>
 
       {loading ? (
-        <div className="text-center py-10">Loading riders...</div>
+        <div className="text-center py-10">
+          <Spinner color="warning" />
+          <p>Loading riders...</p>
+        </div>
       ) : fetchError ? (
         <div className="text-center py-10 text-red-500">
           Error: {fetchError.message}
