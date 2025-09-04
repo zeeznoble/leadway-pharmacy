@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   Table,
   TableHeader,
@@ -9,6 +9,7 @@ import {
 } from "@heroui/table";
 import { Button } from "@heroui/button";
 import { Chip } from "@heroui/chip";
+import { Pagination } from "@heroui/pagination";
 import { riderActions, viewRiderActions } from "@/lib/store/rider-store";
 import { Rider } from "@/types";
 import { RiderColumn } from "@/lib/constants";
@@ -25,6 +26,18 @@ const statusColorMap = {
 };
 
 export default function RiderTable({ riders }: RiderTableProps) {
+  const [page, setPage] = useState(1);
+  const rowsPerPage = 10;
+
+  const pages = Math.ceil(riders.length / rowsPerPage);
+
+  const items = useMemo(() => {
+    const start = (page - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+
+    return riders.slice(start, end);
+  }, [page, riders, rowsPerPage]);
+
   const renderCell = useCallback((rider: Rider, columnKey: React.Key) => {
     switch (columnKey) {
       case "name":
@@ -116,26 +129,68 @@ export default function RiderTable({ riders }: RiderTableProps) {
   console.log(riders);
 
   return (
-    <Table isStriped aria-label="Riders table">
-      <TableHeader columns={RiderColumn}>
-        {(column) => (
-          <TableColumn
-            key={column.uid}
-            align={column.uid === "actions" ? "center" : "start"}
-          >
-            {column.name}
-          </TableColumn>
-        )}
-      </TableHeader>
-      <TableBody items={riders}>
-        {(item) => (
-          <TableRow key={item.rider_id}>
-            {(columnKey) => (
-              <TableCell>{renderCell(item, columnKey)}</TableCell>
-            )}
-          </TableRow>
-        )}
-      </TableBody>
-    </Table>
+    <div className="space-y-4">
+      <Table
+        isStriped
+        shadow="sm"
+        isCompact
+        aria-label="Riders table"
+        topContent={
+          <div className="flex flex-col gap-2">
+            <div className="flex justify-between items-start">
+              <div>
+                <h3 className="text-lg font-semibold">Riders</h3>
+                <p className="text-sm text-gray-600">
+                  Manage all delivery riders and their account information
+                </p>
+              </div>
+              <div className="text-sm text-gray-500">
+                Showing {items.length} of {riders.length} riders
+              </div>
+            </div>
+          </div>
+        }
+        bottomContent={
+          pages > 1 && (
+            <div className="flex w-full justify-between items-center">
+              <div className="text-small text-default-400">
+                {riders.length} total riders
+              </div>
+              <Pagination
+                isCompact
+                showControls
+                color="primary"
+                page={page}
+                total={pages}
+                onChange={setPage}
+              />
+              <div className="text-small text-default-400">
+                Page {page} of {pages}
+              </div>
+            </div>
+          )
+        }
+      >
+        <TableHeader columns={RiderColumn}>
+          {(column) => (
+            <TableColumn
+              key={column.uid}
+              align={column.uid === "actions" ? "center" : "start"}
+            >
+              {column.name}
+            </TableColumn>
+          )}
+        </TableHeader>
+        <TableBody items={items}>
+          {(item) => (
+            <TableRow key={item.rider_id}>
+              {(columnKey) => (
+                <TableCell>{renderCell(item, columnKey)}</TableCell>
+              )}
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </div>
   );
 }
