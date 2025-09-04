@@ -207,7 +207,6 @@ export default function StaticDeliveryTable({
     <Table
       aria-label="Static Deliveries Table"
       isStriped
-      isCompact
       bottomContent={
         totalPages > 1 && (
           <div className="flex w-full justify-between items-center">
