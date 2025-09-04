@@ -64,7 +64,6 @@ export const useInactivityModal = ({
   }, [warningTimeout, logoutTimeout, clearAllTimers]);
 
   const handleStayActive = useCallback(() => {
-    console.log("✅ Stay active clicked");
     resetTimers();
   }, [resetTimers]);
 
