@@ -9,7 +9,6 @@ import {
   DashboardIcon,
   DeliveriesIcon,
   EnrolleeIcon,
-  HelpIcon,
   PendingProvidersIcon,
   PharmacyIcon,
   RiderIcon,
@@ -127,12 +126,12 @@ export default function SideNav() {
           })}
         </ul>
       </nav>
-      <div className="px-4 mt-auto pb-6">
+      {/* <div className="px-4 mt-auto pb-6">
         <button className="flex items-center px-4 py-3 w-full text-sm text-gray-700 hover:bg-gray-200 rounded-lg">
           <HelpIcon stroke="#475467" className="h-6 w-6 mr-3" />
           <span>Help & Support</span>
         </button>
-      </div>
+      </div> */}
     </div>
   );
 
