@@ -4,9 +4,9 @@ import { StatsCard } from "@/components/stats-card";
 import { dashboardStatsChunk } from "@/lib/services/dashboard-stats";
 import {
   EnrolleeIcon,
+  PackageIcon,
   PendingIcon,
   PharmacyIcon,
-  ScheduleIcon,
 } from "@/components/icons/main-icons";
 import StaticDeliveryTable from "@/components/static-del-table";
 import { deliveryStore } from "@/lib/store/delivery-store";
@@ -17,6 +17,7 @@ import { DatePicker } from "@heroui/date-picker";
 import { Button } from "@heroui/button";
 import { Select, SelectItem } from "@heroui/select";
 import { SelectorIcon } from "@/components/icons/icons";
+import { Spinner } from "@heroui/spinner";
 
 export const statuses = [
   { key: "packed", label: "Packed" },
@@ -78,42 +79,41 @@ export default function IndexPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatsCard
           title="Pharmacy Count"
           value={stats?.pharmacyCount ?? 0}
-          icon={<PharmacyIcon stroke="#475467" />}
+          icon={<PharmacyIcon color="oklch(62.3% 0.214 259.815)" />}
           color="border-l-blue-500"
         />
         <StatsCard
           title="Active Enrollees"
           value={stats?.enrolleeCount ?? 0}
-          icon={<EnrolleeIcon stroke="#475467" />}
+          icon={<EnrolleeIcon color="oklch(72.3% 0.219 149.579)" />}
           color="border-l-green-500"
         />
         <StatsCard
           title="Packed but not delivered"
           value={stats?.totalSchedules ?? 0}
-          icon={<ScheduleIcon />}
+          icon={<PendingIcon color="oklch(62.7% 0.265 303.9)" />}
           color="border-l-purple-500"
         />
         <StatsCard
           title="Delivered"
           value={stats?.pendingCount ?? 0}
-          icon={<PendingIcon />}
+          icon={<PackageIcon color="oklch(79.5% 0.184 86.047)" />}
           color="border-l-yellow-500"
         />
       </div>
-
-      <div className="mb-4 py-4 bg-gray-50 rounded-lg">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1">
+      <div className="mb-4 py-4 px-0 bg-gray-50 rounded-lg">
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-4 ">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-4 flex-1 w-full">
             <DatePicker
               label="From Date"
               showMonthAndYearPickers
               value={fromDate}
               onChange={setFromDate}
-              className="w-full sm:max-w-md"
+              className="w-full md:max-w-md"
               size="sm"
               radius="sm"
             />
@@ -123,14 +123,13 @@ export default function IndexPage() {
               value={toDate}
               onChange={setToDate}
               minValue={fromDate || undefined}
-              className="w-full sm:max-w-md"
+              className="w-full md:max-w-md"
               size="sm"
               radius="sm"
             />
-
             <Select
               disableSelectorIconRotation
-              className="max-w-xs"
+              className="w-full md:max-w-xs"
               size="sm"
               label="Delivery Status"
               placeholder="Select a status"
@@ -156,7 +155,7 @@ export default function IndexPage() {
           </div>
         </div>
         {(fromDate || toDate || status.size > 0) && (
-          <div className="mt-2 text-sm text-gray-600">
+          <div className="mt-4 text-sm text-gray-600">
             Filtering deliveries
             {fromDate && ` from ${formatDateForDisplay(fromDate)}`}
             {toDate && ` to ${formatDateForDisplay(toDate)}`}
@@ -170,7 +169,10 @@ export default function IndexPage() {
       </div>
 
       {isLoading || statsLoading ? (
-        <div className="text-center py-10">Loading deliveries...</div>
+        <div className="text-center py-10 flex-col">
+          <Spinner color="warning" />
+          <p>Loading deliveries...</p>
+        </div>
       ) : error ? (
         <div className="text-center py-10 text-red-500">{error}</div>
       ) : deliveries && deliveries.length > 0 ? (
