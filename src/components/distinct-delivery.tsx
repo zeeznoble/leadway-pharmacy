@@ -11,6 +11,7 @@ import { Input } from "@heroui/input";
 import { Button } from "@heroui/button";
 import { Select, SelectItem } from "@heroui/select";
 import { Spinner } from "@heroui/spinner";
+import { Pagination } from "@heroui/pagination";
 import { SearchIcon } from "./icons/icons";
 
 interface DistinctDeliveryTableProps {
@@ -33,11 +34,14 @@ export default function DistinctDeliveryTable({
   const [searchType, setSearchType] = useState<
     "enrollee" | "pharmacy" | "address"
   >("enrollee");
+  const [page, setPage] = useState(1);
+  const rowsPerPage = 10;
 
   const handleSearch = () => {
     if (onSearch) {
       onSearch(searchTerm, searchType);
     }
+    setPage(1); // Reset to first page when searching
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -82,6 +86,22 @@ export default function DistinctDeliveryTable({
     });
   }, [tableRows, searchTerm, searchType]);
 
+  // Pagination logic
+  const pages = Math.ceil(filteredRows.length / rowsPerPage);
+
+  const paginatedRows = useMemo(() => {
+    const start = (page - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    return filteredRows.slice(start, end);
+  }, [filteredRows, page, rowsPerPage]);
+
+  // Reset page when filtered data changes
+  useMemo(() => {
+    if (page > pages && pages > 0) {
+      setPage(1);
+    }
+  }, [filteredRows.length, pages, page]);
+
   const columns = [
     { key: "enrolleeid", label: "Enrollee ID" },
     { key: "enrolleename", label: "Enrollee Name" },
@@ -94,7 +114,7 @@ export default function DistinctDeliveryTable({
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-10">
-        <Spinner size="lg" />
+        <Spinner color="warning" />
       </div>
     );
   }
@@ -109,6 +129,7 @@ export default function DistinctDeliveryTable({
             onSelectionChange={(keys) => {
               const key = Array.from(keys)[0] as string;
               setSearchType(key as "enrollee" | "pharmacy" | "address");
+              setPage(1); // Reset page when changing search type
             }}
             className="w-48"
             radius="sm"
@@ -121,7 +142,10 @@ export default function DistinctDeliveryTable({
           <Input
             placeholder={`Search by ${searchType}...`}
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setPage(1); // Reset page when typing
+            }}
             onKeyUp={handleKeyPress}
             startContent={<SearchIcon size={16} />}
             className="flex-1"
@@ -133,16 +157,63 @@ export default function DistinctDeliveryTable({
         </div>
       </div>
 
+      {/* Results Summary */}
+      {filteredRows.length > 0 && (
+        <div className="flex justify-between items-center text-sm text-gray-600">
+          {pages > 1 && (
+            <div>
+              Page {page} of {pages}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Table Section */}
       {filteredRows.length > 0 && (
-        <Table aria-label="Pending Approval List">
+        <Table
+          isStriped
+          aria-label="Pending Approval List"
+          topContent={
+            <div className="flex flex-col gap-2">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-lg font-semibold">Pending Approvals</h3>
+                  <p className="text-sm text-gray-600">
+                    Review and manage enrollee delivery requests awaiting
+                    approval
+                  </p>
+                </div>
+              </div>
+            </div>
+          }
+          bottomContent={
+            pages > 1 && (
+              <div className="flex w-full justify-between items-center">
+                <div className="text-small text-default-400">
+                  {filteredRows.length} total results
+                </div>
+                <Pagination
+                  isCompact
+                  showControls
+                  color="primary"
+                  page={page}
+                  total={pages}
+                  onChange={setPage}
+                />
+                <div className="text-small text-default-400">
+                  Page {page} of {pages}
+                </div>
+              </div>
+            )
+          }
+        >
           <TableHeader columns={columns}>
             {(column) => (
               <TableColumn key={column.key}>{column.label}</TableColumn>
             )}
           </TableHeader>
           <TableBody
-            items={filteredRows}
+            items={paginatedRows}
             emptyContent="No pending approvals found"
           >
             {(item) => (
