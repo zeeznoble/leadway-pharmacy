@@ -1,5 +1,5 @@
 import { useLocation } from "react-router-dom";
-import { Avatar } from "@heroui/avatar";
+import { Avatar, AvatarIcon } from "@heroui/avatar";
 import {
   Dropdown,
   DropdownTrigger,
@@ -50,11 +50,12 @@ export default function Header() {
         <Dropdown placement="bottom-end">
           <DropdownTrigger>
             <Avatar
-              isBordered
-              as="button"
-              className="transition-transform"
-              src="https://i.pravatar.cc/150?u=a042581f4e29026704d"
+              classNames={{
+                base: "bg-linear-to-br from-[#FFB457] to-[#FF705B]",
+                icon: "text-black/80",
+              }}
               size="sm"
+              icon={<AvatarIcon />}
             />
           </DropdownTrigger>
           <DropdownMenu aria-label="Profile Actions" variant="flat">
