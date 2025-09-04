@@ -664,8 +664,14 @@ export default function DeliveryTable({
           aria-label="Deliveries Table"
           isStriped
           bottomContent={
-            totalPages > 1 ? (
-              <div className="flex w-full justify-center">
+            totalPages > 1 && (
+              <div className="flex w-full justify-between items-center">
+                <p className="text-small text-gray-500">
+                  Total: {filteredRows.length} deliveries
+                  {(searchTerm || currentSearchTerm) && (
+                    <span> (filtered from {rows.length})</span>
+                  )}
+                </p>
                 <Pagination
                   isCompact
                   showControls
@@ -673,8 +679,11 @@ export default function DeliveryTable({
                   total={totalPages}
                   onChange={handlePageChange}
                 />
+                <div className="text-small text-default-400">
+                  Page {currentPage} of {totalPages}
+                </div>
               </div>
-            ) : null
+            )
           }
           className="min-w-full"
           selectionMode={
@@ -702,12 +711,6 @@ export default function DeliveryTable({
                       <h3 className="text-lg font-semibold">Deliveries</h3>
                       <p className="text-sm text-gray-600">
                         Manage and track delivery status
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Total: {filteredRows.length} deliveries
-                        {(searchTerm || currentSearchTerm) && (
-                          <span> (filtered from {rows.length})</span>
-                        )}
                       </p>
                     </>
                   ) : (
