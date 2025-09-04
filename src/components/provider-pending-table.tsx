@@ -117,7 +117,7 @@ export default function ProviderPendingsDeliveryTable({
   const [showPharmacyModal, setShowPharmacyModal] = useState(false);
   const [showDateModal, setShowDateModal] = useState(false);
   const [selectedPharmacyData, setSelectedPharmacyData] = useState<{
-    pharmacyid: number; // Changed from string to number
+    pharmacyid: number;
     pharmacyname: string;
   } | null>(null);
   const [
@@ -824,7 +824,7 @@ export default function ProviderPendingsDeliveryTable({
             <div className="flex w-full sm:w-auto items-center flex-1 gap-2">
               <Select
                 aria-label="search-type"
-                className="w-48"
+                className="w-full sm:w-48"
                 placeholder="Search by"
                 selectedKeys={[searchType]}
                 onSelectionChange={(keys) => {
@@ -912,7 +912,7 @@ export default function ProviderPendingsDeliveryTable({
 
       {isLoading || isLoadingEnrolleeData ? (
         <div className="text-center p-8">
-          <Spinner color="primary" />
+          <Spinner color="warning" />
           <p className="mt-2 text-gray-600">
             {isLoadingEnrolleeData
               ? "Loading enrollee information..."
@@ -944,20 +944,25 @@ export default function ProviderPendingsDeliveryTable({
           topContent={
             <div className="flex flex-col gap-4">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="flex flex-col gap-1">
-                  <p className="text-xs text-gray-500">
-                    Total: {filteredRows.length} deliveries
-                    {(searchTerm || currentSearchTerm) && (
-                      <span> (filtered from {rows.length})</span>
-                    )}
-                  </p>
+                <div className="flex flex-col gap-2">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="text-lg font-semibold">
+                        Deliveries Overview
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        Track, pack, and manage all enrollee deliveries in
+                        progress
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 {onViewAllMedications && selectedEnrolleeId && (
                   <Button
                     color="secondary"
                     radius="sm"
-                    size="md"
+                    size="sm"
                     onPress={onViewAllMedications}
                     isDisabled={isLoading}
                   >
