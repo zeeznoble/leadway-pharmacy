@@ -5,6 +5,7 @@ import Brand from "../brand";
 import Drawer from "./drawer";
 
 import {
+  AssignRiderIcon,
   DashboardIcon,
   DeliveriesIcon,
   EnrolleeIcon,
@@ -45,156 +46,52 @@ export default function SideNav() {
   const navItems = [
     {
       link: "/",
-      icon: (
-        <DashboardIcon
-          strokeWidth={router.pathname === "/" ? "1.5" : "1"}
-          stroke={router.pathname === "/" ? "#ffffff" : "#475467"}
-          width={23}
-          height={20}
-        />
-      ),
+      icon: <DashboardIcon />,
       text: "Dashboard",
     },
     {
       link: "/pharmacy",
-      icon: (
-        <PharmacyIcon
-          strokeWidth={router.pathname.startsWith("/pharmacy") ? "1.5" : "1"}
-          stroke={
-            router.pathname.startsWith("/pharmacy") ? "#ffffff" : "#475467"
-          }
-          width={23}
-          height={20}
-        />
-      ),
+      icon: <PharmacyIcon />,
       text: "Pharmacy",
     },
     {
       link: "/enrollees",
-      icon: (
-        <EnrolleeIcon
-          strokeWidth={router.pathname.startsWith("/enrollees") ? "1.5" : "1"}
-          stroke={
-            router.pathname.startsWith("/enrollee") ? "#ffffff" : "#475467"
-          }
-          width={23}
-          height={20}
-        />
-      ),
+      icon: <EnrolleeIcon />,
       text: "Enrollees",
     },
     {
       link: "/create-delivery",
-      icon: (
-        <DeliveriesIcon
-          strokeWidth={
-            router.pathname.startsWith("/create-delivery") ? "1.5" : "1"
-          }
-          stroke={
-            router.pathname.startsWith("/create-delivery")
-              ? "#ffffff"
-              : "#475467"
-          }
-          width={23}
-          height={20}
-        />
-      ),
+      icon: <DeliveriesIcon />,
       text: "Create Deliveries",
     },
     {
       link: "/provider-pendings",
-      icon: (
-        <PendingProvidersIcon
-          strokeWidth={
-            router.pathname.startsWith("/provider-pendings") ? "1.5" : "1"
-          }
-          stroke={
-            router.pathname.startsWith("/provider-pendings")
-              ? "#ffffff"
-              : "#475467"
-          }
-          width={23}
-          height={20}
-        />
-      ),
+      icon: <PendingProvidersIcon />,
       text: "Pending Approval",
     },
     {
       link: "/third-party-assign",
-      icon: (
-        <TasksIcon
-          strokeWidth={
-            router.pathname.startsWith("/third-party-assign") ? "1.5" : "1"
-          }
-          stroke={
-            router.pathname.startsWith("/third-party-assign")
-              ? "#ffffff"
-              : "#475467"
-          }
-          width={23}
-          height={20}
-        />
-      ),
+      icon: <TasksIcon />,
       text: "Third Party Assign Rider",
     },
     {
       link: "/pack",
-      icon: (
-        <StockIcon
-          strokeWidth={router.pathname.startsWith("/pack") ? "1.5" : "1"}
-          stroke={router.pathname.startsWith("/pack") ? "#ffffff" : "#475467"}
-          width={23}
-          height={20}
-        />
-      ),
+      icon: <StockIcon />,
       text: "Pack",
     },
     {
       link: "/to-be-delivered",
-      icon: (
-        <TasksIcon
-          strokeWidth={
-            router.pathname.startsWith("/to-be-delivered") ? "1.5" : "1"
-          }
-          stroke={
-            router.pathname.startsWith("/to-be-delivered")
-              ? "#ffffff"
-              : "#475467"
-          }
-          width={23}
-          height={20}
-        />
-      ),
+      icon: <AssignRiderIcon />,
       text: "Assign To Rider",
     },
     {
       link: "/sent-for-delivery",
-      icon: (
-        <SentForDeliveryIcon
-          strokeWidth={
-            router.pathname.startsWith("/sent-for-delivery") ? "1.5" : "1"
-          }
-          stroke={
-            router.pathname.startsWith("/sent-for-delivery")
-              ? "#ffffff"
-              : "#475467"
-          }
-          width={23}
-          height={20}
-        />
-      ),
+      icon: <SentForDeliveryIcon />,
       text: "Sent For Delivery",
     },
     {
       link: "/rider",
-      icon: (
-        <RiderIcon
-          strokeWidth={router.pathname.startsWith("/rider") ? "1.5" : "1"}
-          stroke={router.pathname.startsWith("/rider") ? "#ffffff" : "#475467"}
-          width={23}
-          height={20}
-        />
-      ),
+      icon: <RiderIcon />,
       text: "Create Rider",
     },
   ];
@@ -223,7 +120,7 @@ export default function SideNav() {
                   }`}
                 >
                   <span className="mr-3">{item.icon}</span>
-                  <span>{item.text}</span>
+                  <span className="mt-1">{item.text}</span>
                 </Link>
               </li>
             );
