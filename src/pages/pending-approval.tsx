@@ -136,8 +136,6 @@ export default function ProviderPendingsPage() {
       setLastSearchedTerm(searchTerm);
       setLastSearchType(searchType);
 
-      // For the distinct table, we'll reload the pending approval list
-      // and let the component handle local filtering
       loadPendingApprovalList();
     } catch (error) {
       const err = error as Error;
@@ -219,7 +217,7 @@ export default function ProviderPendingsPage() {
   };
 
   return (
-    <section className="px-2">
+    <section>
       <div className="flex justify-between mb-4">
         <div className="flex items-center gap-4">
           {showDetailView && (
@@ -234,14 +232,11 @@ export default function ProviderPendingsPage() {
             </Button>
           )}
           <p className="text-xl">
-            {showDetailView
-              ? `Deliveries for Enrollee: ${selectedEnrolleeId}`
-              : "List of Provider Pendings"}
+            {showDetailView && `Deliveries for Enrollee: ${selectedEnrolleeId}`}
           </p>
         </div>
       </div>
 
-      {/* Date Filter Section - Only show in detail view */}
       {showDetailView && (
         <div className="mb-4 py-4 bg-gray-50 rounded-lg">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
