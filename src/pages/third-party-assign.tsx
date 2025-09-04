@@ -312,9 +312,9 @@ export default function ThirdPartyAssignRider() {
   }, [state.deliveries]);
 
   return (
-    <section className="py-3">
+    <section>
       {/* Date Filter Section */}
-      <div className="mb-4 py-4 bg-gray-50 rounded-lg">
+      <div className="mb-4 pb-4 bg-gray-50 rounded-lg">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1">
             <DatePicker
