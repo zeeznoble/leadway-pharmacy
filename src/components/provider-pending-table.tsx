@@ -924,7 +924,7 @@ export default function ProviderPendingsDeliveryTable({
           aria-label="Deliveries Table"
           isStriped
           bottomContent={
-            totalPages > 1 ? (
+            totalPages > 1 && (
               <div className="flex w-full justify-center">
                 <Pagination
                   isCompact
@@ -934,7 +934,7 @@ export default function ProviderPendingsDeliveryTable({
                   onChange={handlePageChange}
                 />
               </div>
-            ) : null
+            )
           }
           className="min-w-full"
           selectionMode="multiple"
