@@ -395,12 +395,8 @@ export default function PackPage() {
 
   return (
     <section>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Pack Deliveries</h1>
-      </div>
-
       {/* Date Filter Section */}
-      <div className="mb-4 py-4 bg-gray-50 rounded-lg">
+      <div className="mb-4 pb-4 bg-gray-50 rounded-lg">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1">
             <DatePicker
