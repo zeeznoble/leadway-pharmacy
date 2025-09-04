@@ -7,6 +7,7 @@ import {
   ModalFooter,
   ModalHeader,
 } from "@heroui/modal";
+import { Spinner } from "@heroui/spinner";
 
 import { useChunkValue } from "stunk/react";
 
@@ -165,8 +166,7 @@ export default function DeliveriesPage() {
 
   return (
     <section className="px-2">
-      <div className="flex justify-between mb-4">
-        <p className="text-xl">List of Deliveries</p>
+      <div className="flex justify-end mb-4">
         {searchCriteria.enrolleeId !== "" ||
         searchCriteria.firstName !== "" ||
         searchCriteria.lastName !== "" ||
@@ -174,8 +174,7 @@ export default function DeliveriesPage() {
         searchCriteria.email !== "" ? (
           <Button
             color="primary"
-            radius="sm"
-            size="lg"
+            radius="md"
             onPress={deliveryActions.openModal}
           >
             Create Delivery
@@ -186,7 +185,10 @@ export default function DeliveriesPage() {
       </div>
 
       {isLoading ? (
-        <div className="text-center py-10">Loading deliveries...</div>
+        <div className="text-center py-10 flex-col">
+          <Spinner color="warning" />
+          <p>Loading deliveries...</p>
+        </div>
       ) : error ? (
         <div className="text-center py-10 text-red-500">{error}</div>
       ) : (
