@@ -12,7 +12,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        inter: ["Inter", "sans-serif"],
+        overpass: ["Overpass", "Inter", "sans-serif"],
       },
       colors: {
         warning: "#C61531",
