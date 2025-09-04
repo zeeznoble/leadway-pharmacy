@@ -34,7 +34,6 @@ export default function IndexPage() {
   } = useAsyncChunk(dashboardStatsChunk);
   const { deliveries, isLoading, error } = useChunkValue(deliveryStore);
 
-  // Date picker states
   const [fromDate, setFromDate] = useState<CalendarDate | null>(
     today(getLocalTimeZone())
   );
@@ -43,21 +42,45 @@ export default function IndexPage() {
   );
   const [status, setStatus] = useState<Set<string>>(new Set());
 
-  const loadDeliveries = () => {
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  useEffect(() => {
+    if (!isInitialLoad) return;
+
+    console.log("Initial useEffect triggered with:", {
+      fromDate: fromDate?.toString(),
+      toDate: toDate?.toString(),
+      status: Array.from(status),
+      timestamp: new Date().toLocaleTimeString(),
+    });
+
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
-
     const selectedStatusKey = Array.from(status)[0] || "";
     const selectedStatusLabel =
       statuses.find((s) => s.key === selectedStatusKey)?.label || "";
 
     fetchDeliveries("", "", "", fromDateStr, toDateStr, selectedStatusLabel);
-  };
+    setIsInitialLoad(false);
+  }, [fromDate, toDate, status, isInitialLoad]);
 
   useEffect(() => {
-    loadDeliveries();
+    if (isInitialLoad) return;
 
-    console.log("Stats", stats);
+    console.log("Filter change useEffect triggered with:", {
+      fromDate: fromDate?.toString(),
+      toDate: toDate?.toString(),
+      status: Array.from(status),
+      timestamp: new Date().toLocaleTimeString(),
+    });
+
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+    const selectedStatusKey = Array.from(status)[0] || "";
+    const selectedStatusLabel =
+      statuses.find((s) => s.key === selectedStatusKey)?.label || "";
+
+    fetchDeliveries("", "", "", fromDateStr, toDateStr, selectedStatusLabel);
   }, [fromDate, toDate, status]);
 
   const handleClearAll = () => {
