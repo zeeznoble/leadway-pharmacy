@@ -243,18 +243,16 @@ export default function StaticDeliveryTable({
           <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center w-full sm:w-auto">
             <Input
               aria-label="Search deliveries"
-              className="w-full sm:w-64"
+              className="w-full sm:w-72"
               placeholder="Search by enrollee, diagnosis, procedure..."
               radius="sm"
-              size="lg"
               value={searchQuery}
               onChange={handleSearchChange}
             />
             <Button
               color="primary"
               isLoading={isDownloading}
-              onClick={handleDownloadExcel}
-              size="lg"
+              onPress={handleDownloadExcel}
               variant="solid"
             >
               {isDownloading ? "Downloading..." : "Download Excel"}
