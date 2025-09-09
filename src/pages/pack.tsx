@@ -101,10 +101,7 @@ export default function PackPage() {
     }
   }, [state.packingError]);
 
-  const handleSearch = async (
-    searchTerm: string,
-    searchType: "enrollee" | "pharmacy" | "address" = "enrollee"
-  ) => {
+  const handleSearch = async (searchTerm: string) => {
     if (!user?.UserName) {
       toast.error("User information not available");
       return;
@@ -118,16 +115,10 @@ export default function PackPage() {
       const fromDateStr = formatDateForAPI(fromDate);
       const toDateStr = formatDateForAPI(toDate);
 
-      if (searchTerm) {
-        // For enrollee search, use the existing API parameter
-        if (searchType === "enrollee") {
-          await fetchUnpacked("", searchTerm, fromDateStr, toDateStr);
-        } else {
-          await fetchUnpacked("", "", fromDateStr, toDateStr);
-        }
-      } else {
-        await fetchUnpacked("", "", fromDateStr, toDateStr);
-      }
+      // IMPORTANT: Always pass the search term as enrolleeId regardless of searchType
+      // The API expects the search term in the enrolleeId parameter
+      // Whether it's enrollee ID, name, pharmacy, or region - all go to enrolleeId
+      await fetchUnpacked("", searchTerm, fromDateStr, toDateStr);
     } catch (error) {
       const err = error as Error;
       toast.error(err.message);
