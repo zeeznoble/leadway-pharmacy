@@ -100,40 +100,9 @@ export default function DiagnosisProcedureStep() {
     }
   };
 
-  const handleQuantityChange = (
-    procedureId: string,
-    newQuantity: number,
-    currentCost: string
-  ) => {
-    // Get the original cost for calculation
-    const originalCost = originalCosts.get(procedureId) || "0";
-    const costToUse = currentCost === "" ? originalCost : currentCost;
-    const numericCost = parseFloat(costToUse) || 0;
-
-    const currentQuantity =
-      formState.procedureLines.find((p) => p.ProcedureId === procedureId)
-        ?.ProcedureQuantity || 1;
-
-    // Calculate unit cost from current total cost
-    const unitCost =
-      currentQuantity > 0 ? numericCost / currentQuantity : numericCost;
-
-    // Calculate new total cost
-    const newTotalCost = Math.round(unitCost * newQuantity).toString();
-
-    // Check if this new cost equals the original scaled cost
-    const originalUnitCost = parseFloat(originalCost) || 0;
-    const originalScaledCost = Math.round(
-      originalUnitCost * newQuantity
-    ).toString();
-
-    // If the new total cost equals what the original would be at this quantity,
-    // store empty string to indicate unmodified
-    const costToSave = newTotalCost === originalScaledCost ? "" : newTotalCost;
-
-    // Update both quantity and cost
+  const handleQuantityChange = (procedureId: string, newQuantity: number) => {
+    // Only update the quantity, don't touch the cost
     deliveryActions.updateProcedureQuantity(procedureId, newQuantity);
-    deliveryActions.updateProcedureCost(procedureId, costToSave);
   };
 
   const handleSearchClick = () => {
@@ -174,23 +143,35 @@ export default function DiagnosisProcedureStep() {
     }
   };
 
-  // Helper function to get display cost
-  const getDisplayCost = (procedure: any) => {
+  // Helper function to get the unit cost for display in textbox
+  const getUnitCost = (procedure: any) => {
     if (
       procedure.cost === "" ||
       procedure.cost === null ||
       procedure.cost === undefined
     ) {
-      // Show original cost if current cost is empty (unmodified)
+      // Show original unit cost if current cost is empty (unmodified)
       return originalCosts.get(procedure.ProcedureId) || "0";
     }
+    // If cost has been modified, treat it as unit cost
     return procedure.cost;
   };
 
   // Helper function to get total cost for display
   const getTotalCost = (procedure: any) => {
-    const displayCost = getDisplayCost(procedure);
-    return Math.round(parseFloat(displayCost) * procedure.ProcedureQuantity);
+    const unitCost = getUnitCost(procedure);
+    return Math.round(parseFloat(unitCost) * procedure.ProcedureQuantity);
+  };
+
+  // Handle unit cost change
+  const handleUnitCostChange = (procedureId: string, newUnitCost: string) => {
+    const originalCost = originalCosts.get(procedureId) || "0";
+
+    // If the new value equals original cost, store empty string to indicate unmodified
+    // Otherwise, store the actual new value
+    const costToSave = newUnitCost === originalCost ? "" : newUnitCost;
+
+    deliveryActions.updateProcedureCost(procedureId, costToSave);
   };
 
   return (
@@ -364,7 +345,7 @@ export default function DiagnosisProcedureStep() {
             ) : (
               <div className="max-h-80 overflow-y-auto space-y-3">
                 {formState.procedureLines.map((procedure) => {
-                  const displayCost = getDisplayCost(procedure);
+                  const unitCost = getUnitCost(procedure);
                   const totalCost = getTotalCost(procedure);
 
                   return (
@@ -383,7 +364,7 @@ export default function DiagnosisProcedureStep() {
                               ID: {procedure.ProcedureId}
                             </p>
                             <p className="text-sm font-medium text-gray-700">
-                              ₦{totalCost.toLocaleString()}
+                              Total: ₦{totalCost.toLocaleString()}
                             </p>
                           </div>
                         </div>
@@ -391,25 +372,16 @@ export default function DiagnosisProcedureStep() {
                         {/* Input fields in a row */}
                         <div className="flex gap-3 max-w-xs">
                           <Input
-                            type="text"
+                            type="number"
                             size="sm"
                             label="Unit Cost"
-                            value={displayCost}
-                            onChange={(e) => {
-                              const newValue = e.target.value;
-                              const originalCost =
-                                originalCosts.get(procedure.ProcedureId) || "0";
-
-                              // If the new value equals original cost, store empty string to indicate unmodified
-                              // Otherwise, store the actual new value
-                              const costToSave =
-                                newValue === originalCost ? "" : newValue;
-
-                              deliveryActions.updateProcedureCost(
+                            value={unitCost}
+                            onChange={(e) =>
+                              handleUnitCostChange(
                                 procedure.ProcedureId,
-                                costToSave
-                              );
-                            }}
+                                e.target.value
+                              )
+                            }
                             placeholder="0"
                             className="w-24"
                           />
@@ -422,8 +394,7 @@ export default function DiagnosisProcedureStep() {
                             onChange={(e) =>
                               handleQuantityChange(
                                 procedure.ProcedureId,
-                                parseInt(e.target.value) || 1,
-                                procedure.cost || ""
+                                parseInt(e.target.value) || 1
                               )
                             }
                             placeholder="1"
