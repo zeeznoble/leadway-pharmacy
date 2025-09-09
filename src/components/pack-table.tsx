@@ -132,6 +132,9 @@ export default function PackTable({
   const handleSearchTypeChange = (value: string) => {
     setSearchType(value as "enrollee" | "pharmacy" | "address");
     setSearchTerm("");
+    setCurrentPage(1);
+    setSelectedKeys(new Set([]));
+    onSearch("");
   };
 
   const handleSearch = () => {
@@ -155,8 +158,6 @@ export default function PackTable({
 
   const handleSelectionChange = (keys: Selection) => {
     if (keys === "all") {
-      // Select all visible rows on current page only
-      // Only filter out delivered items, not all items with status
       const currentPageKeys = new Set(
         paginatedRows
           .filter(
@@ -172,13 +173,11 @@ export default function PackTable({
       );
 
       if (allCurrentPageSelected) {
-        // Deselect all current page items
         const newSelection = new Set(
           Array.from(currentSelected).filter((key) => !currentPageKeys.has(key))
         );
         setSelectedKeys(newSelection);
       } else {
-        // Add all current page items to selection
         const newSelection = new Set([
           ...Array.from(currentSelected),
           ...Array.from(currentPageKeys),
@@ -190,9 +189,8 @@ export default function PackTable({
     }
   };
 
-  // NEW: Handle global select all (across all pages)
   const handleGlobalSelectAll = () => {
-    const allSelectableKeys = filteredRows
+    const allSelectableKeys = rows
       .filter((row) => !row.actions.isDelivered && row.status !== "Delivered")
       .map((row) => row.key);
 
@@ -212,31 +210,7 @@ export default function PackTable({
     setCurrentPage(page);
   };
 
-  const filteredRows = useMemo(() => {
-    let filtered = rows;
-
-    if (searchTerm.trim()) {
-      const searchTermLower = searchTerm.toLowerCase();
-
-      filtered = filtered.filter((row) => {
-        switch (searchType) {
-          case "pharmacy":
-            return row.pharmacyname.toLowerCase().includes(searchTermLower);
-          case "address":
-            return row.deliveryaddress.toLowerCase().includes(searchTermLower);
-          case "enrollee":
-            return (
-              row.enrollee.name.toLowerCase().includes(searchTermLower) ||
-              row.key.toLowerCase().includes(searchTermLower)
-            );
-          default:
-            return true;
-        }
-      });
-    }
-
-    return filtered;
-  }, [rows, searchType, searchTerm]);
+  const filteredRows = rows;
 
   const isGloballySelected = useMemo(() => {
     if (selectedKeys === "all") return false;
@@ -500,8 +474,6 @@ export default function PackTable({
                       : "Delivery Address"}
                   {filteredRows.length > 0 &&
                     ` - Found ${filteredRows.length} result(s)`}
-                  {searchType === "enrollee"}
-                  {searchType !== "enrollee"}
                 </span>
               )}
             </div>
@@ -582,7 +554,7 @@ export default function PackTable({
               <div className="flex justify-between items-center">
                 <div className="mt-4 text-sm text-gray-500">
                   <p>Total deliveries: {rows.length}</p>
-                  {searchTerm && <p>Filtered results: {filteredRows.length}</p>}
+                  {searchTerm && <p>Search results: {filteredRows.length}</p>}
                   <p>Selected for packing: {selectedCount}</p>
                   {selectedCount > 0 && (
                     <p className="text-blue-600">
