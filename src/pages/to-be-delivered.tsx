@@ -58,9 +58,6 @@ export default function ToBeDeliveredPage() {
   >([]);
   const [isReturningToPack, setIsReturningToPack] = useState(false);
 
-  console.log("Deliveries to be Delivered State:", state.deliveries);
-
-  // Date picker states
   const [fromDate, setFromDate] = useState<CalendarDate | null>(null);
   const [toDate, setToDate] = useState<CalendarDate | null>(null);
 
