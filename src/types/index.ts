@@ -105,6 +105,7 @@ export type Delivery = {
   deliveryaddress: string,
   phonenumber: string;
   recipientcode?: string;
+  enrolleename?: string;
   memberstatus?: string;
   cost: string;
 
