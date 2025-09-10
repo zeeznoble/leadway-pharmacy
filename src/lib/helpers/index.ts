@@ -319,14 +319,22 @@ export const generateDeliveryCode = (): string => {
   return Math.floor(1000000 + Math.random() * 9000000).toString();
 };
 
+// Your delivery code is ${deliveryCode}. Please present this code when making the delivery.
 export const getRiderSmsMessage = (
   riderName: string,
-  deliveryCode: string,
-  deliveryDate: string,
-  enrolleeName: string
+  riderPhoneNumber: string,
+  enrolleeName: string,
+  additionalInfo?: string, // make it optional
 ): string => {
-  return `Hi ${riderName}, you have a new delivery assignment for ${enrolleeName} on ${deliveryDate}. Your delivery code is ${deliveryCode}. Please present this code when making the delivery. - Health Partnerships`;
+  let message = `Hi ${riderName}, you have a new delivery assignment for ${enrolleeName} on ${riderPhoneNumber}.`;
+
+  if (additionalInfo && additionalInfo.trim() !== "") {
+    message += `\nAdditional Information: ${additionalInfo}`;
+  }
+
+  return message;
 };
+
 
 export const getEnrolleeSmsMessage = (
   enrolleeName: string,
