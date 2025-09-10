@@ -171,19 +171,17 @@ export default function ThirdPartyAssignRider() {
 
   const sendDeliverySms = async (
     rider: Rider,
-    enrolleeCode: string,
-    riderCode: string,
-    deliveryDate: string
+    enrolleeCode: string
   ): Promise<void> => {
     try {
-      const formattedDisplayDate = new Date(deliveryDate).toLocaleDateString(
-        "en-US",
-        {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        }
-      );
+      // const formattedDisplayDate = new Date(deliveryDate).toLocaleDateString(
+      //   "en-US",
+      //   {
+      //     year: "numeric",
+      //     month: "long",
+      //     day: "numeric",
+      //   }
+      // );
 
       const selectedDeliveryEntryNo =
         selectedDeliveriesToPack[0].DeliveryEntryNo;
@@ -203,9 +201,9 @@ export default function ThirdPartyAssignRider() {
         To: rider.phone_number,
         Message: getRiderSmsMessage(
           `${rider.first_name} ${rider.last_name}`,
-          riderCode,
-          formattedDisplayDate,
-          fullDeliveryData.EnrolleeName || "Patient"
+          rider.phone_number,
+          fullDeliveryData.enrolleename || "Patient",
+          fullDeliveryData.AdditionalInformation || undefined
         ),
         Source: "Drug Delivery",
         SourceId: 1,
@@ -218,7 +216,7 @@ export default function ThirdPartyAssignRider() {
       const enrolleeSmsPayload: SmsPayload = {
         To: fullDeliveryData.phonenumber || "",
         Message: getEnrolleeSmsMessage(
-          fullDeliveryData.EnrolleeName || "Patient",
+          fullDeliveryData.enrolleename || "Patient",
           enrolleeCode,
           rider.phone_number,
           `${rider.first_name} ${rider.last_name}`
@@ -276,12 +274,7 @@ export default function ThirdPartyAssignRider() {
 
       if (result.IndividualResults[0].Status === "Success") {
         // Send SMS notifications after successful delivery marking
-        await sendDeliverySms(
-          rider,
-          enrolleeVerificationCode,
-          riderDeliveryCode,
-          selectedDeliveriesToPack[0].nextpackdate || ""
-        );
+        await sendDeliverySms(rider, enrolleeVerificationCode);
 
         toast.success(
           "Delivery scheduled and SMS notifications sent successfully!"

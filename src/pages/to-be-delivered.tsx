@@ -184,21 +184,16 @@ export default function ToBeDeliveredPage() {
     }
   };
 
-  const sendDeliverySms = async (
-    rider: Rider,
-    enrolleeCode: string,
-    riderCode: string,
-    deliveryDate: string
-  ): Promise<void> => {
+  const sendDeliverySms = async (rider: Rider, enrolleeCode: string) => {
     try {
-      const formattedDisplayDate = new Date(deliveryDate).toLocaleDateString(
-        "en-US",
-        {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        }
-      );
+      // const formattedDisplayDate = new Date(deliveryDate).toLocaleDateString(
+      //   "en-US",
+      //   {
+      //     year: "numeric",
+      //     month: "long",
+      //     day: "numeric",
+      //   }
+      // );
 
       const selectedDeliveryEntryNo =
         selectedDeliveriesToPack[0].DeliveryEntryNo;
@@ -207,20 +202,18 @@ export default function ToBeDeliveredPage() {
         (delivery: any) => delivery.entryno === selectedDeliveryEntryNo
       );
 
-      console.log("Full Delivery Data:", fullDeliveryData);
-
       if (!fullDeliveryData) {
         throw new Error("Could not find full delivery data");
       }
 
       // Send SMS to rider
       const riderSmsPayload: SmsPayload = {
-        To: rider.phone_number,
+        To: "09036340011",
         Message: getRiderSmsMessage(
           `${rider.first_name} ${rider.last_name}`,
-          riderCode,
           rider.phone_number,
-          fullDeliveryData.EnrolleeName || "Patient"
+          fullDeliveryData.enrolleename || "Patient",
+          fullDeliveryData.AdditionalInformation || undefined
         ),
         Source: "Drug Delivery",
         SourceId: 1,
@@ -231,11 +224,11 @@ export default function ToBeDeliveredPage() {
       };
 
       const enrolleeSmsPayload: SmsPayload = {
-        To: fullDeliveryData.phonenumber || "",
+        To: "09036340011",
         Message: getEnrolleeSmsMessage(
-          fullDeliveryData.EnrolleeName || "Patient",
+          fullDeliveryData.enrolleename || "Patient",
           enrolleeCode,
-          formattedDisplayDate,
+          rider.phone_number,
           `${rider.first_name} ${rider.last_name}`
         ),
         Source: "Drug Delivery",
@@ -291,12 +284,7 @@ export default function ToBeDeliveredPage() {
 
       if (result.IndividualResults[0].Status === "Success") {
         // Send SMS notifications after successful delivery marking
-        await sendDeliverySms(
-          rider,
-          enrolleeVerificationCode,
-          riderDeliveryCode,
-          selectedDeliveriesToPack[0].nextpackdate || ""
-        );
+        await sendDeliverySms(rider, enrolleeVerificationCode);
 
         toast.success(
           "Delivery scheduled and SMS notifications sent successfully!"
