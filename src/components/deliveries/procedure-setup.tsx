@@ -143,7 +143,6 @@ export default function DiagnosisProcedureStep() {
     }
   };
 
-  // Helper function to get the unit cost for display in textbox
   const getUnitCost = (procedure: any) => {
     if (
       procedure.cost === "" ||
