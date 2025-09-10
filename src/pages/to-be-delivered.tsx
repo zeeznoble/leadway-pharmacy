@@ -208,7 +208,7 @@ export default function ToBeDeliveredPage() {
 
       // Send SMS to rider
       const riderSmsPayload: SmsPayload = {
-        To: "09036340011",
+        To: rider.phone_number,
         Message: getRiderSmsMessage(
           `${rider.first_name} ${rider.last_name}`,
           rider.phone_number,
@@ -224,7 +224,7 @@ export default function ToBeDeliveredPage() {
       };
 
       const enrolleeSmsPayload: SmsPayload = {
-        To: "09036340011",
+        To: fullDeliveryData.phonenumber || "",
         Message: getEnrolleeSmsMessage(
           fullDeliveryData.enrolleename || "Patient",
           enrolleeCode,
