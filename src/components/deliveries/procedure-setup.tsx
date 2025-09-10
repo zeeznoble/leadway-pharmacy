@@ -252,7 +252,7 @@ export default function DiagnosisProcedureStep() {
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyUp={handleKeyPress}
-                  isDisabled={formState.procedureLines.length >= 5}
+                  // isDisabled={formState.procedureLines.length >= 5}
                   startContent={
                     <SearchIcon className="w-4 h-4 text-gray-400" />
                   }
@@ -261,9 +261,9 @@ export default function DiagnosisProcedureStep() {
                   color="primary"
                   onPress={handleSearchClick}
                   isLoading={isLoading}
-                  isDisabled={
-                    formState.procedureLines.length >= 5 || !inputValue.trim()
-                  }
+                  // isDisabled={
+                  //   formState.procedureLines.length >= 5 || !inputValue.trim()
+                  // }
                   className="w-full"
                 >
                   Search
@@ -278,7 +278,7 @@ export default function DiagnosisProcedureStep() {
                     placeholder="Choose from search results..."
                     selectedKeys={selectedProcedure}
                     onSelectionChange={handleSelectionChange}
-                    isDisabled={formState.procedureLines.length >= 5}
+                    // isDisabled={formState.procedureLines.length >= 5}
                     scrollRef={scrollerRef}
                     isOpen={isOpen}
                     onOpenChange={setIsOpen}
@@ -304,11 +304,9 @@ export default function DiagnosisProcedureStep() {
                 <Button
                   color="primary"
                   onPress={handleAddProcedure}
-                  isDisabled={
-                    !selectedProcedureObj ||
-                    formState.procedureLines.length >= 5
-                  }
+                  isDisabled={!selectedProcedureObj}
                   className="w-full"
+                  // || formState.procedureLines.length >= 5
                 >
                   Add Medication
                 </Button>
