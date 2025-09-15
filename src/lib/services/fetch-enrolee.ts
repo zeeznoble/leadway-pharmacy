@@ -24,10 +24,33 @@ export type EnrolleeData = {
   Member_ExpiryDate: string;
 }
 
+export type EnrolleeBenefitData = {
+  RowId: number,
+  Benefit: string,
+  Limit: string,
+  Used: number,
+  AmtClaimed: number,
+  Authorised: number,
+  Balance: string,
+  Scheme: number,
+  Service: number,
+  VisitsLimit: number,
+  VisitsUsed: number,
+  VisitsBalance: number,
+  CoinsurancePercentage: number,
+  CopaymentAmount: number,
+  ServiceLimitUnits: number
+}
+
 export type EnrolleeResponse = {
   status: number,
   result: EnrolleeData[],
   profilepic: string,
+}
+
+export type EnrolleeBenefitResponse = {
+  status: number,
+  result: EnrolleeBenefitData[],
 }
 
 type SearchCriteria = {
@@ -116,6 +139,24 @@ export const fetchEnrolleeByMultipleFields = async (
   } catch (error) {
     console.error("Error fetching enrollee data:", error);
     throw error; // Re-throw to let the calling component handle the error
+  }
+};
+
+export const fetchEnrolleeBenefitsBycif = async (
+  cif: number
+): Promise<EnrolleeBenefitResponse | null> => {
+  try {
+    const apiUrl = `${API_URL}/EnrolleeProfile/GetEnrolleeBenefitsByCif_ChronicMedicines?cifno=${cif}`
+    const response = await fetch(apiUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch enrollee data: ${response.status}`);
+    }
+    const data = (await response.json()) as EnrolleeBenefitResponse;
+
+    return data || null;
+  } catch (error) {
+    console.error("Error fetching enrollee data:", error);
+    return null;
   }
 };
 
