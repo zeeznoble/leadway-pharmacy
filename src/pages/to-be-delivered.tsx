@@ -211,7 +211,7 @@ export default function ToBeDeliveredPage() {
         To: rider.phone_number,
         Message: getRiderSmsMessage(
           `${rider.first_name} ${rider.last_name}`,
-          rider.phone_number,
+          fullDeliveryData.phonenumber,
           fullDeliveryData.enrolleename || "Patient",
           fullDeliveryData.AdditionalInformation || undefined
         ),
