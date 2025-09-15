@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { Button } from "@heroui/button";
 import {
   Modal,
@@ -27,6 +27,11 @@ import {
   deliveryStore,
 } from "@/lib/store/delivery-store";
 import { fetchDeliveries } from "@/lib/services/delivery-service";
+import {
+  EnrolleeBenefitData,
+  fetchEnrolleeBenefitsBycif,
+} from "@/lib/services/fetch-enrolee";
+import BenefitTable from "@/components/benefits-table";
 
 export default function DeliveriesPage() {
   const {
@@ -38,7 +43,13 @@ export default function DeliveriesPage() {
     pendingSubmission,
   } = useChunkValue(deliveryStore);
   const formState = useChunkValue(deliveryFormState);
-  const { searchCriteria } = useChunkValue(appChunk);
+  const { searchCriteria, enrolleeData } = useChunkValue(appChunk);
+
+  // State for Benefits Modal
+  const [showBenefitsModal, setShowBenefitsModal] = useState(false);
+  const [benefitsData, setBenefitsData] = useState<EnrolleeBenefitData[]>([]);
+  const [benefitsLoading, setBenefitsLoading] = useState(false);
+  const [benefitsError, setBenefitsError] = useState<string>("");
 
   const lastSearchRef = useRef<string>("");
   const isFetchingRef = useRef<boolean>(false);
@@ -147,6 +158,42 @@ export default function DeliveriesPage() {
     }
   };
 
+  const handleSeeLimitClick = async () => {
+    if (!enrolleeData?.Member_MemberUniqueID) {
+      setBenefitsError("No member ID found");
+      setShowBenefitsModal(true);
+      return;
+    }
+
+    setBenefitsLoading(true);
+    setBenefitsError("");
+    setShowBenefitsModal(true);
+
+    try {
+      const response = await fetchEnrolleeBenefitsBycif(
+        enrolleeData.Member_MemberUniqueID
+      );
+      if (response && response.result) {
+        setBenefitsData(response.result);
+      } else {
+        setBenefitsError("No benefits data found");
+        setBenefitsData([]);
+      }
+    } catch (error) {
+      console.error("Error fetching benefits:", error);
+      setBenefitsError("Failed to load benefits data");
+      setBenefitsData([]);
+    } finally {
+      setBenefitsLoading(false);
+    }
+  };
+
+  const handleBenefitsModalClose = () => {
+    setShowBenefitsModal(false);
+    setBenefitsData([]);
+    setBenefitsError("");
+  };
+
   const renderFormStep = () => {
     switch (formState.currentStep) {
       case 1:
@@ -166,19 +213,24 @@ export default function DeliveriesPage() {
 
   return (
     <section className="px-2">
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-end mb-4 gap-2">
         {searchCriteria.enrolleeId !== "" ||
         searchCriteria.firstName !== "" ||
         searchCriteria.lastName !== "" ||
         searchCriteria.mobileNo !== "" ||
         searchCriteria.email !== "" ? (
-          <Button
-            color="primary"
-            radius="md"
-            onPress={deliveryActions.openModal}
-          >
-            Create Delivery
-          </Button>
+          <>
+            <Button color="secondary" radius="md" onPress={handleSeeLimitClick}>
+              See Limit
+            </Button>
+            <Button
+              color="primary"
+              radius="md"
+              onPress={deliveryActions.openModal}
+            >
+              Create Delivery
+            </Button>
+          </>
         ) : (
           <p className="text-medium">Select an Enrollee to Create Delivery</p>
         )}
@@ -241,6 +293,37 @@ export default function DeliveriesPage() {
                 </Button>
               </div>
             </div>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Benefits Modal */}
+      <Modal
+        backdrop="blur"
+        isOpen={showBenefitsModal}
+        onClose={handleBenefitsModalClose}
+        size="5xl"
+        scrollBehavior="inside"
+      >
+        <ModalContent>
+          <ModalHeader className="flex flex-col gap-1">
+            Enrollee Benefits & Limits
+          </ModalHeader>
+          <ModalBody>
+            <BenefitTable
+              benefitsData={benefitsData}
+              loading={benefitsLoading}
+              error={benefitsError}
+            />
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              color="danger"
+              variant="light"
+              onPress={handleBenefitsModalClose}
+            >
+              Close
+            </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
