@@ -322,11 +322,11 @@ export const generateDeliveryCode = (): string => {
 // Your delivery code is ${deliveryCode}. Please present this code when making the delivery.
 export const getRiderSmsMessage = (
   riderName: string,
-  riderPhoneNumber: string,
+  enrolleephone: string,
   enrolleeName: string,
   additionalInfo?: string, // make it optional
 ): string => {
-  let message = `Hi ${riderName}, you have a new delivery assignment for ${enrolleeName} on ${riderPhoneNumber}.`;
+  let message = `Hi ${riderName}, you have a new delivery assignment for ${enrolleeName} on ${enrolleephone}.`;
 
   if (additionalInfo && additionalInfo.trim() !== "") {
     message += `\nAdditional Information: ${additionalInfo}`;
