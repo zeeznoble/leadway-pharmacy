@@ -742,6 +742,55 @@ export const deliverPackDeliveries = async (deliveryLines: any[]): Promise<Deliv
   }
 };
 
+export const reassignPackDeliveries = async (deliveryLines: any[]): Promise<DeliveredPackResponse> => {
+  try {
+    deliveryStore.set((state) => ({
+      ...state,
+      isPackingLoading: true,
+      packingError: null,
+      packingSuccess: false
+    }));
+
+    const apiUrl = `${API_URL}/PharmacyDelivery/ReAssignDeliveryLine`;
+
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(deliveryLines),
+    });
+
+    console.log("Reassigning pack deliveries to:", apiUrl);
+    console.log("Payload:", JSON.stringify(deliveryLines, null, 2));
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+
+    const data = await response.json() as DeliveredPackResponse;
+
+    console.log("Reassigned Pack Delivery API response:", data);
+
+    deliveryStore.set((state) => ({
+      ...state,
+      isPackingLoading: false,
+      packingError: null,
+      packingSuccess: true
+    }));
+
+    return data;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Failed to reassign deliveries";
+    deliveryStore.set((state) => ({
+      ...state,
+      isPackingLoading: false,
+      packingError: errorMessage,
+    }));
+    throw error;
+  }
+};
+
 export const fetchSentForDelivery = async (fromDate?: string, toDate?: string, enrolleeId?: string): Promise<any> => {
   try {
     deliveryStore.set((state) => ({
