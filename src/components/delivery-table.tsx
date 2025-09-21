@@ -44,6 +44,7 @@ interface DeliveryTableProps {
     searchTerm: string,
     searchType?: "enrollee" | "pharmacy" | "address"
   ) => void;
+  onReassignToRider?: (selectedDeliveries: any[]) => void;
   currentSearchTerm?: string;
   currentSearchType?: "enrollee" | "pharmacy" | "address";
 }
@@ -76,6 +77,7 @@ export default function DeliveryTable({
   isLoading = false,
   onSearch,
   currentSearchTerm = "",
+  onReassignToRider,
   currentSearchType = "enrollee",
 }: DeliveryTableProps) {
   const [isDeleting, setIsDeleting] = useState<Record<string, boolean>>({});
@@ -302,6 +304,18 @@ export default function DeliveryTable({
     }
   };
 
+  const handleReassignToRider = () => {
+    const selectedRows = getSelectedRows(selectedKeys);
+
+    if (selectedRows.length === 0) {
+      toast.error("Please select at least one delivery to reassign");
+      return;
+    }
+
+    // Just pass the selected rows directly - the parent component will handle the API format
+    onReassignToRider?.(selectedRows);
+  };
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
@@ -309,18 +323,18 @@ export default function DeliveryTable({
   const handleSearchTypeChange = (value: string) => {
     setSearchType(value as "enrollee" | "pharmacy" | "address");
     setSearchTerm("");
-  };
-
-  const shouldUseApiSearch = (searchType: string): boolean => {
-    return searchType === "enrollee";
+    setCurrentPage(1);
+    setSelectedKeys(new Set([]));
+    if (onSearch) {
+      onSearch("", value as "enrollee" | "pharmacy" | "address");
+    }
   };
 
   const handleSearch = () => {
     setCurrentPage(1);
     setSelectedKeys(new Set([]));
-
-    if (onSearch && shouldUseApiSearch(searchType)) {
-      onSearch(searchTerm, "enrollee");
+    if (onSearch) {
+      onSearch(searchTerm, searchType);
     }
   };
 
@@ -334,9 +348,8 @@ export default function DeliveryTable({
     setSearchTerm("");
     setCurrentPage(1);
     setSelectedKeys(new Set([]));
-    setSearchType("enrollee");
     if (onSearch) {
-      onSearch("", "enrollee");
+      onSearch("", searchType);
     }
   };
 
@@ -354,19 +367,21 @@ export default function DeliveryTable({
         return {
           key: uniqueKey,
           enrollee: {
-            name: transformedDelivery.EnrolleeName,
-            id: transformedDelivery.EnrolleeId,
-            scheme: transformedDelivery.SchemeName,
+            name: transformedDelivery.EnrolleeName || "Unknown",
+            id: transformedDelivery.EnrolleeId || "",
+            scheme: transformedDelivery.SchemeName || "",
           },
           startDate: formatDate(transformedDelivery.DelStartDate),
           nextDelivery: formatDate(transformedDelivery.NextDeliveryDate),
           deliveryaddress: transformedDelivery.deliveryaddress || "",
-          frequency: transformedDelivery.DeliveryFrequency,
-          recipentcode: transformedDelivery.recipientcode,
+          frequency: transformedDelivery.DeliveryFrequency || "",
+          recipentcode: transformedDelivery.recipientcode || "",
           status: transformedDelivery.Status || "Pending",
-          diagnosisname: transformedDelivery.DiagnosisLines[0]?.DiagnosisName,
-          procedurename: transformedDelivery.ProcedureLines[0]?.ProcedureName,
-          memberstatus: transformedDelivery.memberstatus,
+          diagnosisname:
+            transformedDelivery.DiagnosisLines[0]?.DiagnosisName || "",
+          procedurename:
+            transformedDelivery.ProcedureLines[0]?.ProcedureName || "",
+          memberstatus: transformedDelivery.memberstatus || "",
           actions: {
             isDelivered: transformedDelivery.IsDelivered ?? false,
           },
@@ -378,32 +393,8 @@ export default function DeliveryTable({
     [deliveries]
   );
 
-  const filteredRows = useMemo(() => {
-    if (onSearch && searchType === "enrollee") {
-      return rows; // API search handles filtering
-    }
-
-    if (!searchTerm.trim()) return rows;
-
-    const searchTermLower = searchTerm.toLowerCase();
-
-    return rows.filter((row) => {
-      switch (searchType) {
-        case "enrollee":
-          // This case shouldn't be reached when API search is used
-          return (
-            row.enrollee.name.toLowerCase().includes(searchTermLower) ||
-            row.enrollee.id.toLowerCase().includes(searchTermLower)
-          );
-        case "pharmacy":
-          return row.pharmacyname.toLowerCase().includes(searchTermLower);
-        case "address":
-          return row.deliveryaddress.toLowerCase().includes(searchTermLower);
-        default:
-          return true;
-      }
-    });
-  }, [rows, searchType, searchTerm, onSearch]);
+  // Remove client-side filtering - all filtering happens on server via onSearch
+  const filteredRows = rows;
 
   const isGloballySelected = useMemo(() => {
     if (selectedKeys === "all") return false;
@@ -554,20 +545,11 @@ export default function DeliveryTable({
   };
 
   const showNoResults =
-    !isLoading && filteredRows.length === 0 && searchTerm.trim() !== "";
-
+    !isLoading &&
+    filteredRows.length === 0 &&
+    (searchTerm || deliveries.length > 0);
   const showInitialMessage =
-    !isLoading && deliveries.length === 0 && !searchTerm && !currentSearchTerm;
-
-  const shouldShowSearchUI = !showInitialMessage;
-
-  if (showInitialMessage) {
-    return (
-      <div className="text-center p-8 text-gray-500">
-        No deliveries found. Create a new delivery to get started.
-      </div>
-    );
-  }
+    !isLoading && deliveries.length === 0 && !searchTerm;
 
   const totalSelectableItems = filteredRows.filter(
     (row) => !row.actions.isDelivered && row.status !== "Delivered"
@@ -575,73 +557,77 @@ export default function DeliveryTable({
 
   return (
     <>
-      {shouldShowSearchUI && (
-        <div className="mb-6 flex flex-col gap-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <div className="flex w-full sm:w-auto items-center flex-1 gap-2">
-              <Select
-                aria-label="search-type"
-                className="w-48"
-                placeholder="Search by"
-                selectedKeys={[searchType]}
-                onSelectionChange={(keys) => {
-                  const key = Array.from(keys)[0] as string;
-                  handleSearchTypeChange(key);
-                }}
-                radius="sm"
-              >
-                <SelectItem key="enrollee">Enrollee (ID/Name)</SelectItem>
-                <SelectItem key="pharmacy">Pharmacy</SelectItem>
-                <SelectItem key="address">Region</SelectItem>
-              </Select>
-              <Input
-                className="flex-1"
-                placeholder={getSearchPlaceholder(searchType)}
-                value={searchTerm}
-                onChange={handleSearchChange}
-                onKeyUp={handleKeyPress}
-                radius="sm"
-              />
+      {/* Always show search UI - like PackTable */}
+      <div className="mb-6 flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="flex w-full sm:w-auto items-center flex-1 gap-2">
+            <Select
+              aria-label="search-type"
+              className="w-48"
+              placeholder="Search by"
+              selectedKeys={[searchType]}
+              onSelectionChange={(keys) => {
+                const key = Array.from(keys)[0] as string;
+                handleSearchTypeChange(key);
+              }}
+              radius="sm"
+            >
+              <SelectItem key="enrollee">Enrollee (ID/Name)</SelectItem>
+              <SelectItem key="pharmacy">Pharmacy</SelectItem>
+              <SelectItem key="address">Region</SelectItem>
+            </Select>
+            <Input
+              className="flex-1"
+              placeholder={getSearchPlaceholder(searchType)}
+              value={searchTerm}
+              onChange={handleSearchChange}
+              onKeyUp={handleKeyPress}
+              radius="sm"
+            />
 
+            <Button
+              color="primary"
+              radius="sm"
+              onPress={handleSearch}
+              isDisabled={isLoading}
+            >
+              {isLoading ? <Spinner size="sm" color="white" /> : "Search"}
+            </Button>
+            {searchTerm && (
               <Button
-                color="primary"
+                color="default"
                 radius="sm"
-                onPress={handleSearch}
+                onPress={handleClearSearch}
                 isDisabled={isLoading}
               >
-                {isLoading ? <Spinner size="sm" color="white" /> : "Search"}
+                Clear
               </Button>
-              {(searchTerm || currentSearchTerm) && (
-                <Button
-                  color="default"
-                  radius="sm"
-                  onPress={handleClearSearch}
-                  isDisabled={isLoading}
-                >
-                  Clear
-                </Button>
-              )}
-            </div>
+            )}
           </div>
+        </div>
 
-          <div className="flex justify-between items-center">
-            <div className="text-sm text-gray-600">
-              {(searchTerm || currentSearchTerm) && (
-                <span>
-                  Searching for "{searchTerm || currentSearchTerm}" in{" "}
-                  {searchType === "enrollee"
-                    ? "Enrollee ID/Name"
-                    : searchType === "pharmacy"
-                      ? "Pharmacy Name"
-                      : "Delivery Address"}
-                  {filteredRows.length > 0 &&
-                    ` - Found ${filteredRows.length} result(s)`}
-                  {searchType === "enrollee"}
-                  {searchType !== "enrollee"}
-                </span>
-              )}
-            </div>
+        <div className="flex justify-between items-center">
+          <div className="text-sm text-gray-600">
+            {searchTerm && (
+              <span>
+                Searching for "{searchTerm}" in{" "}
+                {searchType === "enrollee"
+                  ? "Enrollee ID/Name"
+                  : searchType === "pharmacy"
+                    ? "Pharmacy Name"
+                    : "Delivery Address"}
+                {filteredRows.length > 0 &&
+                  ` - Found ${filteredRows.length} result(s)`}
+              </span>
+            )}
           </div>
+        </div>
+      </div>
+
+      {showInitialMessage && (
+        <div className="text-center p-8 text-gray-500">
+          No deliveries found. Search by Enrollee ID, Pharmacy Name, or Delivery
+          Address to get started.
         </div>
       )}
 
@@ -668,9 +654,7 @@ export default function DeliveryTable({
               <div className="flex w-full justify-between items-center">
                 <p className="text-small text-gray-500">
                   Total: {filteredRows.length} deliveries
-                  {(searchTerm || currentSearchTerm) && (
-                    <span> (filtered from {rows.length})</span>
-                  )}
+                  {searchTerm && <span> (search results)</span>}
                 </p>
                 <Pagination
                   isCompact
@@ -716,9 +700,7 @@ export default function DeliveryTable({
                   ) : (
                     <p className="text-xs text-gray-500">
                       Total: {filteredRows.length} deliveries
-                      {(searchTerm || currentSearchTerm) && (
-                        <span> (filtered from {rows.length})</span>
-                      )}
+                      {searchTerm && <span> (search results)</span>}
                     </p>
                   )}
                 </div>
@@ -759,16 +741,28 @@ export default function DeliveryTable({
                         </Button>
                       )}
                       {isSentForDeliveryPage && (
-                        <Button
-                          color="secondary"
-                          radius="sm"
-                          size="md"
-                          isLoading={isClaiming}
-                          isDisabled={isClaiming}
-                          onPress={handleClaimLines}
-                        >
-                          {isClaiming ? "Creating Claims..." : "Claim Lines"}
-                        </Button>
+                        <>
+                          <Button
+                            color="secondary"
+                            radius="sm"
+                            size="md"
+                            isLoading={isClaiming}
+                            isDisabled={isClaiming}
+                            onPress={handleClaimLines}
+                          >
+                            {isClaiming ? "Creating Claims..." : "Claim Lines"}
+                          </Button>
+
+                          <Button
+                            color="primary"
+                            radius="sm"
+                            size="md"
+                            isDisabled={selectedCount === 0 || isLoading}
+                            onPress={handleReassignToRider}
+                          >
+                            Reassign to Rider
+                          </Button>
+                        </>
                       )}
                     </div>
                   </div>
