@@ -1,6 +1,6 @@
 import toast from "react-hot-toast";
 import { authStore } from "@/lib/store/app-store";
-import { API_URL } from "../helpers";
+import { API_URL, generateMonthNames } from "../helpers";
 
 // Types for email functionality
 interface MedicationItem {
@@ -18,6 +18,7 @@ interface EmailTemplateData {
   enrolleeAddress: string;
   medications: MedicationItem[];
   packingPeriod: string;
+  monthNames: string;
 }
 
 interface EmailPayload {
@@ -181,7 +182,7 @@ const getRoutineEmailTemplate = (templateData: EmailTemplateData): string => {
           </p>
 
           <p style="line-height: 1.6; color: #262626; margin: 0;">
-            As we prepare for your next refill (<strong style="color: #f15A24;">${templateData.packingPeriod}</strong>),
+            As we prepare for your next refill (<strong style="color: #f15A24;">${templateData.packingPeriod} - ${templateData.monthNames}</strong>),
             we kindly ask for your assistance in ensuring a seamless service:
           </p>
         </div>
@@ -515,7 +516,8 @@ export const sendMedicationRefillEmails = async (
         enrolleePhone,
         enrolleeAddress,
         medications,
-        packingPeriod: `${selectedMonths} month${selectedMonths !== 1 ? 's' : ''}`
+        packingPeriod: `${selectedMonths} month${selectedMonths !== 1 ? 's' : ''}`,
+        monthNames: generateMonthNames(selectedMonths)
       };
 
       // Determine email subject based on delivery frequency
