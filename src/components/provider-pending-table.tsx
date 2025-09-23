@@ -377,6 +377,8 @@ export default function ProviderPendingsDeliveryTable({
     originalMonths: number,
     deliveryAdjustments: DeliveryAdjustment[]
   ) => {
+    let nextDeliveryDate = "";
+
     if (!selectedPharmacyData) {
       toast.error("Pharmacy information is missing");
       return;
@@ -436,6 +438,8 @@ export default function ProviderPendingsDeliveryTable({
             apiPayload,
           });
 
+          nextDeliveryDate = delivery.NextDeliveryDate;
+
           return apiPayload;
         }
       );
@@ -469,9 +473,9 @@ export default function ProviderPendingsDeliveryTable({
           }
 
           // Get the next pack date from the first delivery
-          const nextPackDate = new Date(deliveriesForAPI[0]?.nextpackdate)
-            .toISOString()
-            .split("T")[0];
+          // const nextPackDate = new Date(deliveriesForAPI[0]?.nextpackdate)
+          //   .toISOString()
+          //   .split("T")[0];
 
           // 🎯 SEND EMAILS FIRST - Before PDF generation
           console.log("Starting email sending process...");
@@ -490,7 +494,7 @@ export default function ProviderPendingsDeliveryTable({
           await generateDeliveryNotePDFNew(
             selectedDeliveriesWithEnrolleeData,
             mostCommonMonths,
-            nextPackDate,
+            new Date(nextDeliveryDate).toISOString().split("T")[0],
             deliveryAdjustments
           );
 
