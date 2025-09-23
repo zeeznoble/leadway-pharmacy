@@ -385,7 +385,7 @@ type DeliveryNoteData = {
   items: DeliveryItem[];
 }
 
-export const generateDeliveryNotePDF = async (deliveryData: DeliveryNoteData[], selectedMonths: number, nextpackdate: string, deliveryAdjustments: DeliveryAdjustment[]) => {
+export const generateDeliveryNotePDF = async (deliveryData: DeliveryNoteData[], selectedMonths: number, nextdeliverydate: string, deliveryAdjustments: DeliveryAdjustment[]) => {
 
   const doc = new jsPDF();
 
@@ -464,7 +464,7 @@ export const generateDeliveryNotePDF = async (deliveryData: DeliveryNoteData[], 
     doc.setFont('helvetica', 'normal');
     doc.text(`Issue date:`, doc.internal.pageSize.width - 60, 97, { align: 'left' });
     doc.setFont('helvetica', 'bold');
-    doc.text(nextpackdate, doc.internal.pageSize.width - 20, 97, { align: 'right' });
+    doc.text(nextdeliverydate, doc.internal.pageSize.width - 20, 97, { align: 'right' });
 
     // Patient details
     doc.setFontSize(12);
@@ -572,11 +572,11 @@ At your convenience, we have a team of expert Doctors ready to be of support to 
 
   // Download the PDF with updated filename
   const enrolleeCount = enrolleeIds.length;
-  const fileName = `Delivery_Notes_${deliveryNoteNo}_${enrolleeCount}_Enrollees_${selectedMonths}M_${nextpackdate.replace(/\//g, '-')}.pdf`;
+  const fileName = `Delivery_Notes_${deliveryNoteNo}_${enrolleeCount}_Enrollees_${selectedMonths}M_${nextdeliverydate.replace(/\//g, '-')}.pdf`;
   doc.save(fileName);
 };
 
-export const generateDeliveryNotePDFNew = async (deliveryData: DeliveryNoteData[], selectedMonths: number, nextpackdate: string, deliveryAdjustments: DeliveryAdjustment[]) => {
+export const generateDeliveryNotePDFNew = async (deliveryData: DeliveryNoteData[], selectedMonths: number, nextdeliverydate: string, deliveryAdjustments: DeliveryAdjustment[]) => {
 
   const doc = new jsPDF();
 
@@ -655,7 +655,7 @@ export const generateDeliveryNotePDFNew = async (deliveryData: DeliveryNoteData[
     doc.setFont('helvetica', 'normal');
     doc.text(`Issue date:`, doc.internal.pageSize.width - 60, 97, { align: 'left' });
     doc.setFont('helvetica', 'bold');
-    doc.text(nextpackdate, doc.internal.pageSize.width - 20, 97, { align: 'right' });
+    doc.text(nextdeliverydate, doc.internal.pageSize.width - 20, 97, { align: 'right' });
 
     // Patient details - FIXED FIELD MAPPING
     doc.setFontSize(12);
@@ -779,7 +779,7 @@ At your convenience, we have a team of expert Doctors ready to be of support to 
 
   // Download the PDF with updated filename
   const enrolleeCount = enrolleeIds.length;
-  const fileName = `Delivery_Notes_${deliveryNoteNo}_${enrolleeCount}_Enrollees_${selectedMonths}M_${nextpackdate.replace(/\//g, '-')}.pdf`;
+  const fileName = `Delivery_Notes_${deliveryNoteNo}_${enrolleeCount}_Enrollees_${selectedMonths}M_${nextdeliverydate.replace(/\//g, '-')}.pdf`;
   doc.save(fileName);
 };
 
