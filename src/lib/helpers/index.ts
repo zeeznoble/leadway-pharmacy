@@ -783,10 +783,7 @@ At your convenience, we have a team of expert Doctors ready to be of support to 
   doc.save(fileName);
 };
 
-// Helper function to determine quantity unit (you may need to adjust this)
 const getQuantityUnit = (procedureName: string): string => {
-  // Add your logic to determine the appropriate unit based on procedure name
-  // This is a simplified example
   if (procedureName.toLowerCase().includes('tablet') || procedureName.toLowerCase().includes('capsule')) {
     return 'tablets';
   } else if (procedureName.toLowerCase().includes('syrup') || procedureName.toLowerCase().includes('liquid')) {
