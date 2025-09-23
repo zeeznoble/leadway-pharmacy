@@ -797,6 +797,23 @@ const getQuantityUnit = (procedureName: string): string => {
   return 'units';
 };
 
+export const generateMonthNames = (numberOfMonths: number): string => {
+  const currentDate = new Date();
+  const monthNames = [];
+
+  for (let i = 0; i < numberOfMonths; i++) {
+    const futureDate = new Date(currentDate);
+    futureDate.setMonth(currentDate.getMonth() + i);
+
+    const monthName = futureDate.toLocaleDateString('en-US', {
+      month: 'long'
+    });
+    monthNames.push(monthName);
+  }
+
+  return monthNames.join(', ');
+};
+
 // // Helper function to load image
 // const loadImage = (url: string): Promise<HTMLImageElement> => {
 //   return new Promise((resolve, reject) => {
