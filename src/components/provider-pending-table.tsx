@@ -494,7 +494,7 @@ export default function ProviderPendingsDeliveryTable({
           await generateDeliveryNotePDFNew(
             selectedDeliveriesWithEnrolleeData,
             mostCommonMonths,
-            new Date(nextDeliveryDate).toISOString().split("T")[0],
+            formatDate(nextDeliveryDate),
             deliveryAdjustments
           );
 
