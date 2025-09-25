@@ -512,7 +512,7 @@ export default function PackTable({
         </div>
       </div>
 
-      {error && (
+      {error && !isLoading && (
         <div className="text-center p-4 mb-4 text-red-500 bg-red-50 rounded-md">
           {error}
         </div>
