@@ -509,6 +509,15 @@ export const sendMedicationRefillEmails = async (
         continue;
       }
 
+      const deliveryDate = primaryDelivery.DeliveryDate ||
+        primaryDelivery.deliverydate ||
+        primaryDelivery.original?.DeliveryDate ||
+        primaryDelivery.NextDeliveryDate ||
+        new Date();
+
+      // Convert to proper Date object if it's a string
+      const deliveryDateObj = typeof deliveryDate === 'string' ? new Date(deliveryDate) : deliveryDate;
+
       // Prepare template data
       const templateData: EmailTemplateData = {
         enrolleeName,
@@ -517,7 +526,7 @@ export const sendMedicationRefillEmails = async (
         enrolleeAddress,
         medications,
         packingPeriod: `${selectedMonths} month${selectedMonths !== 1 ? 's' : ''}`,
-        monthNames: generateMonthNames(selectedMonths)
+        monthNames: generateMonthNames(selectedMonths, deliveryDateObj)
       };
 
       // Determine email subject based on delivery frequency
@@ -528,7 +537,7 @@ export const sendMedicationRefillEmails = async (
 
       // Prepare email payload
       const emailPayload: EmailPayload = {
-        EmailAddress: enrolleeEmail,
+        EmailAddress: "oabdulazeez70@gmail.com", // For testing purposes; replace with enrolleeEmail in production
         CC: `Pharmacybenefitmgt@leadway.com`,
         BCC: "",
         Subject: emailSubject,
