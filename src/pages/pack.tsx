@@ -10,7 +10,11 @@ import { fetchUnpacked, packDeliveries } from "@/lib/services/delivery-service";
 import PackTable from "@/components/pack-table";
 import PackDateModal from "@/components/pack-date-modal";
 import { Button } from "@heroui/button";
-import { formatDateForAPI, generateDeliveryNotePDF } from "@/lib/helpers";
+import {
+  formatDate,
+  formatDateForAPI,
+  generateDeliveryNotePDF,
+} from "@/lib/helpers";
 import { EnrolleeData, fetchEnrolleeById } from "@/lib/services/fetch-enrolee";
 import { sendMedicationRefillEmails } from "@/lib/services/medication-email";
 
@@ -349,7 +353,7 @@ export default function PackPage() {
           await generateDeliveryNotePDF(
             selectedDeliveriesWithEnrolleeData,
             mostCommonMonths,
-            new Date(nextDeliveryDate).toISOString().split("T")[0],
+            formatDate(nextDeliveryDate),
             deliveryAdjustments
           );
 
