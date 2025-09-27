@@ -783,7 +783,7 @@ At your convenience, we have a team of expert Doctors ready to be of support to 
   doc.save(fileName);
 };
 
-const getQuantityUnit = (procedureName: string): string => {
+const getQuantityUnit = (procedureName: string) => {
   if (procedureName.toLowerCase().includes('tablet') || procedureName.toLowerCase().includes('capsule')) {
     return 'tablets';
   } else if (procedureName.toLowerCase().includes('syrup') || procedureName.toLowerCase().includes('liquid')) {
@@ -794,7 +794,7 @@ const getQuantityUnit = (procedureName: string): string => {
   return 'units';
 };
 
-export const generateMonthNames = (numberOfMonths: number, startDate?: Date): string => {
+export const generateMonthNames = (numberOfMonths: number, startDate?: Date) => {
   const baseDate = startDate || new Date();
   const monthNames = [];
 
