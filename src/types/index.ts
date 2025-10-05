@@ -108,7 +108,7 @@ export type Delivery = {
   enrolleename?: string;
   memberstatus?: string;
   cost: string;
-
+  Tobedeliverdby?: string;
   EntryNo?: number;
   DeliveryId?: string;
   Status?: string;
@@ -148,6 +148,7 @@ export type DeliveryApiResponse = {
     pharmacyname: string | null;
     pharmacyid: number;
     approveddate: null,
+    Tobedeliverdby?: string | null;
     Packdate: null,
     enrolleeCount: number;
     scheduledcount: number,

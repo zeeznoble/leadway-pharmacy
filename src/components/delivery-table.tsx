@@ -36,6 +36,7 @@ import {
 } from "@/lib/services/delivery-service";
 import { formatDate, transformApiResponse } from "@/lib/helpers";
 import type { Delivery } from "@/types";
+import ToBeDeliveredPage from "@/pages/to-be-delivered";
 
 interface DeliveryTableProps {
   deliveries: Delivery[];
@@ -70,6 +71,7 @@ interface RowItem {
   };
   original: any;
   cost: string;
+  toBeDeliveredBy?: string;
 }
 
 export default function DeliveryTable({
@@ -361,6 +363,8 @@ export default function DeliveryTable({
     () =>
       deliveries.map((delivery, index) => {
         const transformedDelivery = transformApiResponse(delivery);
+ console.log("Raw delivery:", delivery.Tobedeliverdby);
+      console.log("Transformed delivery:", transformedDelivery.Tobedeliverdby);
 
         const uniqueKey = `${transformedDelivery.EntryNo || index}-${Date.now()}-${Math.random()}`;
 
@@ -387,6 +391,7 @@ export default function DeliveryTable({
           },
           pharmacyname: transformedDelivery.PharmacyName || "",
           cost: transformedDelivery.cost || "",
+         toBeDeliveredBy: delivery.Tobedeliverdby || transformedDelivery.Tobedeliverdby || "",
           original: transformedDelivery,
         };
       }),
@@ -423,6 +428,7 @@ export default function DeliveryTable({
     () => [
       ...DELIVERY_COLUMNS,
       { key: "cost", label: "Cost" },
+      { key: "toBeDeliveredBy", label: "To be delivered by" },
       {
         key: "actions",
         label: "Actions",
@@ -471,6 +477,7 @@ export default function DeliveryTable({
             case "cancelled":
             case "failed":
               return "danger";
+              
             default:
               return "default";
           }
@@ -523,6 +530,14 @@ export default function DeliveryTable({
         return <span className="text-gray-500">{item.pharmacyname}</span>;
       case "cost":
         return <span className="text-gray-500">{item.cost}</span>;
+        case "toBeDeliveredBy":  // ADD THIS WHOLE CASE
+         return (
+    <span className="text-sm">
+      {item.toBeDeliveredBy || (
+        <span className="text-gray-400 italic">Not assigned</span>
+      )}
+    </span>
+  );
       default:
         return getKeyValue(item, columnKey);
     }

@@ -17,6 +17,7 @@ export const initialFormState = {
   deliveryaddress: "",
   phonenumber: "",
   cost: "",
+  Tobedeliverdby: "",
 
   pharmacyId: 8520,
   pharmacyName: "",
@@ -70,6 +71,7 @@ export const deliveryStore = chunk({
   nextPackDate: null as string | null,
   nextDeliveryDate: null as string | null,
   cost: "" as string,
+  Tobedeliverdby: "" as string,
   pendingSubmission: false,
   duplicateDeliveries: [] as Delivery[]
 })
