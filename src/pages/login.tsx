@@ -91,7 +91,7 @@ export default function LoginPage() {
               }
               isInvalid={isEmailInvalid}
               errorMessage={
-                isEmailInvalid ? "Please enter a valid email address" : ""
+                isEmailInvalid ? "Please enter a valid email" : ""
               }
               isDisabled={isLoading}
             />
