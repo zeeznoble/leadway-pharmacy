@@ -297,6 +297,7 @@ export const deliveryActions = {
       additionalInformation: safeGet(data.AdditionalInformation, ""),
       dosageDescription: safeGet(data.DosageDescription, ""),
       comment: safeGet(data.comment, ""),
+      Tobedeliverdby: safeGet(data.Tobedeliverdby, ""),
 
 
       currentStep: 1,
