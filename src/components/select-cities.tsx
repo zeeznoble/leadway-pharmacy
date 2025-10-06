@@ -64,7 +64,7 @@ export default function SelectCities({
 
       prevStateId.current = stateId;
 
-      citiesChunk.setParams(stateId);
+      citiesChunk.setParams({ stateId });
       citiesChunk.reload(stateId);
     }
   }, [stateId]);
