@@ -18,6 +18,7 @@ import { Button } from "@heroui/button";
 import { Select, SelectItem } from "@heroui/select";
 import { SelectorIcon } from "@/components/icons/icons";
 import { Spinner } from "@heroui/spinner";
+import { Input } from "@heroui/input";
 
 export const statuses = [
   { key: "packed", label: "Packed" },
@@ -41,6 +42,7 @@ export default function IndexPage() {
     today(getLocalTimeZone()).add({ months: 1 })
   );
   const [status, setStatus] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
@@ -51,6 +53,7 @@ export default function IndexPage() {
       fromDate: fromDate?.toString(),
       toDate: toDate?.toString(),
       status: Array.from(status),
+      searchQuery,
       timestamp: new Date().toLocaleTimeString(),
     });
 
@@ -60,9 +63,16 @@ export default function IndexPage() {
     const selectedStatusLabel =
       statuses.find((s) => s.key === selectedStatusKey)?.label || "";
 
-    fetchDeliveries("", "", "", fromDateStr, toDateStr, selectedStatusLabel);
+    fetchDeliveries(
+      "",
+      searchQuery,
+      "",
+      fromDateStr,
+      toDateStr,
+      selectedStatusLabel
+    );
     setIsInitialLoad(false);
-  }, [fromDate, toDate, status, isInitialLoad]);
+  }, [fromDate, toDate, status, searchQuery, isInitialLoad]);
 
   useEffect(() => {
     if (isInitialLoad) return;
@@ -71,6 +81,7 @@ export default function IndexPage() {
       fromDate: fromDate?.toString(),
       toDate: toDate?.toString(),
       status: Array.from(status),
+      searchQuery,
       timestamp: new Date().toLocaleTimeString(),
     });
 
@@ -80,13 +91,25 @@ export default function IndexPage() {
     const selectedStatusLabel =
       statuses.find((s) => s.key === selectedStatusKey)?.label || "";
 
-    fetchDeliveries("", "", "", fromDateStr, toDateStr, selectedStatusLabel);
-  }, [fromDate, toDate, status]);
+    fetchDeliveries(
+      "",
+      searchQuery,
+      "",
+      fromDateStr,
+      toDateStr,
+      selectedStatusLabel
+    );
+  }, [fromDate, toDate, status, searchQuery]);
 
   const handleClearAll = () => {
     setFromDate(null);
     setToDate(null);
     setStatus(new Set<string>());
+    setSearchQuery("");
+  };
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
   };
 
   return (
@@ -129,8 +152,18 @@ export default function IndexPage() {
         />
       </div>
       <div className="mb-4 py-4 px-0 bg-gray-50 rounded-lg">
-        <div className="flex flex-col md:flex-row items-start md:items-center gap-4 ">
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
           <div className="flex flex-col md:flex-row items-start md:items-center gap-4 flex-1 w-full">
+            <Input
+              aria-label="Search deliveries"
+              className="w-full md:max-w-md"
+              placeholder="Search by enrollee name..."
+              radius="sm"
+              label="Search"
+              size="sm"
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+            />
             <DatePicker
               label="From Date"
               showMonthAndYearPickers
@@ -171,15 +204,18 @@ export default function IndexPage() {
               color="default"
               radius="sm"
               size="sm"
-              disabled={!fromDate && !toDate && status.size === 0}
+              disabled={
+                !fromDate && !toDate && status.size === 0 && !searchQuery
+              }
             >
               Clear Filters
             </Button>
           </div>
         </div>
-        {(fromDate || toDate || status.size > 0) && (
+        {(fromDate || toDate || status.size > 0 || searchQuery) && (
           <div className="mt-4 text-sm text-gray-600">
             Filtering deliveries
+            {searchQuery && ` for "${searchQuery}"`}
             {fromDate && ` from ${formatDateForDisplay(fromDate)}`}
             {toDate && ` to ${formatDateForDisplay(toDate)}`}
             {status.size > 0 &&
