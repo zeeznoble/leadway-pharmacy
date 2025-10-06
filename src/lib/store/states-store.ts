@@ -31,7 +31,7 @@ export type City = {
 };
 
 export const citiesChunk = asyncChunk(
-  async (stateId: string) => {
+  async ({ stateId }: { stateId: string }) => {
     if (!stateId) {
       throw new Error("State ID is required");
     }
