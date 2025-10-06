@@ -82,7 +82,7 @@ export default function RiderViewModal({
                 className="mt-3"
                 onPress={() => {
                   if (riderId) {
-                    reload(riderId);
+                    reload();
                   }
                 }}
               >
