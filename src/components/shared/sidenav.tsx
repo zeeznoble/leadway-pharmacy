@@ -11,6 +11,7 @@ import {
   EnrolleeIcon,
   PendingProvidersIcon,
   PharmacyIcon,
+  ReportIcon,
   RiderIcon,
   SentForDeliveryIcon,
   StockIcon,
@@ -92,6 +93,11 @@ export default function SideNav() {
       link: "/rider",
       icon: <RiderIcon />,
       text: "Create Rider",
+    },
+    {
+      link: "/reports",
+      icon: <ReportIcon />,
+      text: "Reports",
     },
   ];
 
