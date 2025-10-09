@@ -76,13 +76,11 @@
     "vite-tsconfig-paths": "^5.1.4"
   },
   "overrides": {
-    "@internationalized/date": "3.10.0",
-    "@react-types/shared": "3.30.0"
+    "@internationalized/date": "3.10.0"
   },
   "pnpm": {
     "overrides": {
-      "@internationalized/date": "3.10.0",
-      "@react-types/shared": "3.30.0"
+      "@internationalized/date": "3.10.0"
     }
   }
 }
