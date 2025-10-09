@@ -124,7 +124,7 @@ export default function ReportsPage() {
   return (
     <section>
       <Card shadow="none">
-        <CardBody>
+        <CardBody className="p-0">
           <Tabs
             selectedKey={activeReport}
             onSelectionChange={(key) => {
@@ -253,7 +253,12 @@ export default function ReportsPage() {
 
           {/* Action Buttons */}
           <div className="flex gap-3 mb-6">
-            <Button color="primary" isLoading={loading} onPress={fetchReport}>
+            <Button
+              color="warning"
+              className="text-white"
+              isLoading={loading}
+              onPress={fetchReport}
+            >
               Generate Report
             </Button>
             <Button color="default" variant="bordered" onPress={clearFilters}>
