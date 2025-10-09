@@ -24,6 +24,16 @@ import {
   FileSpreadsheetIcon,
   FileTextIcon,
 } from "@/components/icons/icons";
+import { DatePicker } from "@heroui/date-picker";
+import { parseDate } from "@internationalized/date";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableColumn,
+  TableHeader,
+  TableRow,
+} from "@heroui/table";
 
 const genderOptions = [
   { value: "M", label: "Male" },
@@ -38,6 +48,19 @@ export default function ReportsPage() {
 
   const handleFilterChange = (key: keyof ReportFilters, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleDateChange = (key: keyof ReportFilters, value: any) => {
+    if (value) {
+      const dateStr = `${value.year}-${String(value.month).padStart(2, "0")}-${String(value.day).padStart(2, "0")}`;
+      setFilters((prev) => ({ ...prev, [key]: dateStr }));
+    } else {
+      setFilters((prev) => {
+        const newFilters = { ...prev };
+        delete newFilters[key];
+        return newFilters;
+      });
+    }
   };
 
   const fetchReport = async () => {
@@ -121,6 +144,11 @@ export default function ReportsPage() {
     setReportData([]);
   };
 
+  const getColumns = () => {
+    if (reportData.length === 0) return [];
+    return Object.keys(reportData[0]);
+  };
+
   return (
     <section>
       <Card shadow="none">
@@ -161,19 +189,15 @@ export default function ReportsPage() {
                     handleFilterChange("planType", e.target.value)
                   }
                 />
-                <Input
+                <DatePicker
                   label="From Date"
-                  type="date"
-                  value={filters.fromDate || ""}
-                  onChange={(e) =>
-                    handleFilterChange("fromDate", e.target.value)
-                  }
+                  value={filters.fromDate ? parseDate(filters.fromDate) : null}
+                  onChange={(date) => handleDateChange("fromDate", date)}
                 />
-                <Input
+                <DatePicker
                   label="To Date"
-                  type="date"
-                  value={filters.toDate || ""}
-                  onChange={(e) => handleFilterChange("toDate", e.target.value)}
+                  value={filters.toDate ? parseDate(filters.toDate) : null}
+                  onChange={(date) => handleDateChange("toDate", date)}
                 />
                 <Input
                   label="Company"
@@ -296,37 +320,27 @@ export default function ReportsPage() {
             </div>
           )}
 
-          {/* Results Table */}
+          {/* Results Table with HeroUI */}
           {reportData.length > 0 && (
             <div className="overflow-x-auto">
-              <table className="min-w-full border-collapse border border-gray-300">
-                <thead>
-                  <tr className="bg-gray-100">
-                    {Object.keys(reportData[0]).map((key) => (
-                      <th
-                        key={key}
-                        className="border border-gray-300 px-4 py-2 text-left font-semibold"
-                      >
-                        {key}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {reportData.map((row, idx) => (
-                    <tr key={idx} className="hover:bg-gray-50">
-                      {Object.values(row).map((value: any, cellIdx) => (
-                        <td
-                          key={cellIdx}
-                          className="border border-gray-300 px-4 py-2"
-                        >
-                          {value ?? "N/A"}
-                        </td>
-                      ))}
-                    </tr>
+              <Table aria-label="Report results table" isStriped>
+                <TableHeader>
+                  {getColumns().map((column) => (
+                    <TableColumn key={column}>{column}</TableColumn>
                   ))}
-                </tbody>
-              </table>
+                </TableHeader>
+                <TableBody>
+                  {reportData.map((row, idx) => (
+                    <TableRow key={idx}>
+                      {getColumns().map((column) => (
+                        <TableCell key={column}>
+                          {row[column] ?? "N/A"}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           )}
 
