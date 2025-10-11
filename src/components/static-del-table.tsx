@@ -10,7 +10,6 @@ import {
 } from "@heroui/table";
 import { Pagination } from "@heroui/pagination";
 import { Badge } from "@heroui/badge";
-import { Input } from "@heroui/input";
 import { Button } from "@heroui/button";
 import { Key } from "@react-types/shared";
 import toast from "react-hot-toast";
@@ -43,6 +42,7 @@ interface RowItem {
   procedureqty: number;
   pharmacyid: number;
   pharmacyname: string;
+  deliveryaddress: string;
   original: any;
 }
 
@@ -51,14 +51,7 @@ export default function StaticDeliveryTable({
 }: DeliveryTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(50);
-  const [searchQuery, setSearchQuery] = useState("");
   const [isDownloading, setIsDownloading] = useState(false);
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const query = e.target.value;
-    setSearchQuery(query);
-    setCurrentPage(1);
-  };
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -95,37 +88,21 @@ export default function StaticDeliveryTable({
     [deliveries]
   );
 
-  // Filter rows based on search query
-  const filteredRows = useMemo(() => {
-    if (!searchQuery.trim()) return rows;
-
-    const searchLower = searchQuery.toLowerCase();
-
-    return rows.filter(
-      (row) =>
-        row.enrollee.name.toLowerCase().includes(searchLower) ||
-        row.enrollee.scheme.toLowerCase().includes(searchLower) ||
-        row.diagnosisname.toLowerCase().includes(searchLower) ||
-        row.procedurename.toLowerCase().includes(searchLower) ||
-        row.pharmacyname.toLowerCase().includes(searchLower)
-    );
-  }, [rows, searchQuery]);
-
-  const totalPages = Math.ceil(filteredRows.length / pageSize);
+  const totalPages = Math.ceil(rows.length / pageSize);
 
   const paginatedRows = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = Math.min(startIndex + pageSize, filteredRows.length);
+    const endIndex = Math.min(startIndex + pageSize, rows.length);
 
-    return filteredRows.slice(startIndex, endIndex);
-  }, [filteredRows, currentPage, pageSize]);
+    return rows.slice(startIndex, endIndex);
+  }, [rows, currentPage, pageSize]);
 
   const handleDownloadExcel = async () => {
     try {
       setIsDownloading(true);
 
       // Prepare data for Excel export
-      const excelData = filteredRows.map((row) => ({
+      const excelData = rows.map((row) => ({
         "Enrollee Name": row.enrollee.name,
         Scheme: row.enrollee.scheme,
         "Start Date": row.startDate,
@@ -163,6 +140,7 @@ export default function StaticDeliveryTable({
 
       // Write and download file
       XLSX.writeFile(workbook, filename);
+      toast.success("Excel file downloaded successfully!");
     } catch (error) {
       toast.error(`Error downloading Excel file: ${error}`);
     } finally {
@@ -182,16 +160,10 @@ export default function StaticDeliveryTable({
         return <Badge>{item.status}</Badge>;
       case "diagnosisname":
         return <span>{item.diagnosisname}</span>;
-      // case "diagnosis_id":
-      //   return <span className="text-gray-500">{item.diagnosis_id}</span>;
       case "procedurename":
         return <span>{item.procedurename}</span>;
-      // case "procedureid":
-      //   return <span className="text-gray-500">{item.procedureid}</span>;
       case "pharmacyname":
         return <span className="text-gray-500">{item.pharmacyname}</span>;
-      // case "pharmacyid":
-      //   return <span className="text-gray-500">{item.pharmacyid}</span>;
       default:
         return getKeyValue(item, columnKey);
     }
@@ -211,8 +183,7 @@ export default function StaticDeliveryTable({
         totalPages > 1 && (
           <div className="flex w-full justify-between items-center">
             <p className="text-xs text-gray-500">
-              Total: {filteredRows.length} deliveries
-              {searchQuery && <span> (filtered from {rows.length})</span>}
+              Total: {rows.length} deliveries
             </p>
             <Pagination
               isCompact
@@ -236,24 +207,14 @@ export default function StaticDeliveryTable({
               View delivery records and status
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center w-full sm:w-auto">
-            <Input
-              aria-label="Search deliveries"
-              className="w-full sm:w-72"
-              placeholder="Search by enrollee, diagnosis, procedure..."
-              radius="sm"
-              value={searchQuery}
-              onChange={handleSearchChange}
-            />
-            <Button
-              color="primary"
-              isLoading={isDownloading}
-              onPress={handleDownloadExcel}
-              variant="solid"
-            >
-              {isDownloading ? "Downloading..." : "Download Excel"}
-            </Button>
-          </div>
+          <Button
+            color="primary"
+            isLoading={isDownloading}
+            onPress={handleDownloadExcel}
+            variant="solid"
+          >
+            {isDownloading ? "Downloading..." : "Download Excel"}
+          </Button>
         </div>
       }
     >

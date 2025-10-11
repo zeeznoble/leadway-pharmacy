@@ -215,3 +215,34 @@ export const ArrowLeft = (props: IconSvgProps) => {
     </svg>
   );
 };
+
+export const FileTextIcon = (props: IconSvgProps) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      fill="currentColor"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path d="m19.94 7.68-.03-.09a.8.8 0 0 0-.2-.29l-5-5c-.09-.09-.19-.15-.29-.2l-.09-.03a.8.8 0 0 0-.26-.05c-.02 0-.04-.01-.06-.01H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-12s-.01-.04-.01-.06c0-.09-.02-.17-.05-.26ZM6 20V4h7v4c0 .55.45 1 1 1h4v11z"></path>
+      <path d="M8 11h8v2H8zM8 15h8v2H8zM8 7h3v2H8z"></path>
+    </svg>
+  );
+};
+
+export const FileSpreadsheetIcon = (props: IconSvgProps) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      fill="currentColor"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path d="m21,3H3c-.55,0-1,.45-1,1v16c0,.55.45,1,1,1h18c.55,0,1-.45,1-1V4c0-.55-.45-1-1-1Zm-1,2v2H4v-2h16Zm-6,8h-4v-4h4v4Zm-6,0h-4v-4h4v4Zm-4,6v-4h4v4h-4Zm6,0v-4h4v4h-4Zm6,0v-10h4v10h-4Z"></path>
+    </svg>
+  );
+};
